@@ -1,24 +1,44 @@
-# Hotel Reservation System
+# Hotel Reservation System - Version 2.0.0
 
-Part of Open University TM470 Final IT Project
+This project stems from work I did as part of my Open University TM470 Final IT Project.
 
-Python application using Flask framework.
+It is a full-stack application using the Flask framework for the REST API backend and React frontend for the user admin panel and booking pages.
 
-![image](docs/images/overview.png)
+## Changes from Version 1.0.0
+
+- ### Flask REST API
+
+    The Flask application now serves the reservation system data to the React frontend via a REST API instead of populating Jinga2 html templates.
+
+- ### SQLAlchemy
+
+    The database connection is now handled with SQLAlchemy, instead of directly with the SQLite database.
+
+- ### React
+
+    The frontend is built with a React app which consumes the data from the Flask API.
+
+- ### Frontend component library
+
+    I had used a Bootstrap/jQuery dashboard template (https://adminlte.io/) to style the frontend, but I am considering using the Material UI React library (https://mui.com/) instead.
 
 ## Setup environment
 
-#### Dependencies:
-- Python 3.11
+This project was developed using Linux. Commands for running in a Windows enviroment will be a little different. I will put instructions here later.
+
+### Dependencies:
+- Python 3.11+
 - pip
 - pipenv
 
+
+### Check Python version
 ```
 $ python --version
-Python 3.11.6
+Python 3.12.3
 ```
 
-#### Install pip 
+### Install pip 
 https://packaging.python.org/en/latest/guides/installing-using-linux-tools/
 
 ```
@@ -65,7 +85,7 @@ The application builds upon steps from tutorial https://flask.palletsprojects.co
 $ flask --app reservation_system init-db
 $ flask --app reservation_system dummy-data
 ```
-### Run app with debugger
+### Run backend app with debugger
 ```
 $ flask --app reservation_system run --debug
 ```
@@ -102,43 +122,58 @@ Admin dashboard views are styled with AdminLTE (https://adminlte.io/)
 
 ## TODO / Features
 
-### Booking overview (homepage)
+- ### Business set-up
+    - [ ] Add users
+    - [ ] Set user permissions
 
-- [x] Arrivals / Departures
-- [x] Recent bookings
-- [ ] Revenue summary
+- ### Dashboard
+    - [ ] Notifications
+    - [ ] Arrivals
+    - [ ] Departures
+    - [ ] Stays
+    - [ ] New Bookings
+    - [ ] Cancellations
+    - [ ] Revenue overview & Comparison
+    - [ ] Search
 
-### Calendar
+- ### Rooms & Rates
+    - [ ] Unit types
+    - [ ] Amenities
+    - [ ] Rates and prices
+    - [ ] Rate restrictions (min. stays etc)
+    - [ ] Special offers
+    - [ ] Discounts/Voucher codes
+    - [ ] Image / Video galleries
 
-- [x] Calendar month view
-- [x] Only allow future bookings
-- [x] Prevent bookings overlapping dates or "double bookings" for same dates
+- ### Bookings
+    - [ ] Special request / Notes
+    - [ ] Colour coded flags
+    - [ ] Track history
 
-### Rooms / Room Types
+- ### Booking management
+    - [ ] Calendar view
+    - [ ] Modify & cancel bookings
+    - [ ] Block rooms
+    - [ ] Group bookings
+    - [ ] Store guest information
+    - [ ] Housekeeping
+    - [ ] Statistics & trends reports
 
-- [x] Add special offers/discount rates
-- [x] Photo uploads
-- [ ] Amenities list
+- ### Customer communication
+    - [ ] Booking page
+    - [ ] Website booking and availability widgets
+    - [ ] Confirmation emails
+    - [ ] Reminders
+    - [ ] Newsletter
+    - [ ] Reviews
 
-### Customers
-
-- [x] Add new guest details at booking time (currently a guest must be created before creating a reservation)
-- [ ] Allow multiple rooms per booking
-
-### Invoicing
-
-- [x] Calulate full booking price
-- [x] Print invoice
-- [ ] Print revenue report
-
-### Users
-
-- [ ] Create new users
-- [ ] Update/delete users
-- [ ] Different permission levels?
-
-### Code
-
-- [x] Refactor row query functions
-- [ ] Would type hints help?
-- [ ] Write tests
+- ### Payments
+    - [ ] Invoicing
+    - [ ] Extra sale items
+    - [ ] Integrate with 3rd-party payment gateways
+    - [ ] Accounting reports
+        
+- ### Code
+    - [x] Refactor row query functions
+    - [ ] Would type hints help?
+    - [ ] Write tests
