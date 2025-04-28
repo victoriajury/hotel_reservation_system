@@ -1,6 +1,6 @@
 import pytest
 from flask import g, session
-from reservation_system.db import get_db
+from server.db import get_db
 from werkzeug.security import check_password_hash
 
 

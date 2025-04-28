@@ -1,4 +1,4 @@
-from reservation_system import create_app
+from server.app import create_app
 
 
 def test_config():

@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from flask import Blueprint, flash, g, redirect, render_template, request, url_for
-from reservation_system.auth import login_required
-from reservation_system.db import get_db
-from reservation_system.db_queries import (
+from server.auth import login_required
+from server.db import get_db
+from server.db_queries import (
     delete_by_id,
     format_sql_query_columns,
     format_sql_update_columns,
@@ -11,53 +11,53 @@ from reservation_system.db_queries import (
     get_row_by_id,
     sql_insert_placeholders,
 )
-from reservation_system.helpers import format_required_field_error
+from server.helpers import format_required_field_error, previous_page_url
 
-bp = Blueprint("rooms", __name__, url_prefix="/rooms")
-table = "rooms"
+bp = Blueprint("guests", __name__, url_prefix="/guests")
+table = "guests"
+parent_page = "guests.index"
 
 
 def get_table_fields():
     return [
-        "room_number",
-        "room_type",
+        "name",
+        "email",
+        "telephone",
+        "address_1",
+        "address_2",
+        "city",
+        "county",
+        "postcode",
+        "guest_notes",
     ]
 
 
 def get_required_fields():
     return [
-        "room_number",
-        "room_type",
+        "name",
+        "email",
+        "telephone",
+        "address_1",
+        "city",
+        "county",
+        "postcode",
     ]
 
 
 @bp.route("/")
 @login_required
 def index():
-    fields = format_sql_query_columns(
-        get_table_fields() + ["type_name", f"{table}.modified", f"{table}.modified_by_id", "username"]
-    )
-    join = f"""
-    JOIN users u ON {table}.modified_by_id = u.id
-    JOIN room_types rt ON {table}.room_type = rt.id
-    """
+    fields = format_sql_query_columns(get_table_fields() + ["created", "modified", "modified_by_id", "username"])
+    join = f" JOIN users u ON {table}.modified_by_id = u.id"
 
-    rooms = get_all_rows(table, fields, join, order_by="room_number")
+    guests = get_all_rows(table, fields, join, order_by="name")
 
-    return render_template("rooms/index.html", rooms=rooms)
-
-
-def get_other_table_rows():
-    type_names = get_all_rows("room_types", "id, type_name")
-
-    return type_names
+    return render_template("guests/index.html", guests=guests)
 
 
 @bp.route("/create", methods=("GET", "POST"))
 @login_required
 def create():
-    room_types = get_other_table_rows()
-
     if request.method == "POST":
         data = [request.form[f] for f in get_table_fields()] + [g.user["id"]]
         columns = format_sql_query_columns(get_table_fields() + ["modified_by_id"])
@@ -73,26 +73,31 @@ def create():
             flash(format_required_field_error(error_fields))
         else:
             db = get_db()
-            db.execute(
+            cursor = db.execute(
                 f"INSERT INTO {table} ({columns}) VALUES ({placeholders})",
                 data,
             )
+            guest_id = cursor.lastrowid
             db.commit()
-            return redirect(url_for("rooms.index"))
 
-    return render_template("rooms/create.html", room_types=room_types)
+            previous_page = previous_page_url(request.args.get("redirect"))
+            if previous_page == "reservations.create":
+                # adding new guest when making a new reservation
+                return redirect(url_for(previous_page, guest_id=guest_id))
+            return redirect(url_for(parent_page))
+
+    return render_template("guests/create.html")
 
 
 @bp.route("/<int:id>/update", methods=("GET", "POST"))
 @login_required
 def update(id):
-    room = get_row_by_id(
+    guest = get_row_by_id(
         id,
         table,
-        format_sql_query_columns(get_table_fields() + ["modified_by_id", "username"]),
+        format_sql_query_columns(get_table_fields() + ["created", "modified_by_id", "username"]),
         f" JOIN users u ON {table}.modified_by_id = u.id",
     )
-    room_types = get_other_table_rows()
 
     if request.method == "POST":
         modified = datetime.now()
@@ -114,13 +119,23 @@ def update(id):
                 data,
             )
             db.commit()
-            return redirect(url_for("rooms.index"))
+            previous_page = previous_page_url(request.args.get("redirect"))
+            reservation_id = request.args.get("reservation_id")
+            if isinstance(previous_page, tuple):
+                # return to calendar after updating guest
+                year, month = previous_page
+                return redirect(url_for("calendar.calendar", year=year, month=month, reservation_id=reservation_id))
+            elif previous_page:
+                return redirect(url_for(previous_page, reservation_id=reservation_id))
+            return redirect(url_for(parent_page))
 
-    return render_template("rooms/update.html", room=room, room_types=room_types)
+    return render_template("guests/update.html", guest=guest)
 
 
 @bp.route("/<int:id>/delete", methods=("POST",))
 @login_required
 def delete(id):
+    # TODO: Warn if there are active bookings connected to guest
+    # Delete booking ?
     delete_by_id(id, table)
-    return redirect(url_for("rooms.index"))
+    return redirect(url_for(parent_page))

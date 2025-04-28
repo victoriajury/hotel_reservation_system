@@ -2,8 +2,8 @@ import os
 from datetime import datetime
 
 from flask import Flask, render_template
-from reservation_system.auth import login_required
-from reservation_system.db_queries import count_rows, format_sql_query_columns, get_all_rows
+from server.auth import login_required
+from server.db_queries import count_rows, format_sql_query_columns, get_all_rows
 
 from . import (
     auth,

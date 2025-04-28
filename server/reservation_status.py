@@ -1,7 +1,7 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from reservation_system.auth import login_required
-from reservation_system.db import get_db
-from reservation_system.db_queries import (
+from server.auth import login_required
+from server.db import get_db
+from server.db_queries import (
     delete_by_id,
     format_sql_query_columns,
     format_sql_update_columns,
@@ -9,7 +9,7 @@ from reservation_system.db_queries import (
     get_row_by_id,
     sql_insert_placeholders,
 )
-from reservation_system.helpers import format_required_field_error
+from server.helpers import format_required_field_error
 
 bp = Blueprint("reservation_status", __name__, url_prefix="/reservation_status")
 table = "reservation_status"

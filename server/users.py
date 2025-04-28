@@ -1,14 +1,14 @@
 from flask import Blueprint, flash, g, redirect, render_template, request, url_for
-from reservation_system.auth import login_required
-from reservation_system.db import get_db
-from reservation_system.db_queries import (
+from server.auth import login_required
+from server.db import get_db
+from server.db_queries import (
     delete_by_id,
     format_sql_query_columns,
     format_sql_update_columns,
     get_all_rows,
     get_row_by_id,
 )
-from reservation_system.helpers import format_required_field_error
+from server.helpers import format_required_field_error
 from werkzeug.security import generate_password_hash
 
 bp = Blueprint("users", __name__, url_prefix="/users")

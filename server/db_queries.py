@@ -1,4 +1,4 @@
-from reservation_system.db import get_db
+from server.db import get_db
 from werkzeug.exceptions import abort
 
 

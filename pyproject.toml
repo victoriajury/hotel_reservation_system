@@ -1,7 +1,7 @@
 [project]
 name = "reservation_system"
-version = "1.0.0"
-description = "Basic hotel reservation system app built with Flask."
+version = "2.0.0"
+description = "Basic hotel reservation system app built with Flask and React."
 readme = "README.md"
 dependencies = [
     "flask",

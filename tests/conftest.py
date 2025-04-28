@@ -2,8 +2,8 @@ import os
 import tempfile
 
 import pytest
-from reservation_system import create_app
-from reservation_system.db import dummy_db, init_db
+from server.app import create_app
+from server.db import dummy_db, init_db
 
 
 @pytest.fixture
