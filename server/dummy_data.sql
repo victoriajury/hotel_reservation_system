@@ -95,30 +95,30 @@ VALUES
   (2,390,1)
 ;
 
-INSERT INTO join_guests_reservations
-  (guest_id, reservation_id)
-VALUES
-  (5, 1),
-  (4, 2),
-  (2, 3),
-  (8, 4),
-  (4, 5),
-  (7, 6),
-  (3, 7),
-  (6, 8),
-  (1, 9)
-;
+-- INSERT INTO join_guests_reservations
+--   (guest_id, reservation_id)
+-- VALUES
+--   (5, 1),
+--   (4, 2),
+--   (2, 3),
+--   (8, 4),
+--   (4, 5),
+--   (7, 6),
+--   (3, 7),
+--   (6, 8),
+--   (1, 9)
+-- ;
 
-INSERT INTO join_rooms_reservations
-  (room_id, reservation_id)
-VALUES
-  (1, 1),
-  (2, 2),
-  (3, 3),
-  (4, 4),
-  (5, 5),
-  (6, 6),
-  (3, 7),
-  (2, 8),
-  (7, 9)
-;
+-- INSERT INTO join_rooms_reservations
+--   (room_id, reservation_id)
+-- VALUES
+--   (1, 1),
+--   (2, 2),
+--   (3, 3),
+--   (4, 4),
+--   (5, 5),
+--   (6, 6),
+--   (3, 7),
+--   (2, 8),
+--   (7, 9)
+-- ;

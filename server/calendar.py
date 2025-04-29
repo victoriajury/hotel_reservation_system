@@ -12,7 +12,11 @@ table = "reservations"
 @bp.route("/")
 @login_required
 def index():
-    return redirect(url_for("calendar.calendar", year=datetime.now().year, month=datetime.now().month))
+    return redirect(
+        url_for(
+            "calendar.calendar", year=datetime.now().year, month=datetime.now().month
+        )
+    )
 
 
 @bp.route("/<int:year>/<int:month>/")
@@ -23,7 +27,9 @@ def calendar(year, month):
     # calculate number of days in month
     calendar_start = datetime(year, month, 1)
     month_start = calendar_start.date()
-    next_month_start = datetime(year, month + 1, 1) if month + 1 <= 12 else datetime(year + 1, 1, 1)
+    next_month_start = (
+        datetime(year, month + 1, 1) if month + 1 <= 12 else datetime(year + 1, 1, 1)
+    )
     no_days_in_month = (next_month_start - calendar_start).days
     calendar_end = datetime(year, month, no_days_in_month)
     month_end = calendar_end.date()
@@ -82,7 +88,9 @@ def calendar(year, month):
     )
     # We only want reservations for this month view, not all time
     # Cancelled bookings do not show
-    where = f""" WHERE end_date > "{calendar_start}" AND start_date < "{calendar_end}" """
+    where = (
+        f""" WHERE end_date > "{calendar_start}" AND start_date < "{calendar_end}" """
+    )
     join = f"""
         JOIN users u ON {table}.modified_by_id = u.id
         JOIN reservation_status rs ON {table}.status_id = rs.id
@@ -116,9 +124,13 @@ def calendar(year, month):
         invoice["invoice_id"] = res["invoice_id"] or None
         invoice["reservation_id"] = res["id"]
         no_nights = (res["end_date"] - res["start_date"]).days
-        room_base_total = invoice["total_room_base_price"] = res["base_price_per_night"] * no_nights
+        room_base_total = invoice["total_room_base_price"] = (
+            res["base_price_per_night"] * no_nights
+        )
         invoice_items = [
-            row["items_total"] for row in invoice_extra_items_totals if row["invoice_id"] == invoice["invoice_id"]
+            row["items_total"]
+            for row in invoice_extra_items_totals
+            if row["invoice_id"] == invoice["invoice_id"]
         ]
         # there should only be one row returned from invoice_items if any
         extras = invoice["extras"] = invoice_items[0] if invoice_items else 0
