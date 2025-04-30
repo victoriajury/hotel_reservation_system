@@ -1,11 +1,14 @@
 from flask import jsonify
 from flask_restful import Resource
+from server.db import db
 from server.models import SpecialOffers
 
 
 class SpecialOfferResource(Resource):
     def get(self):
-        offers = [data.to_dict() for data in SpecialOffers.query.all()]
+
+        query = db.session.execute(db.select(SpecialOffers)).scalars()
+        offers = [data.to_dict() for data in query.all()]
 
         return jsonify(offers)
 

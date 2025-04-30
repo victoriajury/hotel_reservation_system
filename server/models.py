@@ -43,6 +43,7 @@ class Guests(db.Model):
         DateTime, server_default=func.now()
     )
     modified_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+
     modified_by_user: Mapped[Users] = relationship()
 
     def to_dict(self):
@@ -62,6 +63,7 @@ class RoomTypes(db.Model):
         DateTime, server_default=func.now()
     )
     modified_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+
     modified_by_user: Mapped[Users] = relationship()
 
     def to_dict(self):
@@ -78,12 +80,25 @@ class Rooms(db.Model):
         DateTime, server_default=func.now()
     )
     modified_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+
+    room_type_name: Mapped[RoomTypes] = relationship()
     modified_by_user: Mapped[Users] = relationship()
 
     def to_dict(self):
         _dict = make_dict(self)
+        _dict["room_type_name"] = self.room_type_name.type_name
         _dict["modified_by_user"] = self.modified_by_user.username
         return _dict
+
+
+class ReservationStatus(db.Model):
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    status: Mapped[str] = mapped_column(String)
+    description: Mapped[Optional[str]] = mapped_column(String)
+    bg_color: Mapped[Optional[str]] = mapped_column(String)
+
+    def to_dict(self):
+        return make_dict(self)
 
 
 class Reservations(db.Model):
@@ -103,22 +118,15 @@ class Reservations(db.Model):
         DateTime, server_default=func.now()
     )
     modified_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+
+    status: Mapped[ReservationStatus] = relationship()
     modified_by_user: Mapped[Users] = relationship()
 
     def to_dict(self):
         _dict = make_dict(self)
         _dict["modified_by_user"] = self.modified_by_user.username
+        _dict["status"] = self.status.status
         return _dict
-
-
-class ReservationStatus(db.Model):
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    status: Mapped[str] = mapped_column(String)
-    description: Mapped[Optional[str]] = mapped_column(String)
-    bg_color: Mapped[Optional[str]] = mapped_column(String)
-
-    def to_dict(self):
-        return make_dict(self)
 
 
 class SpecialOffers(db.Model):
@@ -136,10 +144,13 @@ class SpecialOffers(db.Model):
         DateTime, server_default=func.now()
     )
     modified_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+
+    room_type_name: Mapped[RoomTypes] = relationship()
     modified_by_user: Mapped[Users] = relationship()
 
     def to_dict(self):
         _dict = make_dict(self)
+        _dict["room_type_name"] = self.room_type_name.type_name
         _dict["modified_by_user"] = self.modified_by_user.username
         return _dict
 
@@ -178,6 +189,7 @@ class InvoiceItems(db.Model):
         DateTime, server_default=func.now()
     )
     modified_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+
     modified_by_user: Mapped[Users] = relationship()
 
     def to_dict(self):
@@ -197,6 +209,7 @@ class Payments(db.Model):
         DateTime, server_default=func.now()
     )
     modified_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+
     modified_by_user: Mapped[Users] = relationship()
 
     def to_dict(self):

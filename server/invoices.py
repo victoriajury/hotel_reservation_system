@@ -1,11 +1,14 @@
 from flask import jsonify
 from flask_restful import Resource
+from server.db import db
 from server.models import Invoices
 
 
 class InvoiceResource(Resource):
     def get(self):
-        invoices = [data.to_dict() for data in Invoices.query.all()]
+
+        query = db.session.execute(db.select(Invoices)).scalars()
+        invoices = [data.to_dict() for data in query.all()]
 
         return jsonify(invoices)
 

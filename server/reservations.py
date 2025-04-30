@@ -1,13 +1,16 @@
 from flask import jsonify
 from flask_restful import Resource
+from server.db import db
 from server.models import Reservations
 
 
 class ReservationResource(Resource):
     def get(self):
-        reservations = [data.to_dict() for data in Reservations.query.all()]
 
-        return jsonify(reservations)
+        query = db.session.execute(db.select(Reservations)).scalars()
+        reservation = [data.to_dict() for data in query.all()]
+
+        return jsonify(reservation)
 
 
 # from datetime import datetime

@@ -1,11 +1,14 @@
 from flask import jsonify
 from flask_restful import Resource
+from server.db import db
 from server.models import ReservationStatus
 
 
 class ReservationStatusResource(Resource):
     def get(self):
-        status = [data.to_dict() for data in ReservationStatus.query.all()]
+
+        query = db.session.execute(db.select(ReservationStatus)).scalars()
+        status = [data.to_dict() for data in query.all()]
 
         return jsonify(status)
 

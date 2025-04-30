@@ -1,11 +1,14 @@
 from flask import jsonify
 from flask_restful import Resource
+from server.db import db
 from server.models import Payments
 
 
 class PaymentResource(Resource):
     def get(self):
-        payments = [data.to_dict() for data in Payments.query.all()]
+
+        query = db.session.execute(db.select(Payments)).scalars()
+        payments = [data.to_dict() for data in query.all()]
 
         return jsonify(payments)
 

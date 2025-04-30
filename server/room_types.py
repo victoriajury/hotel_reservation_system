@@ -1,11 +1,14 @@
 from flask import jsonify
 from flask_restful import Resource
+from server.db import db
 from server.models import RoomTypes
 
 
 class RoomTypeResource(Resource):
     def get(self):
-        room_types = [data.to_dict() for data in RoomTypes.query.all()]
+
+        query = db.session.execute(db.select(RoomTypes)).scalars()
+        room_types = [data.to_dict() for data in query.all()]
 
         return jsonify(room_types)
 
