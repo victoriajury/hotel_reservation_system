@@ -1,7 +1,7 @@
 INSERT INTO users (username, password)
 VALUES
-  ('test', 'pbkdf2:sha256:50000$TCI4GzcX$0de171a4f4dac32e3364c7ddc7c14f3e2fa61f2d17574483f7ffbb431b4acb2f'),
-  ('other', 'pbkdf2:sha256:50000$kJPKsz6N$d2d4784f1b030a9761f5ccaeeaca413f27f2ecb76d6168407af962ddce849f79');
+  ('Alice', 'pbkdf2:sha256:50000$TCI4GzcX$0de171a4f4dac32e3364c7ddc7c14f3e2fa61f2d17574483f7ffbb431b4acb2f'),
+  ('Bob', 'pbkdf2:sha256:50000$kJPKsz6N$d2d4784f1b030a9761f5ccaeeaca413f27f2ecb76d6168407af962ddce849f79');
 
 INSERT INTO room_types
   (type_name, base_price_per_night, amenities, photo, max_occupants, modified_by_id)
@@ -43,7 +43,8 @@ VALUES
 INSERT INTO invoices
   (reservation_id, amount_paid, modified, modified_by_id)
 VALUES
-  (2, 0, "2024-05-30 12:59:24", 1);
+  (1, 0, "2024-05-30 12:59:24", 1),
+  (2, 50, "2024-05-31 15:59:24", 1);
 
 INSERT INTO invoice_items
   (invoice_id, item_description, is_room, quantity, price, total, modified_by_id)
@@ -57,7 +58,8 @@ VALUES
 INSERT INTO payments
   (invoice_id, amount, modified_by_id)
 VALUES
-  (1,90,1);
+  (1,90,1),
+  (2,50,1);
 
 INSERT INTO join_guests_reservations
   (guest_id, reservation_id)

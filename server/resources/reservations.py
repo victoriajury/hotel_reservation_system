@@ -1,16 +1,24 @@
 from flask import jsonify
 from flask_restful import Resource
-from server.db import db
+from server.database import db
 from server.models import Reservations
 
 
 class ReservationResource(Resource):
-    def get(self):
+    def get(self, reservation_id=None):
+        if reservation_id is None:
+            query = db.session.execute(db.select(Reservations)).scalars()
+            reservations = [data.to_dict() for data in query.all()]
 
-        query = db.session.execute(db.select(Reservations)).scalars()
-        reservation = [data.to_dict() for data in query.all()]
+            return jsonify(reservations)
+        else:
+            reservation = (
+                db.session.execute(db.select(Reservations).filter_by(id=reservation_id))
+                .scalar_one()
+                .to_dict()
+            )
 
-        return jsonify(reservation)
+            return jsonify(reservation)
 
 
 # from datetime import datetime

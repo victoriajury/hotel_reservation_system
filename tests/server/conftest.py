@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 from server.app import create_app
-from server.db import init_db
+from server.database import init_db
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def app():
     app = create_app(
         {
             "TESTING": True,
-            "DATABASE": db_path,
+            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         }
     )
 
@@ -27,13 +27,25 @@ def app():
 
 
 @pytest.fixture
-def client(app):
-    return app.test_client()
+def app_no_db():
+    db_fd, db_path = tempfile.mkstemp()
+
+    app = create_app(
+        {
+            "TESTING": True,
+            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+        }
+    )
+
+    yield app
+
+    os.close(db_fd)
+    os.unlink(db_path)
 
 
 @pytest.fixture
-def runner(app):
-    return app.test_cli_runner()
+def client(app):
+    return app.test_client()
 
 
 class AuthActions(object):

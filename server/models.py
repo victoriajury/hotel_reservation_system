@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional
 
-from server.db import db
+from server.database import db
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -108,7 +108,7 @@ class Reservations(db.Model):
     end_date: Mapped[datetime.datetime] = mapped_column(DateTime)
     total_room_base_price: Mapped[float] = mapped_column(Float)
     special_offer_applied: Mapped[Optional[str]] = mapped_column(String)
-    special_offer_discount: Mapped[float] = mapped_column(Float, default=0)
+    special_offer_discount: Mapped[float] = mapped_column(Float, server_default="0.0")
     reservation_notes: Mapped[Optional[str]] = mapped_column(String)
     status_id: Mapped[int] = mapped_column(ForeignKey("reservation_status.id"))
     created: Mapped[datetime.datetime] = mapped_column(

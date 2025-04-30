@@ -1,16 +1,24 @@
 from flask import jsonify
 from flask_restful import Resource
-from server.db import db
+from server.database import db
 from server.models import Invoices
 
 
 class InvoiceResource(Resource):
-    def get(self):
+    def get(self, invoice_id=None):
+        if invoice_id is None:
+            query = db.session.execute(db.select(Invoices)).scalars()
+            invoices = [data.to_dict() for data in query.all()]
 
-        query = db.session.execute(db.select(Invoices)).scalars()
-        invoices = [data.to_dict() for data in query.all()]
+            return jsonify(invoices)
+        else:
+            invoice = (
+                db.session.execute(db.select(Invoices).filter_by(id=invoice_id))
+                .scalar_one()
+                .to_dict()
+            )
 
-        return jsonify(invoices)
+            return jsonify(invoice)
 
 
 # from flask import Blueprint, flash, g, redirect, render_template, request, url_for

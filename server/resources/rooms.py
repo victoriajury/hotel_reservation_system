@@ -1,16 +1,24 @@
 from flask import jsonify
 from flask_restful import Resource
-from server.db import db
+from server.database import db
 from server.models import Rooms
 
 
 class RoomResource(Resource):
-    def get(self):
+    def get(self, room_id=None):
+        if room_id is None:
+            query = db.session.execute(db.select(Rooms)).scalars()
+            rooms = [data.to_dict() for data in query.all()]
 
-        query = db.session.execute(db.select(Rooms)).scalars()
-        rooms = [data.to_dict() for data in query.all()]
+            return jsonify(rooms)
+        else:
+            room = (
+                db.session.execute(db.select(Rooms).filter_by(id=room_id))
+                .scalar_one()
+                .to_dict()
+            )
 
-        return jsonify(rooms)
+        return jsonify(room)
 
 
 # from datetime import datetime

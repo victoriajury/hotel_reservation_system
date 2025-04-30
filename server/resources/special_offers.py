@@ -1,16 +1,24 @@
 from flask import jsonify
 from flask_restful import Resource
-from server.db import db
+from server.database import db
 from server.models import SpecialOffers
 
 
 class SpecialOfferResource(Resource):
-    def get(self):
+    def get(self, offer_id=None):
+        if offer_id is None:
+            query = db.session.execute(db.select(SpecialOffers)).scalars()
+            offers = [data.to_dict() for data in query.all()]
 
-        query = db.session.execute(db.select(SpecialOffers)).scalars()
-        offers = [data.to_dict() for data in query.all()]
+            return jsonify(offers)
+        else:
+            offer = (
+                db.session.execute(db.select(SpecialOffers).filter_by(id=offer_id))
+                .scalar_one()
+                .to_dict()
+            )
 
-        return jsonify(offers)
+            return jsonify(offer)
 
 
 #  from datetime import datetime

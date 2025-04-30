@@ -1,16 +1,24 @@
 from flask import jsonify
 from flask_restful import Resource
-from server.db import db
+from server.database import db
 from server.models import Payments
 
 
 class PaymentResource(Resource):
-    def get(self):
+    def get(self, payment_id=None):
+        if payment_id is None:
+            query = db.session.execute(db.select(Payments)).scalars()
+            payments = [data.to_dict() for data in query.all()]
 
-        query = db.session.execute(db.select(Payments)).scalars()
-        payments = [data.to_dict() for data in query.all()]
+            return jsonify(payments)
+        else:
+            payment = (
+                db.session.execute(db.select(Payments).filter_by(id=payment_id))
+                .scalar_one()
+                .to_dict()
+            )
 
-        return jsonify(payments)
+            return jsonify(payment)
 
 
 # from datetime import datetime

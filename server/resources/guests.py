@@ -1,6 +1,6 @@
 from flask import jsonify
 from flask_restful import Resource
-from server.db import db
+from server.database import db
 from server.models import Guests
 
 

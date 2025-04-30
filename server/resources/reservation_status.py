@@ -1,16 +1,24 @@
 from flask import jsonify
 from flask_restful import Resource
-from server.db import db
+from server.database import db
 from server.models import ReservationStatus
 
 
 class ReservationStatusResource(Resource):
-    def get(self):
+    def get(self, status_id=None):
+        if status_id is None:
+            query = db.session.execute(db.select(ReservationStatus)).scalars()
+            statuses = [data.to_dict() for data in query.all()]
 
-        query = db.session.execute(db.select(ReservationStatus)).scalars()
-        status = [data.to_dict() for data in query.all()]
+            return jsonify(statuses)
+        else:
+            status = (
+                db.session.execute(db.select(ReservationStatus).filter_by(id=status_id))
+                .scalar_one()
+                .to_dict()
+            )
 
-        return jsonify(status)
+            return jsonify(status)
 
 
 # from flask import Blueprint, flash, redirect, render_template, request, url_for

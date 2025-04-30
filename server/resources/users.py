@@ -1,6 +1,6 @@
 from flask import jsonify, make_response, request
 from flask_restful import Resource
-from server.db import db
+from server.database import db
 from server.models import Users
 
 
