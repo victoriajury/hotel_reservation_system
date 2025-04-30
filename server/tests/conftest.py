@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 from server.app import create_app
-from server.db import dummy_db, init_db
+from server.db import init_db
 
 
 @pytest.fixture
@@ -18,8 +18,7 @@ def app():
     )
 
     with app.app_context():
-        init_db()
-        dummy_db(os.path.join(os.path.dirname(__file__), "test_data.sql"))
+        init_db(os.path.join(os.path.dirname(__file__), "test_data.sql"))
 
     yield app
 
@@ -42,7 +41,9 @@ class AuthActions(object):
         self._client = client
 
     def login(self, username="test", password="test"):
-        return self._client.post("/auth/login", data={"username": username, "password": password})
+        return self._client.post(
+            "/auth/login", data={"username": username, "password": password}
+        )
 
     def logout(self):
         return self._client.get("/auth/logout")

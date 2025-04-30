@@ -1,12 +1,10 @@
 import os
 
-import click
 from flask import Flask
 from flask_restful import Api
-from server.db import db
-from sqlalchemy import text
+from server.db import db, init_db_command
 
-from . import (
+from .resources import (
     guests,
     invoice_items,
     invoices,
@@ -46,8 +44,14 @@ def create_app(test_config=None):
 
     api = Api(app)
 
-    api.add_resource(users.UserResource, "/api/users")
-    api.add_resource(guests.GuestResource, "/api/guests")
+    api.add_resource(users.UserResource, "/api/users", endpoint="users")
+    api.add_resource(users.UserResource, "/api/users/<int:user_id>", endpoint="user")
+
+    api.add_resource(guests.GuestResource, "/api/guests", endpoint="guests")
+    api.add_resource(
+        guests.GuestResource, "/api/guests/<int:guest_id>", endpoint="guest"
+    )
+
     api.add_resource(room_types.RoomTypeResource, "/api/room-types")
     api.add_resource(rooms.RoomResource, "/api/rooms")
     api.add_resource(reservations.ReservationResource, "/api/reservations")
@@ -61,33 +65,6 @@ def create_app(test_config=None):
 
     # app.register_blueprint(auth.bp)
 
-    @app.cli.command("init-db")
-    def init_db(filename="dummy_data.sql"):
-        """Initialize the database using schema.sql"""
-        # TODO: take new file as CLI arg
-        try:
-            with app.open_resource(filename, "r") as f:
-                sql = f.read()
-                if sql:
-                    confirm = input(
-                        "Are you sure you want to overwrite the database? Y/N: "
-                    )
-                if confirm == "Y":
-                    with db.engine.connect() as con:
-                        db.drop_all()
-                        db.create_all()
-                        for statement in sql.split(";"):
-                            line = statement.strip()
-                            if line:
-                                stmt = text(line)
-                                con.execute(stmt)
-                        con.commit()
-                    click.echo(f"✅ Database initialized from {filename}")
-                else:
-                    click.echo("🔁 No changes made to the database.")
-        except Exception as e:
-            click.echo(
-                f"❌ Error: Database not initialized from {filename} ({repr(e)})"
-            )
+    app.cli.add_command(init_db_command)
 
     return app

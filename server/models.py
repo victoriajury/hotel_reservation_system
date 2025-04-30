@@ -2,7 +2,7 @@ import datetime
 from typing import Optional
 
 from server.db import db
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
@@ -166,6 +166,7 @@ class Invoices(db.Model):
         DateTime, server_default=func.now()
     )
     modified_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+
     modified_by_user: Mapped[Users] = relationship()
 
     def to_dict(self):
@@ -216,3 +217,21 @@ class Payments(db.Model):
         _dict = make_dict(self)
         _dict["modified_by_user"] = self.modified_by_user.username
         return _dict
+
+
+"""
+Define joining tables for many-to-many relationships
+"""
+
+guests_reservations = db.Table(
+    "join_guests_reservations",
+    Column("guest_id", ForeignKey(Guests.id), primary_key=True),
+    Column("reservation_id", ForeignKey(Reservations.id), primary_key=True),
+)
+
+
+rooms_reservations = db.Table(
+    "join_rooms_reservations",
+    Column("room_id", ForeignKey(Rooms.id), primary_key=True),
+    Column("reservation_id", ForeignKey(Reservations.id), primary_key=True),
+)

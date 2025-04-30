@@ -75,7 +75,9 @@ def test_update(client, auth, app):
 
     auth.login()
     assert client.get("/room_types/1/update").status_code == 200
-    res = client.post("/room_types/1/update", data=data, content_type="multipart/form-data")
+    res = client.post(
+        "/room_types/1/update", data=data, content_type="multipart/form-data"
+    )
     assert res.status_code == 302
 
     with app.app_context():
@@ -140,7 +142,9 @@ def test_create_update_allowed_extensions_validate(client, auth, path, extension
         ("/room_types/1/update", "photo", "test.jpg", b"", b"Invalid file"),
     ],
 )
-def test_create_update_photo_upload_validate(client, auth, path, key, filename, photo_bytes, expected):
+def test_create_update_photo_upload_validate(
+    client, auth, path, key, filename, photo_bytes, expected
+):
     data = {
         "type_name": "Single",
         "base_price_per_night": "95",

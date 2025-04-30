@@ -1,4 +1,7 @@
+import click
+from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from sqlalchemy.orm import DeclarativeBase
 
 
@@ -8,52 +11,33 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 
-# import sqlite3
+
+def init_db(filename="dummy_data.sql"):
+    """Initialize the database using schema.sql"""
+    # TODO: take new file as CLI arg
+    with current_app.open_resource(filename, "r") as f:
+        sql = f.read()
+        if sql:
+            with db.engine.connect() as con:
+                db.drop_all()
+                db.create_all()
+                for statement in sql.split(";"):
+                    line = statement.strip()
+                    if line:
+                        stmt = text(line)
+                        con.execute(stmt)
+                con.commit()
+            click.echo(f"✅ Database initialized from {filename}")
 
 
-# def get_db():
-#     if "db" not in g:
-#         g.db = sqlite3.connect(current_app.config["DATABASE"], detect_types=sqlite3.PARSE_DECLTYPES)
-#         g.db.row_factory = sqlite3.Row
-
-#     return g.db
-
-
-# def close_db(e=None):
-#     db = g.pop("db", None)
-
-#     if db is not None:
-#         db.close()
-
-
-# def init_db():
-#     db = get_db()
-
-#     with current_app.open_resource("schema.sql") as f:
-#         db.executescript(f.read().decode("utf8"))
-
-# def dummy_db(data="dummy_data.sql"):
-
-#     with current_app.open_resource(data) as f:
-#         with db.engine.connect() as con:
-#             query = text(f.read())
-#             con.execute(query)
-
-# @click.command("init-db")
-# def init_db_command():
-#     """Clear the existing data and create new tables."""
-#     init_db()
-#     click.echo("Initialized the database.")
-
-
-# @click.command("dummy-data")
-# def dummy_db_command():
-#     """Add dummy data to the database tables."""
-#     dummy_db()
-#     click.echo("Populated the database.")
-
-
-# def init_app(app):
-#     app.teardown_appcontext(close_db)
-#     app.cli.add_command(init_db_command)
-#     app.cli.add_command(dummy_db_command)
+@click.command("init-db")
+def init_db_command():
+    """Clear the existing data and create new tables."""
+    confirm = input("Are you sure you want to overwrite the database? Y/N: ")
+    if confirm.lower() == "y":
+        try:
+            init_db()
+        except Exception as e:
+            click.echo(f"❌ Error: Database not initialized. {repr(e)}")
+    else:
+        click.echo("🔁 No changes made to the database.")

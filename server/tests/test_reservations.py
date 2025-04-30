@@ -73,9 +73,18 @@ def test_create(client, auth, app):
 @pytest.mark.parametrize(
     "redirect_url, expected",
     [
-        ("/reservations/create", f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/"),
-        ("/calendar/2024/6/", f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/"),
-        ("/calendar/invalid/input", f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/"),
+        (
+            "/reservations/create",
+            f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/",
+        ),
+        (
+            "/calendar/2024/6/",
+            f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/",
+        ),
+        (
+            "/calendar/invalid/input",
+            f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/",
+        ),
     ],
 )
 def test_create_with_redirect(client, auth, app, redirect_url, expected):
@@ -94,7 +103,9 @@ def test_create_with_redirect(client, auth, app, redirect_url, expected):
     }
 
     auth.login()
-    assert client.get(f"/reservations/create?redirect={redirect_url}").status_code == 200
+    assert (
+        client.get(f"/reservations/create?redirect={redirect_url}").status_code == 200
+    )
     response = client.post(f"/reservations/create?redirect={redirect_url}", data=data)
 
     with app.app_context():
@@ -108,7 +119,9 @@ def test_create_with_redirect(client, auth, app, redirect_url, expected):
 def test_update_with_invoice(client, auth, app):
     data = {
         "number_of_guests": "1",
-        "start_date": (datetime.datetime.now() + datetime.timedelta(days=8)).date(),  # 5 nights changes to 7
+        "start_date": (
+            datetime.datetime.now() + datetime.timedelta(days=8)
+        ).date(),  # 5 nights changes to 7
         "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
         "total_room_base_price": "120.0",
         "special_offer_applied": "",
@@ -136,15 +149,25 @@ def test_update_with_invoice(client, auth, app):
     with app.app_context():
         db = get_db()
         res = db.execute("SELECT * FROM reservations WHERE id = 2").fetchone()
-        assert res["start_date"] == (datetime.datetime.now() + datetime.timedelta(days=8)).date()
-        assert res["end_date"] == (datetime.datetime.now() + datetime.timedelta(days=15)).date()
+        assert (
+            res["start_date"]
+            == (datetime.datetime.now() + datetime.timedelta(days=8)).date()
+        )
+        assert (
+            res["end_date"]
+            == (datetime.datetime.now() + datetime.timedelta(days=15)).date()
+        )
         assert res["reservation_notes"] == "Early breakfast."
         assert res["number_of_guests"] == 1
 
-        res = db.execute("SELECT * FROM join_guests_reservations WHERE reservation_id = 2").fetchone()
+        res = db.execute(
+            "SELECT * FROM join_guests_reservations WHERE reservation_id = 2"
+        ).fetchone()
         assert res["guest_id"] == 1
 
-        res = db.execute("SELECT * FROM join_rooms_reservations WHERE reservation_id = 2").fetchone()
+        res = db.execute(
+            "SELECT * FROM join_rooms_reservations WHERE reservation_id = 2"
+        ).fetchone()
         assert res["room_id"] == 2
 
         res = db.execute(
@@ -154,13 +177,18 @@ def test_update_with_invoice(client, auth, app):
         assert res["quantity"] == 7
         assert res["total"] == 910.0
 
-    assert b'<span class="info-box-number text-center text-muted mb-0">7</span>' in response.data
+    assert (
+        b'<span class="info-box-number text-center text-muted mb-0">7</span>'
+        in response.data
+    )
 
 
 def test_update_with_no_existing_invoice(client, auth, app):
     data = {
         "number_of_guests": "1",
-        "start_date": (datetime.datetime.now() + datetime.timedelta(days=8)).date(),  # 3 nights changes to 1
+        "start_date": (
+            datetime.datetime.now() + datetime.timedelta(days=8)
+        ).date(),  # 3 nights changes to 1
         "end_date": (datetime.datetime.now() + datetime.timedelta(days=9)).date(),
         "total_room_base_price": "120.0",
         "special_offer_applied": "",
@@ -179,15 +207,25 @@ def test_update_with_no_existing_invoice(client, auth, app):
     with app.app_context():
         db = get_db()
         res = db.execute("SELECT * FROM reservations WHERE id = 1").fetchone()
-        assert res["start_date"] == (datetime.datetime.now() + datetime.timedelta(days=8)).date()
-        assert res["end_date"] == (datetime.datetime.now() + datetime.timedelta(days=9)).date()
+        assert (
+            res["start_date"]
+            == (datetime.datetime.now() + datetime.timedelta(days=8)).date()
+        )
+        assert (
+            res["end_date"]
+            == (datetime.datetime.now() + datetime.timedelta(days=9)).date()
+        )
         assert res["reservation_notes"] == "Early breakfast."
         assert res["number_of_guests"] == 1
 
-        res = db.execute("SELECT * FROM join_guests_reservations WHERE reservation_id = 1").fetchone()
+        res = db.execute(
+            "SELECT * FROM join_guests_reservations WHERE reservation_id = 1"
+        ).fetchone()
         assert res["guest_id"] == 2
 
-        res = db.execute("SELECT * FROM join_rooms_reservations WHERE reservation_id = 1").fetchone()
+        res = db.execute(
+            "SELECT * FROM join_rooms_reservations WHERE reservation_id = 1"
+        ).fetchone()
         assert res["room_id"] == 2
 
         count = db.execute("SELECT COUNT(id) FROM invoices").fetchone()[0]
@@ -198,15 +236,27 @@ def test_update_with_no_existing_invoice(client, auth, app):
         ).fetchone()
         assert res is None
 
-    assert b'<span class="info-box-number text-center text-muted mb-0">1</span>' in response.data
+    assert (
+        b'<span class="info-box-number text-center text-muted mb-0">1</span>'
+        in response.data
+    )
 
 
 @pytest.mark.parametrize(
     "redirect_url, expected",
     [
-        ("/reservations/create", f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/"),
-        ("/calendar/2024/6/", f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/"),
-        ("/calendar/invalid/input", f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/"),
+        (
+            "/reservations/create",
+            f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/",
+        ),
+        (
+            "/calendar/2024/6/",
+            f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/",
+        ),
+        (
+            "/calendar/invalid/input",
+            f"/calendar/{datetime.datetime.now().year}/{datetime.datetime.now().month}/",
+        ),
     ],
 )
 def test_update_with_redirect(client, auth, app, redirect_url, expected):
@@ -315,8 +365,12 @@ def test_update_validate_collisions(client, auth, start_date, end_date):
     }
     update_data = {
         "number_of_guests": "2",
-        "start_date": (datetime.datetime.now() + datetime.timedelta(days=start_date)).date(),
-        "end_date": (datetime.datetime.now() + datetime.timedelta(days=end_date)).date(),
+        "start_date": (
+            datetime.datetime.now() + datetime.timedelta(days=start_date)
+        ).date(),
+        "end_date": (
+            datetime.datetime.now() + datetime.timedelta(days=end_date)
+        ).date(),
         "total_room_base_price": "120.0",
         "special_offer_applied": "",
         "special_offer_discount": "0",
@@ -340,11 +394,17 @@ def test_update_validate_collisions(client, auth, start_date, end_date):
         ("/reservations/1/update", 10, 10),
     ],
 )
-def test_create_validate_end_date_before_start_date(client, auth, path, start_date, end_date):
+def test_create_validate_end_date_before_start_date(
+    client, auth, path, start_date, end_date
+):
     data = {
         "number_of_guests": "2",
-        "start_date": (datetime.datetime.now() + datetime.timedelta(days=start_date)).date(),
-        "end_date": (datetime.datetime.now() + datetime.timedelta(days=end_date)).date(),
+        "start_date": (
+            datetime.datetime.now() + datetime.timedelta(days=start_date)
+        ).date(),
+        "end_date": (
+            datetime.datetime.now() + datetime.timedelta(days=end_date)
+        ).date(),
         "total_room_base_price": "120.0",
         "special_offer_applied": "",
         "special_offer_discount": "0",
@@ -355,7 +415,10 @@ def test_create_validate_end_date_before_start_date(client, auth, path, start_da
     }
     auth.login()
     response = client.post(path, data=data)
-    assert b"DATE ERROR: Check-out date cannot be before or same as check-in date." in response.data
+    assert (
+        b"DATE ERROR: Check-out date cannot be before or same as check-in date."
+        in response.data
+    )
 
 
 @pytest.mark.parametrize(
@@ -380,7 +443,10 @@ def test_create_validate_booking_in_the_past(client, auth, path, start_date, end
     }
     auth.login()
     response = client.post(path, data=data)
-    assert b"DATE ERROR: Check-in or check-out dates cannot be in the past." in response.data
+    assert (
+        b"DATE ERROR: Check-in or check-out dates cannot be in the past."
+        in response.data
+    )
 
 
 def test_delete(client, auth, app):
@@ -393,9 +459,13 @@ def test_delete(client, auth, app):
         db = get_db()
         post = db.execute("SELECT * FROM reservations WHERE id = 1").fetchone()
         assert post is None
-        post = db.execute("SELECT * FROM join_guests_reservations WHERE reservation_id = 1").fetchone()
+        post = db.execute(
+            "SELECT * FROM join_guests_reservations WHERE reservation_id = 1"
+        ).fetchone()
         assert post is None
-        post = db.execute("SELECT * FROM join_rooms_reservations WHERE reservation_id = 1").fetchone()
+        post = db.execute(
+            "SELECT * FROM join_rooms_reservations WHERE reservation_id = 1"
+        ).fetchone()
         assert post is None
 
 
@@ -416,7 +486,11 @@ def test_delete_redirect(client, auth, app, redirect, expected):
         db = get_db()
         post = db.execute("SELECT * FROM reservations WHERE id = 1").fetchone()
         assert post is None
-        post = db.execute("SELECT * FROM join_guests_reservations WHERE reservation_id = 1").fetchone()
+        post = db.execute(
+            "SELECT * FROM join_guests_reservations WHERE reservation_id = 1"
+        ).fetchone()
         assert post is None
-        post = db.execute("SELECT * FROM join_rooms_reservations WHERE reservation_id = 1").fetchone()
+        post = db.execute(
+            "SELECT * FROM join_rooms_reservations WHERE reservation_id = 1"
+        ).fetchone()
         assert post is None

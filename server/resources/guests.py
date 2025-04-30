@@ -5,12 +5,20 @@ from server.models import Guests
 
 
 class GuestResource(Resource):
-    def get(self):
+    def get(self, guest_id=None):
+        if guest_id is None:
+            query = db.session.execute(db.select(Guests)).scalars()
+            guests = [data.to_dict() for data in query.all()]
 
-        query = db.session.execute(db.select(Guests)).scalars()
-        guests = [data.to_dict() for data in query.all()]
+            return jsonify(guests)
+        else:
+            guest = (
+                db.session.execute(db.select(Guests).filter_by(id=guest_id))
+                .scalar_one()
+                .to_dict()
+            )
 
-        return jsonify(guests)
+            return jsonify(guest)
 
 
 # from datetime import datetime
