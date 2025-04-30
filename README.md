@@ -1,5 +1,7 @@
 # Hotel Reservation System
 
+Now working on [version 2.0.0](https://github.com/victoriajury/hotel_reservation_system/tree/version-2) which separates the application in to a Flask REST API backend and React frontend.
+
 Part of Open University TM470 Final IT Project
 
 Python application using Flask framework.
