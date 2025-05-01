@@ -9,10 +9,14 @@ It is a full-stack application using the Flask framework for the REST API backen
 - ### Flask REST API
 
     The Flask application now serves the reservation system data to the React frontend via a REST API instead of populating Jinga2 html templates.
+    
+    - [Flask-RESTful](https://flask-restful.readthedocs.io/en/latest/)
 
 - ### SQLAlchemy
 
     The database connection is now handled with SQLAlchemy, instead of directly with the SQLite database.
+
+    - [Flask-SQLAlchemy](https://flask-sqlalchemy.readthedocs.io/en/stable/)
 
 - ### React
 
@@ -67,27 +71,23 @@ Install packages
 pipenv install [OPTIONS] [PACKAGES]...
 ```
 
-## Steps for creating the initial Flask application
+## Steps for initialising the application
 
-### Install Flask
+### Install with pipenv
 ```
-$ pipenv install Flask
+$ pipenv install --dev
 ```
-#### Developing a hotel reservation application
-
-The application builds upon steps from tutorial https://flask.palletsprojects.com/en/3.0.x/tutorial/
-
 
 ## Run the application
 
 ### Initialise database
 ```
-$ flask --app reservation_system init-db
-$ flask --app reservation_system dummy-data
+$ flask --app server/app.py init-db
+
 ```
 ### Run backend app with debugger
 ```
-$ flask --app reservation_system run --debug
+$ flask --app server/app run --debug
 ```
 ###
 If flask runs successfully, you should be able to click the link in terminal:
