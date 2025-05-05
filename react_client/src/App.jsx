@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import './App.css'
+import Dashboard from './dashboard/Dashboard';
 
-function App() {
+export default function App() {
   const [data, setData] = useState([])
 
   useEffect(() => {
@@ -18,23 +18,24 @@ function App() {
   }, []);
 
   return (
-    <>
-      <h1>Guests</h1>
-      <div className="card">
-        {data.map((element, index) => {
-            // {console.log(element.name)}
-            return(
-            <div  key={index}>
-              <p>ID: #{element.id}<br/>
-              Name: {element.name}<br/>
-              Address: {element.address_1}, {element.address_2},{element.city}, {element.postcode}</p>
-            </div>
-            ) 
-        })}
+    <Dashboard />
+    
+    // <>
+
+    //   <h1>Guests</h1>
+    //   <div className="card">
+    //     {data.map((element, index) => {
+    //         // {console.log(element.name)}
+    //         return(
+    //         <div  key={index}>
+    //           <p>ID: #{element.id}<br/>
+    //           Name: {element.name}<br/>
+    //           Address: {element.address_1}, {element.address_2},{element.city}, {element.postcode}</p>
+    //         </div>
+    //         ) 
+    //     })}
         
-      </div>
-    </>
+    //   </div>
+    // </>
   )
 }
-
-export default App
