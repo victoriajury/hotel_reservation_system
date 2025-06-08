@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask
+from flask_cors import CORS
 from flask_restful import Api
 from server.database import db, init_db_command
 
@@ -21,6 +22,7 @@ from .resources import (
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///reservations.sqlite"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
