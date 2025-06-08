@@ -111,6 +111,22 @@ $ npm --version
 10.9.2
 ```
 
+### Install and Setup Toolpad Core
+
+``` bash
+npx create-toolpad-app@latest
+✔ Enter path of directory to bootstrap new app: react_client
+✔ Which framework would you like to use? Vite
+✔ Would you like to enable authentication? no
+```
+
+Run the following to get started:
+
+``` bash
+  cd react_client
+  npm run dev
+```
+
 ## Run the application
 
 ### Initialise database
