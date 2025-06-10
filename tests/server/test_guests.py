@@ -28,7 +28,7 @@ def test_get_single_guest(client):
         "api/guests/123",
     ),
 )
-def test_guest_record_exists(client, auth, path):
+def test_guest_record_not_found(client, auth, path):
     # test data only has 2 records, expects record 3 not found
     # auth.login()
     assert client.get(path).status_code == 404
@@ -185,6 +185,19 @@ def test_delete(client, auth, app):
         count_query = db.func.count(Guests.id)
         count = db.session.execute(count_query).scalar()
         assert count == 1
+
+
+def test_delete_not_found(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/guests/3",
+    )
+    assert res.status_code == 404
+
+    with app.app_context():
+        count_query = db.func.count(Guests.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
 
 
 # @pytest.mark.parametrize(

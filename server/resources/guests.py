@@ -42,6 +42,7 @@ class GuestResource(Resource):
     def post(self):
         try:
             fields = parser.parse_args()
+
             new_guest = Guests(
                 name=fields["name"],
                 email=fields["email"],
@@ -74,6 +75,7 @@ class GuestResource(Resource):
 
         try:
             fields = parser.parse_args()
+
             guest.name = fields["name"]
             guest.email = fields["email"]
             guest.telephone = fields["telephone"]
@@ -96,9 +98,11 @@ class GuestResource(Resource):
 
     def delete(self, guest_id):
         # TODO: Warn if there are active bookings connected to guest
-        guest = db.session.execute(
-            db.select(Guests).filter_by(id=guest_id)
-        ).scalar_one()
+        try:
+            guest = db.get_or_404(Guests, guest_id)
+        except NotFound:
+            response = make_response("Guest not found.", 404)
+            return response
 
         db.session.delete(guest)
         db.session.commit()
