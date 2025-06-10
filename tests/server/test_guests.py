@@ -34,22 +34,6 @@ def test_guest_record_not_found(client, auth, path):
     assert client.get(path).status_code == 404
 
 
-# def test_index(client, auth):
-#     response = client.get("/guests/")
-#     assert b'href="/auth/login"' in response.data
-#     assert b"Alice Johnson" not in response.data
-#     assert b"Edit" not in response.data
-#     assert response.headers["Location"] == "/auth/login"
-
-#     auth.login()
-#     response = client.get("/guests/")
-#     assert b"Log out" in response.data
-#     assert b"Alice Johnson" in response.data
-#     assert b"alice.johnson@example.com" in response.data
-#     assert b"2024-05-30 12:59 by test" in response.data
-#     assert b'href="/guests/1/update"' in response.data
-
-
 # @pytest.mark.parametrize(
 #     "path",
 #     (
