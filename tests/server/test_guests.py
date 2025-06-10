@@ -1,3 +1,8 @@
+import pytest
+from server.database import db
+from server.models import Guests
+
+
 def test_get_all_guests(client):
     response = client.get("api/guests")
     assert response.status_code == 200
@@ -14,6 +19,19 @@ def test_get_single_guest(client):
     data = response.get_json()
     assert isinstance(data, dict)
     assert data["name"] == "Alice Johnson"
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "api/guests/3",
+        "api/guests/123",
+    ),
+)
+def test_guest_record_exists(client, auth, path):
+    # test data only has 2 records, expects record 3 not found
+    # auth.login()
+    assert client.get(path).status_code == 404
 
 
 # def test_index(client, auth):
@@ -45,40 +63,128 @@ def test_get_single_guest(client):
 #     assert response.headers["Location"] == "/auth/login"
 
 
-# @pytest.mark.parametrize(
-#     "path",
-#     (
-#         "/guests/3/update",
-#         "/guests/3/delete",
-#     ),
-# )
-# def test_record_exists(client, auth, path):
-#     # test data only has 2 records, expects record 3 not found
-#     auth.login()
-#     assert client.post(path).status_code == 404
+def test_create_guest(client, auth, app):
+    data = {
+        "name": "Any Name",
+        "email": "anyemail@example.com",
+        "telephone": "+44 123456789",
+        "address_1": "123 Any Street",
+        "address_2": "Anywhere",
+        "city": "Anytown",
+        "county": "Someshire",
+        "postcode": "AB12 3CD",
+        "guest_notes": "",
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/guests").status_code == 200
+    res = client.post("api/guests", json=data)
+    assert res.status_code == 201
+
+    with app.app_context():
+        count_query = db.func.count(Guests.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 3
 
 
-# def test_create(client, auth, app):
-#     data = {
-#         "name": "Any Name",
-#         "email": "anyemail@example.com",
-#         "telephone": "+44 123456789",
-#         "address_1": "123 Any Street",
-#         "address_2": "Anywhere",
-#         "city": "Anytown",
-#         "county": "Someshire",
-#         "postcode": "AB12 3CD",
-#         "guest_notes": "",
-#     }
+def test_create_guest_missing_fields(client, auth, app):
+    data = {
+        "email": "anyemail@example.com",
+        "telephone": "+44 123456789",
+        "address_1": "123 Any Street",
+        "address_2": "Anywhere",
+        "city": "Anytown",
+        "county": "Someshire",
+        "postcode": "AB12 3CD",
+        "guest_notes": "",
+        "modified_by_id": 1,
+    }
 
-#     auth.login()
-#     assert client.get("/guests/create").status_code == 200
-#     client.post("/guests/create", data=data)
+    # auth.login()
+    assert client.get("api/guests").status_code == 200
+    res = client.post("api/guests", json=data)
+    assert res.status_code == 400
+    assert "Missing required parameter" in res.json["message"]["name"]
 
-#     with app.app_context():
-#         db = get_db()
-#         count = db.execute("SELECT COUNT(id) FROM guests").fetchone()[0]
-#         assert count == 3
+    with app.app_context():
+        count_query = db.func.count(Guests.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
+
+
+def test_update_guest(client, auth, app):
+    data = {
+        "name": "Any Name",
+        "email": "anyemail@example.com",
+        "telephone": "+44 123456789",
+        "address_1": "123 Any Street",
+        "address_2": "Anywhere",
+        "city": "Anytown",
+        "county": "Someshire",
+        "postcode": "AB12 3CD",
+        "guest_notes": "Some notes",
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/guests").status_code == 200
+    res = client.put("api/guests/1", json=data)
+    assert res.status_code == 204
+
+
+def test_update_guest_missing_fields(client, auth, app):
+    data = {
+        # "name" missing
+        "email": "anyemail@example.com",
+        "telephone": "+44 123456789",
+        "address_1": "123 Any Street",
+        "address_2": "Anywhere",
+        "city": "Anytown",
+        "county": "Someshire",
+        "postcode": "AB12 3CD",
+        "guest_notes": "Some notes",
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/guests/1").status_code == 200
+    res = client.put("api/guests/1", json=data)
+    assert res.status_code == 400
+    assert "Missing required parameter" in res.json["message"]["name"]
+
+
+def test_update_guest_not_found(client, auth, app):
+    data = {
+        "name": "Any Name",
+        "email": "anyemail@example.com",
+        "telephone": "+44 123456789",
+        "address_1": "123 Any Street",
+        "address_2": "Anywhere",
+        "city": "Anytown",
+        "county": "Someshire",
+        "postcode": "AB12 3CD",
+        "guest_notes": "Some notes",
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/guests").status_code == 200
+    res = client.put("api/guests/3", json=data)
+    assert res.status_code == 404
+
+
+def test_delete(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/guests/1",
+    )
+    assert res.status_code == 204
+
+    with app.app_context():
+        count_query = db.func.count(Guests.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 1
 
 
 # @pytest.mark.parametrize(
@@ -202,14 +308,3 @@ def test_get_single_guest(client):
 #     response = client.post(path, data=data)
 #     assert b"Name is required." in response.data
 #     assert b"City is required." in response.data
-
-
-# def test_delete(client, auth, app):
-#     auth.login()
-#     response = client.post("/guests/1/delete")
-#     assert response.headers["Location"] == "/guests/"
-
-#     with app.app_context():
-#         db = get_db()
-#         post = db.execute("SELECT * FROM guests WHERE id = 1").fetchone()
-#         assert post is None

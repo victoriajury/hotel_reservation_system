@@ -2,6 +2,7 @@ from flask import jsonify, make_response
 from flask_restful import HTTPException, Resource, reqparse
 from server.database import db
 from server.models import Guests
+from werkzeug.exceptions import NotFound
 
 parser = reqparse.RequestParser()
 required_fields = [
@@ -25,23 +26,22 @@ parser.add_argument("guest_notes")
 class GuestResource(Resource):
     def get(self, guest_id=None):
         if guest_id is None:
+            # Return all guests
             query = db.session.execute(db.select(Guests)).scalars()
             guests = [data.to_dict() for data in query.all()]
-
             return jsonify(guests)
-        else:
-            guest = (
-                db.session.execute(db.select(Guests).filter_by(id=guest_id))
-                .scalar_one()
-                .to_dict()
-            )
 
-            return jsonify(guest)
+        else:
+            try:
+                guest = db.get_or_404(Guests, guest_id).to_dict()
+                return jsonify(guest)
+            except NotFound:
+                response = make_response("Guest not found.", 404)
+                return response
 
     def post(self):
-        fields = parser.parse_args()
-
         try:
+            fields = parser.parse_args()
             new_guest = Guests(
                 name=fields["name"],
                 email=fields["email"],
@@ -61,17 +61,19 @@ class GuestResource(Resource):
             response = make_response(new_guest.to_dict(), 201)
 
         except HTTPException as e:
-            response = make_response(e.get_description(), e.code)
+            response = make_response(e.data, e.code)
 
         return response
 
     def put(self, guest_id):
-        fields = parser.parse_args()
-        guest = db.session.execute(
-            db.select(Guests).filter_by(id=guest_id)
-        ).scalar_one()
+        try:
+            guest = db.get_or_404(Guests, guest_id)
+        except NotFound:
+            response = make_response("Guest not found.", 404)
+            return response
 
         try:
+            fields = parser.parse_args()
             guest.name = fields["name"]
             guest.email = fields["email"]
             guest.telephone = fields["telephone"]
@@ -88,7 +90,7 @@ class GuestResource(Resource):
             response = make_response(guest.to_dict(), 204)
 
         except HTTPException as e:
-            response = make_response(e.get_description(), e.code)
+            response = make_response(e.data, e.code)
 
         return response
 
