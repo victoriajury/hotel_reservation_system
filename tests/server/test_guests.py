@@ -90,6 +90,7 @@ def test_create_guest(client, auth, app):
 
 def test_create_guest_missing_fields(client, auth, app):
     data = {
+        # "name" missing
         "email": "anyemail@example.com",
         "telephone": "+44 123456789",
         "address_1": "123 Any Street",
@@ -174,7 +175,7 @@ def test_update_guest_not_found(client, auth, app):
     assert res.status_code == 404
 
 
-def test_delete(client, auth, app):
+def test_delete_guest(client, auth, app):
     # auth.login()
     res = client.delete(
         "api/guests/1",
@@ -187,7 +188,7 @@ def test_delete(client, auth, app):
         assert count == 1
 
 
-def test_delete_not_found(client, auth, app):
+def test_delete_guest_not_found(client, auth, app):
     # auth.login()
     res = client.delete(
         "api/guests/3",

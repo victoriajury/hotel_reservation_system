@@ -109,6 +109,11 @@ def create_app(test_config=None):
     )
     api.add_resource(
         invoice_items.InvoiceItemResource,
+        "/api/invoice-items",
+        endpoint="create_invoice_item",
+    )
+    api.add_resource(
+        invoice_items.InvoiceItemResource,
         "/api/invoice-items/<int:invoice_item_id>",
         endpoint="invoice_item",
     )
