@@ -1,3 +1,7 @@
+import pytest
+from server.database import db
+from server.models import Rooms
+
 def test_get_all_rooms(client):
     response = client.get("api/rooms")
     assert response.status_code == 200
@@ -16,106 +20,136 @@ def test_get_single_room(client):
     assert data["room_number"] == 1
 
 
-# def test_index(client, auth):
-#     response = client.get("/rooms/")
-#     assert b'href="/auth/login"' in response.data
-#     assert b"Room Type" not in response.data
-#     assert b"Edit" not in response.data
-#     assert response.headers["Location"] == "/auth/login"
-
-#     auth.login()
-#     response = client.get("/rooms/")
-#     assert b"Log out" in response.data
-#     assert b"Room Type" in response.data
-#     assert b"101" in response.data
-#     assert b"Superior Double" in response.data
-#     assert b'href="/rooms/1/update"' in response.data
+@pytest.mark.parametrize(
+    "path",
+    (
+        "api/rooms/3",
+        "api/rooms/123",
+    ),
+)
+def test_room_record_not_found(client, auth, path):
+    # test data only has 2 records, expects record 3 not found
+    # auth.login()
+    assert client.get(path).status_code == 404
 
 
-# @pytest.mark.parametrize(
-#     "path",
-#     (
-#         "/rooms/create",
-#         "/rooms/1/update",
-#         "/rooms/1/delete",
-#     ),
-# )
-# def test_login_required(client, path):
-#     response = client.post(path)
-#     assert response.headers["Location"] == "/auth/login"
+def test_create_room(client, auth, app):
+    data = {
+        "room_number": 101,
+        "room_type": 1,
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/rooms").status_code == 200
+    res = client.post("api/rooms", json=data)
+    assert res.status_code == 201
+
+    with app.app_context():
+        count_query = db.func.count(Rooms.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 3
 
 
-# @pytest.mark.parametrize(
-#     "path",
-#     (
-#         "/rooms/3/update",
-#         "/rooms/3/delete",
-#     ),
-# )
-# def test_record_exists(client, auth, path):
-#     # test data only has 2 records, expects record 3 not found
-#     auth.login()
-#     assert client.post(path).status_code == 404
+def test_create_room_missing_fields(client, auth, app):
+    data = {
+        # "room_number" missing
+        "room_type": 1,
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/rooms").status_code == 200
+    res = client.post("api/rooms", json=data)
+    assert res.status_code == 400
+    assert "Missing required parameter" in res.json["message"]["room_number"]
+
+    with app.app_context():
+        count_query = db.func.count(Rooms.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
 
 
-# def test_create(client, auth, app):
-#     data = {
-#         "room_number": "102",
-#         "room_type": "1",
-#     }
+def test_create_room_valid_field_type(client, auth, app):
+    data = {
+        "room_number": "Not a number",
+        "room_type": 1,
+        "modified_by_id": 1,
+    }
 
-#     auth.login()
-#     assert client.get("/rooms/create").status_code == 200
-#     client.post("/rooms/create", data=data)
+    # auth.login()
+    assert client.get("api/rooms").status_code == 200
+    res = client.post("api/rooms", json=data)
+    assert res.status_code == 400
+    assert "invalid literal for int()" in res.json["message"]["room_number"]
 
-#     with app.app_context():
-#         db = get_db()
-#         count = db.execute("SELECT COUNT(id) FROM rooms").fetchone()[0]
-#         assert count == 3
-
-
-# def test_update(client, auth, app):
-#     data = {
-#         "room_number": "102",
-#         "room_type": "3",
-#     }
-
-#     auth.login()
-#     assert client.get("/rooms/1/update").status_code == 200
-#     res = client.post("/rooms/1/update", data=data)
-#     assert res.status_code == 302
-
-#     with app.app_context():
-#         db = get_db()
-#         res = db.execute("SELECT * FROM rooms WHERE id = 1").fetchone()
-#         assert res["room_number"] == 102
-#         assert res["room_type"] == 3
+    with app.app_context():
+        count_query = db.func.count(Rooms.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
 
 
-# @pytest.mark.parametrize(
-#     "path",
-#     (
-#         "/rooms/create",
-#         "/rooms/1/update",
-#     ),
-# )
-# def test_create_update_validate(client, auth, path):
-#     data = {
-#         "room_number": "",
-#         "room_type": "",
-#     }
-#     auth.login()
-#     response = client.post(path, data=data)
-#     assert b"Room Number is required." in response.data
-#     assert b"Room Type is required." in response.data
+def test_update_room(client, auth, app):
+    data = {
+        "room_number": 101,
+        "room_type": 1,
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/rooms").status_code == 200
+    res = client.put("api/rooms/1", json=data)
+    assert res.status_code == 204
 
 
-# def test_delete(client, auth, app):
-#     auth.login()
-#     response = client.post("/rooms/1/delete")
-#     assert response.headers["Location"] == "/rooms/"
+def test_update_room_missing_fields(client, auth, app):
+    data = {
+        # "room_number" missing
+        "room_type": 1,
+        "modified_by_id": 1,
+    }
 
-#     with app.app_context():
-#         db = get_db()
-#         post = db.execute("SELECT * FROM rooms WHERE id = 1").fetchone()
-#         assert post is None
+    # auth.login()
+    assert client.get("api/rooms/1").status_code == 200
+    res = client.put("api/rooms/1", json=data)
+    assert res.status_code == 400
+    assert "Missing required parameter" in res.json["message"]["room_number"]
+
+
+def test_update_room_not_found(client, auth, app):
+    data = {
+        "room_number": 101,
+        "room_type": 1,
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/rooms").status_code == 200
+    res = client.put("api/rooms/3", json=data)
+    assert res.status_code == 404
+
+
+def test_delete_room(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/rooms/1",
+    )
+    assert res.status_code == 204
+
+    with app.app_context():
+        count_query = db.func.count(Rooms.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 1
+
+
+def test_delete_room_not_found(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/rooms/3",
+    )
+    assert res.status_code == 404
+
+    with app.app_context():
+        count_query = db.func.count(Rooms.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
