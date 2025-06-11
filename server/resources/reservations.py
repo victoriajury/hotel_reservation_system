@@ -1,24 +1,123 @@
-from flask import jsonify
-from flask_restful import Resource
+from datetime import datetime
+
+from flask import jsonify, make_response
+from flask_restful import HTTPException, Resource, reqparse
 from server.database import db
 from server.models import Reservations
+from werkzeug.exceptions import NotFound
+
+date_format = "%a, %d %b %Y %H:%M:%S %Z"
+
+parser = reqparse.RequestParser()
+required_fields = [
+    "number_of_guests",
+    "start_date",
+    "end_date",
+    "total_room_base_price",
+    "special_offer_discount",
+    "status_id",
+    "modified_by_id",
+]
+for arg in required_fields:
+    if "date" in arg:
+        # forcing date type might cause issues?
+        parser.add_argument(
+            arg, type=lambda x: datetime.strptime(x, date_format), required=True
+        )
+    parser.add_argument(arg, required=True)
+
+# optional fields
+parser.add_argument("special_offer_applied")
+parser.add_argument("reservation_notes")
 
 
 class ReservationResource(Resource):
     def get(self, reservation_id=None):
         if reservation_id is None:
+            # Return all reservations
             query = db.session.execute(db.select(Reservations)).scalars()
             reservations = [data.to_dict() for data in query.all()]
 
             return jsonify(reservations)
+
         else:
-            reservation = (
-                db.session.execute(db.select(Reservations).filter_by(id=reservation_id))
-                .scalar_one()
-                .to_dict()
+            try:
+                reservation = db.get_or_404(Reservations, reservation_id).to_dict()
+                return jsonify(reservation)
+            except NotFound:
+                response = make_response("Reservation not found.", 404)
+                return response
+
+    def post(self):
+        try:
+            fields = parser.parse_args()
+
+            new_reservation = Reservations(
+                number_of_guests=fields["number_of_guests"],
+                start_date=datetime.strptime(fields["start_date"], date_format),
+                end_date=datetime.strptime(fields["end_date"], date_format),
+                total_room_base_price=fields["total_room_base_price"],
+                special_offer_applied=fields["special_offer_applied"],
+                special_offer_discount=fields["special_offer_discount"],
+                reservation_notes=fields["reservation_notes"],
+                status_id=fields["status_id"],
+                modified_by_id=fields["modified_by_id"],
             )
 
-            return jsonify(reservation)
+            db.session.add(new_reservation)
+            db.session.commit()
+
+            response = make_response(new_reservation.to_dict(), 201)
+
+        except HTTPException as e:
+            response = make_response(e.data, e.code)
+
+        return response
+
+    def put(self, reservation_id):
+        try:
+            reservation = db.get_or_404(Reservations, reservation_id)
+        except NotFound:
+            response = make_response("Reservation not found.", 404)
+            return response
+
+        try:
+            fields = parser.parse_args()
+
+            reservation.number_of_guests = fields["number_of_guests"]
+            reservation.start_date = datetime.strptime(
+                fields["start_date"], date_format
+            )
+            reservation.end_date = datetime.strptime(fields["end_date"], date_format)
+            reservation.total_room_base_price = fields["total_room_base_price"]
+            reservation.special_offer_applied = fields.get("special_offer_applied")
+            reservation.special_offer_discount = fields["special_offer_discount"]
+            reservation.reservation_notes = fields.get("reservation_notes")
+            reservation.status_id = fields["status_id"]
+            reservation.modified_by_id = fields["modified_by_id"]
+
+            db.session.commit()
+
+            response = make_response(reservation.to_dict(), 204)
+
+        except HTTPException as e:
+            response = make_response(e.data, e.code)
+
+        return response
+
+    def delete(self, reservation_id):
+        try:
+            reservation = db.get_or_404(Reservations, reservation_id)
+        except NotFound:
+            response = make_response("Reservation not found.", 404)
+            return response
+
+        db.session.delete(reservation)
+        db.session.commit()
+
+        response = make_response("Reservation deleted", 204)
+
+        return response
 
 
 # from datetime import datetime
