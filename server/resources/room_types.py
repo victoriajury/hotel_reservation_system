@@ -1,7 +1,29 @@
-from flask import jsonify
-from flask_restful import Resource
+import os
+
+from flask import current_app, jsonify, make_response, request
+from flask_restful import HTTPException, Resource
 from server.database import db
+from server.helpers import room_image_location
 from server.models import RoomTypes
+from werkzeug.exceptions import NotFound
+from werkzeug.utils import secure_filename
+
+# RequestParser doesn't work for multipart/form-data with images as it expects a json object.
+required_fields = [
+    "type_name",
+    "base_price_per_night",
+    "amenities",
+    "max_occupants",
+    "modified_by_id",
+]
+
+type_casts = {
+    "base_price_per_night": float,
+    "max_occupants": int,
+    "modified_by_id": int,
+}
+
+ALLOWED_EXTENSIONS = {"jpg", "jpeg"}
 
 
 class RoomTypeResource(Resource):
@@ -12,190 +34,158 @@ class RoomTypeResource(Resource):
 
             return jsonify(room_types)
         else:
-            room_type = (
-                db.session.execute(db.select(RoomTypes).filter_by(id=room_type_id))
-                .scalar_one()
-                .to_dict()
+            try:
+                room_type = db.get_or_404(RoomTypes, room_type_id).to_dict()
+                return jsonify(room_type)
+            except NotFound:
+                response = make_response("Room Type not found.", 404)
+                return response
+
+    def post(self):
+        try:
+            fields = parse_form(
+                required_fields=required_fields,
+                required_files=["photo"],
+                type_casts=type_casts,
             )
 
-            return jsonify(room_type)
+            photo = fields.get("photo")
+
+            filename = secure_filename(photo.filename)
+            filepath = os.path.join(
+                current_app.static_folder, room_image_location(), filename
+            )
+            photo.save(filepath)
+
+            new_room_type = RoomTypes(
+                type_name=fields["type_name"],
+                base_price_per_night=fields["base_price_per_night"],
+                amenities=fields["amenities"],
+                photo=filename,
+                max_occupants=fields["max_occupants"],
+                modified_by_id=fields["modified_by_id"],
+            )
+
+            db.session.add(new_room_type)
+            db.session.commit()
+
+            response = make_response(new_room_type.to_dict(), 201)
+
+        except HTTPException as e:
+            response = make_response(e.description, e.response)
+
+        return response
+
+    def put(self, room_type_id):
+        try:
+            room_type = db.get_or_404(RoomTypes, room_type_id)
+        except NotFound:
+            response = make_response("Room Type not found.", 404)
+            return response
+
+        try:
+            fields = parse_form(
+                required_fields=required_fields,
+                required_files=["photo"],
+                type_casts=type_casts,
+            )
+
+            photo = fields.get("photo")
+
+            filename = secure_filename(photo.filename)
+            filepath = os.path.join(
+                current_app.static_folder, room_image_location(), filename
+            )
+            photo.save(filepath)
+
+            room_type.type_name = fields["type_name"]
+            room_type.base_price_per_night = fields["base_price_per_night"]
+            room_type.amenities = fields["amenities"]
+            room_type.photo = filename
+            room_type.max_occupants = fields["max_occupants"]
+            room_type.modified_by_id = fields["modified_by_id"]
+
+            db.session.commit()
+
+            response = make_response(room_type.to_dict(), 204)
+
+        except HTTPException as e:
+            response = make_response(e.description, e.response)
+
+        return response
+
+    def delete(self, room_type_id):
+        try:
+            room_type = db.get_or_404(RoomTypes, room_type_id)
+        except NotFound:
+            response = make_response("Room Type not found.", 404)
+            return response
+
+        db.session.delete(room_type)
+        db.session.commit()
+
+        response = make_response("Room Type deleted", 204)
+
+        return response
 
 
-# import os
-# from datetime import datetime
-
-# from flask import Blueprint, flash, g, redirect, render_template, request, url_for
-# from server.auth import login_required
-# from server.db import get_db
-# from server.db_queries import (
-#     delete_by_id,
-#     format_sql_query_columns,
-#     format_sql_update_columns,
-#     get_all_rows,
-#     get_row_by_id,
-#     sql_insert_placeholders,
-# )
-# from server.helpers import format_required_field_error, room_image_location
-# from werkzeug.utils import secure_filename
-
-# bp = Blueprint("room_types", __name__, url_prefix="/room_types", static_folder="static")
-# table = "room_types"
-# ALLOWED_EXTENSIONS = {"jpg", "jpeg"}
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# def allowed_file(filename):
-#     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+def parse_form(required_fields=None, required_files=None, type_casts=None):
+    """
+    Parses multipart/form-data and validates required fields/files.
 
+    Args:
+        required_fields (list): Form fields that must be present.
+        required_files (list): File fields that must be present.
+        type_casts (dict): Optional type conversion, e.g. {'price': float}.
 
-# def upload_file(files):
-#     if "photo" not in files:
-#         # check if the post request has the image file part
-#         flash("No photo part found.")
-#         return False
+    Returns:
+        dict: Combined data with validated form fields and file objects.
 
-#     # upload image file
-#     file = files["photo"]
-#     # If the user does not select a file, the browser submits an
-#     # empty file without a filename.
+    Raises:
+        HTTPException: If a required field or file is missing or invalid.
+    """
+    data = {}
 
-#     if file.filename == "":
-#         flash("No selected photo.")
-#         return False
-#     if not allowed_file(file.filename):
-#         flash("Not a valid file type.")
-#         return False
+    required_fields = required_fields or []
+    required_files = required_files or []
+    type_casts = type_casts or {}
 
-#     file.seek(0, os.SEEK_END)
-#     if file.tell() > 0:
-#         filename = secure_filename(file.filename)
-#         file.save(os.path.join(bp.static_folder, room_image_location(), filename))
-#         return filename
-#     flash("Invalid file")
-#     return False
+    # Validate and extract form fields
+    for field in required_fields:
+        value = request.form.get(field)
+        if value is None:
+            raise HTTPException(
+                description=f"Missing required parameter: {field}", response=400
+            )
 
+        # Optional type casting
+        if field in type_casts:
+            try:
+                value = type_casts[field](value)
+            except (ValueError, TypeError):
+                raise HTTPException(
+                    description=f"Invalid value for field: {field} (expected {type_casts[field].__name__}",
+                    response=400,
+                )
 
-# def get_table_fields():
-#     return [
-#         "type_name",
-#         "base_price_per_night",
-#         "amenities",
-#         "max_occupants",
-#     ]
+        data[field] = value
 
+    # Validate and extract file uploads
+    for file_field in required_files:
+        file = request.files.get(file_field)
+        if not file or file.filename == "":
+            raise HTTPException(
+                description=f"Missing required file: {file_field}", response=400
+            )
+        if not allowed_file(file.filename):
+            raise HTTPException(
+                description=f"Not a valid file extension type: {file.filename}",
+                response=400,
+            )
+        data[file_field] = file
 
-# def get_required_fields():
-#     return [
-#         "type_name",
-#         "base_price_per_night",
-#         "amenities",
-#         "max_occupants",
-#     ]
-
-
-# @bp.route("/")
-# @login_required
-# def index():
-#     fields = format_sql_query_columns(
-#         get_table_fields() + ["photo", "modified", "modified_by_id", "username"]
-#     )
-#     join = f" JOIN users u ON {table}.modified_by_id = u.id"
-
-#     room_types = get_all_rows(table, fields, join, order_by="base_price_per_night DESC")
-
-#     return render_template(
-#         "room_types/index.html",
-#         room_types=room_types,
-#         image_location=room_image_location(),
-#     )
-
-
-# @bp.route("/create", methods=("GET", "POST"))
-# @login_required
-# def create():
-#     if request.method == "POST":
-#         filename = upload_file(request.files)
-#         if filename:
-#             data = [request.form[f] for f in get_table_fields()] + [
-#                 filename,
-#                 g.user["id"],
-#             ]
-#             columns = format_sql_query_columns(
-#                 get_table_fields() + ["photo", "modified_by_id"]
-#             )
-#             placeholders = sql_insert_placeholders(len(data))
-
-#             # handle required field errors
-#             error_fields = []
-#             for required in get_required_fields():
-#                 if not request.form[required]:
-#                     error_fields.append(required)
-
-#             if error_fields:
-#                 flash(format_required_field_error(error_fields))
-#             else:
-#                 db = get_db()
-#                 db.execute(
-#                     f"INSERT INTO {table} ({columns}) VALUES ({placeholders})",
-#                     data,
-#                 )
-#                 db.commit()
-#                 return redirect(url_for("room_types.index"))
-
-#     return render_template("room_types/create.html")
-
-
-# @bp.route("/<int:id>/update", methods=("GET", "POST"))
-# @login_required
-# def update(id):
-#     room_type = get_row_by_id(
-#         id,
-#         table,
-#         format_sql_query_columns(
-#             get_table_fields() + ["photo", "modified_by_id", "username"]
-#         ),
-#         f" JOIN users u ON {table}.modified_by_id = u.id",
-#     )
-
-#     if request.method == "POST":
-#         filename = upload_file(request.files)
-#         if filename:
-#             modified = datetime.now()
-#             data = [request.form[f] for f in get_table_fields()] + [
-#                 filename,
-#                 modified,
-#                 g.user["id"],
-#                 id,
-#             ]
-#             columns = format_sql_update_columns(
-#                 get_table_fields() + ["photo", "modified", "modified_by_id"]
-#             )
-
-#             # handle required field errors
-#             error_fields = []
-#             for required in get_required_fields():
-#                 if not request.form[required]:
-#                     error_fields.append(required)
-
-#             if error_fields:
-#                 flash(format_required_field_error(error_fields))
-#             else:
-#                 db = get_db()
-#                 db.execute(
-#                     f"UPDATE {table} SET {columns} WHERE id = ?",
-#                     data,
-#                 )
-#                 db.commit()
-#                 return redirect(url_for("room_types.index"))
-
-#     return render_template(
-#         "room_types/update.html",
-#         room_type=room_type,
-#         image_location=room_image_location(),
-#     )
-
-
-# @bp.route("/<int:id>/delete", methods=("POST",))
-# @login_required
-# def delete(id):
-#     delete_by_id(id, table)
-#     return redirect(url_for("room_types.index"))
+    return data
