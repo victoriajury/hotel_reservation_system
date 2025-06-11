@@ -1,7 +1,32 @@
-from flask import jsonify
-from flask_restful import Resource
+from datetime import datetime
+
+from flask import jsonify, make_response
+from flask_restful import HTTPException, Resource, reqparse
 from server.database import db
 from server.models import SpecialOffers
+from werkzeug.exceptions import NotFound
+
+date_format = "%Y-%m-%d"
+
+parser = reqparse.RequestParser()
+required_fields = [
+    "title",
+    "room_type",
+    "price_per_night",
+    "start_date",
+    "end_date",
+    "is_enabled",
+    "modified_by_id",
+]
+for arg in required_fields:
+    if "date" in arg:
+        # forcing date type might cause issues?
+        parser.add_argument(
+            arg, type=lambda x: datetime.strptime(x, date_format), required=True
+        )
+    if "is_enabled" in arg:
+        parser.add_argument(arg, type=bool, required=True)
+    parser.add_argument(arg, required=True)
 
 
 class SpecialOfferResource(Resource):
@@ -11,161 +36,77 @@ class SpecialOfferResource(Resource):
             offers = [data.to_dict() for data in query.all()]
 
             return jsonify(offers)
+
         else:
-            offer = (
-                db.session.execute(db.select(SpecialOffers).filter_by(id=offer_id))
-                .scalar_one()
-                .to_dict()
+            try:
+                offer = db.get_or_404(SpecialOffers, offer_id).to_dict()
+                return jsonify(offer)
+            except NotFound:
+                response = make_response("Special Offer not found.", 404)
+                return response
+
+    def post(self):
+        try:
+            fields = parser.parse_args()
+
+            new_offer = SpecialOffers(
+                title=fields["title"],
+                room_type=fields["room_type"],
+                price_per_night=fields["price_per_night"],
+                start_date=datetime.strptime(fields["start_date"], date_format),
+                end_date=datetime.strptime(fields["end_date"], date_format),
+                is_enabled=bool(fields["is_enabled"]),
+                modified_by_id=fields["modified_by_id"],
             )
 
-            return jsonify(offer)
+            db.session.add(new_offer)
+            db.session.commit()
 
+            response = make_response(new_offer.to_dict(), 201)
 
-#  from datetime import datetime
+        except HTTPException as e:
+            response = make_response(e.data, e.code)
 
-# from flask import Blueprint, flash, g, redirect, render_template, request, url_for
-# from server.auth import login_required
-# from server.db import get_db
-# from server.db_queries import (
-#     delete_by_id,
-#     format_sql_query_columns,
-#     format_sql_update_columns,
-#     get_all_rows,
-#     get_row_by_id,
-#     sql_insert_placeholders,
-# )
-# from server.helpers import format_required_field_error
+        return response
 
-# bp = Blueprint("special_offers", __name__, url_prefix="/special_offers")
-# table = "special_offers"
+    def put(self, offer_id):
+        try:
+            offer = db.get_or_404(SpecialOffers, offer_id)
+        except NotFound:
+            response = make_response("Special Offer not found.", 404)
+            return response
 
+        try:
+            fields = parser.parse_args()
 
-# def get_table_fields():
-#     return [
-#         "title",
-#         "room_type",
-#         "price_per_night",
-#         "start_date",
-#         "end_date",
-#         "is_enabled",
-#     ]
+            offer.title = fields["title"]
+            offer.room_type = fields["room_type"]
+            offer.price_per_night = fields["price_per_night"]
+            offer.start_date = datetime.strptime(fields["start_date"], date_format)
+            offer.end_date = datetime.strptime(fields["end_date"], date_format)
+            offer.is_enabled = bool(fields["is_enabled"])
+            offer.modified_by_id = fields["modified_by_id"]
 
+            db.session.commit()
 
-# def get_required_fields():
-#     return [
-#         "title",
-#         "room_type",
-#         "price_per_night",
-#         "start_date",
-#         "end_date",
-#     ]
+            response = make_response(offer.to_dict(), 204)
 
+        except HTTPException as e:
+            response = make_response(e.data, e.code)
 
-# @bp.route("/")
-# @login_required
-# def index():
-#     fields = format_sql_query_columns(
-#         get_table_fields()
-#         + ["type_name", f"{table}.modified", f"{table}.modified_by_id", "username"]
-#     )
-#     join = f"""
-#     JOIN users u ON {table}.modified_by_id = u.id
-#     JOIN room_types rt ON {table}.room_type = rt.id
-#     """
+        return response
 
-#     special_offers = get_all_rows(table, fields, join, order_by="start_date")
+    def delete(self, offer_id):
+        # TODO: Warn if there are active bookings connected to offer
+        try:
+            offer = db.get_or_404(SpecialOffers, offer_id)
+        except NotFound:
+            response = make_response("Special Offer not found.", 404)
+            return response
 
-#     return render_template("special_offers/index.html", special_offers=special_offers)
+        db.session.delete(offer)
+        db.session.commit()
 
+        response = make_response("Special Offer deleted", 204)
 
-# def get_other_table_rows():
-#     type_names = get_all_rows("room_types", "id, type_name, base_price_per_night")
-
-#     return type_names
-
-
-# @bp.route("/create", methods=("GET", "POST"))
-# @login_required
-# def create():
-#     room_types = get_other_table_rows()
-
-#     if request.method == "POST":
-#         is_enabled = 1 if request.form.get("is_enabled") else 0
-#         data = [request.form[f] for f in get_table_fields() if f != "is_enabled"] + [
-#             is_enabled,
-#             g.user["id"],
-#         ]
-#         columns = format_sql_query_columns(get_table_fields() + ["modified_by_id"])
-#         placeholders = sql_insert_placeholders(len(data))
-
-#         # handle required field errors
-#         error_fields = []
-#         for required in get_required_fields():
-#             if not request.form[required]:
-#                 error_fields.append(required)
-
-#         if error_fields:
-#             flash(format_required_field_error(error_fields))
-#         else:
-#             db = get_db()
-#             db.execute(
-#                 f"INSERT INTO {table} ({columns}) VALUES ({placeholders})",
-#                 data,
-#             )
-#             db.commit()
-#             return redirect(url_for("special_offers.index"))
-
-#     return render_template("special_offers/create.html", room_types=room_types)
-
-
-# @bp.route("/<int:id>/update", methods=("GET", "POST"))
-# @login_required
-# def update(id):
-#     special_offer = get_row_by_id(
-#         id,
-#         table,
-#         format_sql_query_columns(get_table_fields() + ["modified_by_id", "username"]),
-#         f" JOIN users u ON {table}.modified_by_id = u.id",
-#     )
-#     room_types = get_other_table_rows()
-
-#     if request.method == "POST":
-#         modified = datetime.now()
-#         is_enabled = 1 if request.form.get("is_enabled") else 0
-#         data = [request.form[f] for f in get_table_fields() if f != "is_enabled"] + [
-#             is_enabled,
-#             modified,
-#             g.user["id"],
-#             id,
-#         ]
-#         columns = format_sql_update_columns(
-#             get_table_fields() + ["modified", "modified_by_id"]
-#         )
-
-#         # handle required field errors
-#         error_fields = []
-#         for required in get_required_fields():
-#             if not request.form[required]:
-#                 error_fields.append(required)
-
-#         if error_fields:
-#             flash(format_required_field_error(error_fields))
-#         else:
-#             db = get_db()
-#             db.execute(
-#                 f"UPDATE {table} SET {columns} WHERE id = ?",
-#                 data,
-#             )
-#             db.commit()
-#             return redirect(url_for("special_offers.index"))
-
-#     return render_template(
-#         "special_offers/update.html", special_offer=special_offer, room_types=room_types
-#     )
-
-
-# @bp.route("/<int:id>/delete", methods=("POST",))
-# @login_required
-# def delete(id):
-#     delete_by_id(id, table)
-#     return redirect(url_for("special_offers.index"))
+        return response
