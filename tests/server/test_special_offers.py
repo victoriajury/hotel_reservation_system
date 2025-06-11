@@ -1,7 +1,7 @@
 import pytest
 from server.database import db
 from server.models import SpecialOffers
-import datetime
+
 
 def test_get_all_special_offers(client):
     response = client.get("api/special-offers")
