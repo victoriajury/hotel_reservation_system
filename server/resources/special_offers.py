@@ -19,14 +19,15 @@ required_fields = [
     "modified_by_id",
 ]
 for arg in required_fields:
-    if "date" in arg:
+    if arg in ["start_date", "end_date"]:
         # forcing date type might cause issues?
         parser.add_argument(
             arg, type=lambda x: datetime.strptime(x, date_format), required=True
         )
-    if "is_enabled" in arg:
+    elif arg == "is_enabled":
         parser.add_argument(arg, type=bool, required=True)
-    parser.add_argument(arg, required=True)
+    else:
+        parser.add_argument(arg, required=True)
 
 
 class SpecialOfferResource(Resource):
@@ -53,8 +54,8 @@ class SpecialOfferResource(Resource):
                 title=fields["title"],
                 room_type=fields["room_type"],
                 price_per_night=fields["price_per_night"],
-                start_date=datetime.strptime(fields["start_date"], date_format),
-                end_date=datetime.strptime(fields["end_date"], date_format),
+                start_date=fields["start_date"],
+                end_date=fields["end_date"],
                 is_enabled=bool(fields["is_enabled"]),
                 modified_by_id=fields["modified_by_id"],
             )
@@ -82,8 +83,8 @@ class SpecialOfferResource(Resource):
             offer.title = fields["title"]
             offer.room_type = fields["room_type"]
             offer.price_per_night = fields["price_per_night"]
-            offer.start_date = datetime.strptime(fields["start_date"], date_format)
-            offer.end_date = datetime.strptime(fields["end_date"], date_format)
+            offer.start_date = fields["start_date"]
+            offer.end_date = fields["end_date"]
             offer.is_enabled = bool(fields["is_enabled"])
             offer.modified_by_id = fields["modified_by_id"]
 

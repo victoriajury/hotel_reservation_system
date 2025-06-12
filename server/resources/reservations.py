@@ -19,12 +19,13 @@ required_fields = [
     "modified_by_id",
 ]
 for arg in required_fields:
-    if "date" in arg:
+    if arg in ["start_date", "end_date"]:
         # forcing date type might cause issues?
         parser.add_argument(
             arg, type=lambda x: datetime.strptime(x, date_format), required=True
         )
-    parser.add_argument(arg, required=True)
+    else:
+        parser.add_argument(arg, required=True)
 
 # optional fields
 parser.add_argument("special_offer_applied")
@@ -54,8 +55,8 @@ class ReservationResource(Resource):
 
             new_reservation = Reservations(
                 number_of_guests=fields["number_of_guests"],
-                start_date=datetime.strptime(fields["start_date"], date_format),
-                end_date=datetime.strptime(fields["end_date"], date_format),
+                start_date=fields["start_date"],
+                end_date=fields["end_date"],
                 total_room_base_price=fields["total_room_base_price"],
                 special_offer_applied=fields["special_offer_applied"],
                 special_offer_discount=fields["special_offer_discount"],
@@ -85,10 +86,8 @@ class ReservationResource(Resource):
             fields = parser.parse_args()
 
             reservation.number_of_guests = fields["number_of_guests"]
-            reservation.start_date = datetime.strptime(
-                fields["start_date"], date_format
-            )
-            reservation.end_date = datetime.strptime(fields["end_date"], date_format)
+            reservation.start_date = fields["start_date"]
+            reservation.end_date = fields["end_date"]
             reservation.total_room_base_price = fields["total_room_base_price"]
             reservation.special_offer_applied = fields.get("special_offer_applied")
             reservation.special_offer_discount = fields["special_offer_discount"]

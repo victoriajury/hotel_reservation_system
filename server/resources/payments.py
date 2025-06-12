@@ -20,7 +20,7 @@ for arg in required_fields:
 class PaymentResource(Resource):
     def get(self, payment_id=None):
         if payment_id is None:
-            # Return al payments
+            # Return all payments
             query = db.session.execute(db.select(Payments)).scalars()
             payments = [data.to_dict() for data in query.all()]
             return jsonify(payments)
