@@ -1,3 +1,8 @@
+import pytest
+from server.database import db
+from server.models import Payments
+
+
 def test_get_all_payments(client):
     response = client.get("api/payments")
     assert response.status_code == 200
@@ -16,21 +21,17 @@ def test_get_single_payment(client):
     assert data["amount"] == 90
 
 
-# def test_index(client, auth):
-#     response = client.get("/payments/")
-#     assert b'href="/auth/login"' in response.data
-#     assert b"Amount" not in response.data
-#     assert b"Edit" not in response.data
-#     assert response.headers["Location"] == "/auth/login"
-
-#     auth.login()
-#     response = client.get("/payments/")
-#     assert b"Log out" in response.data
-#     assert b"Amount" in response.data
-#     assert b"90" in response.data
-#     assert b"00001" in response.data
-#     assert b'href="/payments/1/update' in response.data
-
+@pytest.mark.parametrize(
+    "path",
+    (
+        "api/payments/3",
+        "api/payments/123",
+    ),
+)
+def test_payment_record_not_found(client, auth, path):
+    # test data only has 2 records, expects record 3 not found
+    # auth.login()
+    assert client.get(path).status_code == 404
 
 # @pytest.mark.parametrize(
 #     "path",
@@ -44,58 +45,104 @@ def test_get_single_payment(client):
 #     assert response.headers["Location"] == "/auth/login"
 
 
-# def test_record_exists(client, auth):
-#     # test data only has 2 records, expects record 3 not found
-#     auth.login()
-#     assert client.post("/payments/2/update", follow_redirects=False).status_code == 404
+def test_create_payment(client, auth, app):
+    data = {
+        "invoice_id": 1,
+        "amount": 125.00,
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/payments").status_code == 200
+    res = client.post("api/payments", json=data)
+    assert res.status_code == 201
+
+    with app.app_context():
+        count_query = db.func.count(Payments.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 3
 
 
-# def test_create(client, auth, app):
-#     data = {
-#         "invoice_id": "1",
-#         "amount": "100",
-#     }
+def test_create_payment_missing_fields(client, auth, app):
+    data = {
+        # "invoice_id" missing
+        "amount": 125.00,
+        "modified_by_id": 1,
+    }
 
-#     auth.login()
-#     assert client.get("/payments/create?invoice_id=1").status_code == 200
-#     client.post("/payments/create", data=data)
+    # auth.login()
+    assert client.get("api/payments").status_code == 200
+    res = client.post("api/payments", json=data)
+    assert res.status_code == 400
+    assert "Missing required parameter" in res.json["message"]["invoice_id"]
 
-#     with app.app_context():
-#         db = get_db()
-#         count = db.execute("SELECT COUNT(id) FROM payments").fetchone()[0]
-#         assert count == 2
-
-
-# def test_update(client, auth, app):
-#     data = {
-#         "invoice_id": "1",
-#         "amount": "50",
-#     }
-
-#     auth.login()
-#     assert client.get("/payments/1/update").status_code == 200
-#     res = client.post("/payments/1/update", data=data)
-#     assert res.status_code == 302
-
-#     with app.app_context():
-#         db = get_db()
-#         res = db.execute("SELECT * FROM payments WHERE id = 1").fetchone()
-#         assert res["invoice_id"] == 1
-#         assert res["amount"] == 50
+    with app.app_context():
+        count_query = db.func.count(Payments.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
 
 
-# @pytest.mark.parametrize(
-#     "path",
-#     (
-#         "/payments/create?invoice_id=1",
-#         "/payments/1/update",
-#     ),
-# )
-# def test_create_update_validate(client, auth, path):
-#     data = {
-#         "invoice_id": "1",
-#         "amount": "",
-#     }
-#     auth.login()
-#     response = client.post(path, data=data, follow_redirects=True)
-#     assert b"Amount is required." in response.data
+def test_update_payment(client, auth, app):
+    data = {
+        "invoice_id": 3,
+        "amount": 50.00,
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/payments").status_code == 200
+    res = client.put("api/payments/1", json=data)
+    assert res.status_code == 204
+
+
+def test_update_payment_missing_fields(client, auth, app):
+    data = {
+        # "invoice_id" missing
+        "amount": 50.00,
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/payments/1").status_code == 200
+    res = client.put("api/payments/1", json=data)
+    assert res.status_code == 400
+    assert "Missing required parameter" in res.json["message"]["invoice_id"]
+
+
+def test_update_payment_not_found(client, auth, app):
+    data = {
+        "invoice_id": 1,
+        "amount": 50.00,
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/payments").status_code == 200
+    res = client.put("api/payments/3", json=data)
+    assert res.status_code == 404
+
+
+def test_delete_payment(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/payments/1",
+    )
+    assert res.status_code == 204
+
+    with app.app_context():
+        count_query = db.func.count(Payments.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 1
+
+
+def test_delete_payment_not_found(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/payments/3",
+    )
+    assert res.status_code == 404
+
+    with app.app_context():
+        count_query = db.func.count(Payments.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2

@@ -1,3 +1,11 @@
+from io import BytesIO
+import os
+import pytest
+from server.database import db
+from server.models import RoomTypes
+from server.helpers import room_image_location
+
+
 def test_get_all_room_types(client):
     response = client.get("api/room-types")
     assert response.status_code == 200
@@ -16,10 +24,17 @@ def test_get_single_room_type(client):
     assert data["type_name"] == "Superior Double"
 
 
-# from io import BytesIO
-
-# import pytest
-# from server.db import get_db
+@pytest.mark.parametrize(
+    "path",
+    (
+        "api/room-types/3",
+        "api/room-types/123",
+    ),
+)
+def test_room_type_record_not_found(client, auth, path):
+    # test data only has 2 records, expects record 3 not found
+    # auth.login()
+    assert client.get(path).status_code == 404
 
 
 # def test_index(client, auth):
@@ -36,6 +51,243 @@ def test_get_single_room_type(client):
 #     assert b"King-size bed, bath, sea views" in response.data
 #     assert b'href="/room_types/1/update"' in response.data
 
+
+def test_create_room_type(client, auth, app):
+    image_filename = "test123.jpg"
+
+    data = {
+        "type_name": "Single",
+        "base_price_per_night": "95",
+        "amenities": "Single bed, sea views, shower",
+        "max_occupants": "1",
+        "modified_by_id": 1,
+    }
+    data["photo"] = (BytesIO(b"abcdef"), image_filename)
+
+    # auth.login()
+    assert client.get("api/room-types").status_code == 200
+    res = client.post("api/room-types", data=data, content_type="multipart/form-data")
+    assert res.status_code == 201
+
+    file_path = os.path.join(app.static_folder, room_image_location(), image_filename)
+    assert os.path.exists(file_path), f"Expected file {file_path} not found"
+
+    # cleanup
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    with app.app_context():
+        count_query = db.func.count(RoomTypes.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 3
+
+
+def test_create_room_type_missing_fields(client, auth, app):
+    image_filename = "test123.jpg"
+
+    data = {
+        # "type_name" missing,
+        "base_price_per_night": "95",
+        "amenities": "Single bed, sea views, shower",
+        "max_occupants": "1",
+        "modified_by_id": 1,
+    }
+    data["photo"] = (BytesIO(b"abcdef"), image_filename)
+
+    # auth.login()
+    assert client.get("api/room-types").status_code == 200
+    res = client.post("api/room-types", data=data, content_type="multipart/form-data")
+    assert res.status_code == 400
+    assert b"Missing required parameter: type_name" in res.data
+
+    with app.app_context():
+        count_query = db.func.count(RoomTypes.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
+
+
+def test_create_room_type_valid_fields_type(client, auth, app):
+    image_filename = "test123.jpg"
+
+    data = {
+        "type_name": "Double Room",
+        "base_price_per_night": "95",
+        "amenities": "Single bed, sea views, shower",
+        "max_occupants": "not an int",
+        "modified_by_id": 1,
+    }
+    data["photo"] = (BytesIO(b"abcdef"), image_filename)
+
+    # auth.login()
+    assert client.get("api/room-types").status_code == 200
+    res = client.post("api/room-types", data=data, content_type="multipart/form-data")
+    assert res.status_code == 400
+    assert b"Invalid value for field: max_occupants" in res.data
+
+    with app.app_context():
+        count_query = db.func.count(RoomTypes.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
+
+
+def test_create_room_type_missing_image(client, auth, app):
+    data = {
+        "type_name": "Single",
+        "base_price_per_night": "95",
+        "amenities": "Single bed, sea views, shower",
+        "max_occupants": "1",
+        "modified_by_id": 1,
+    }
+    data["photo"] = None
+
+    # auth.login()
+    assert client.get("api/room-types").status_code == 200
+    res = client.post("api/room-types", data=data, content_type="multipart/form-data")
+    assert res.status_code == 400
+    assert b"Missing required file: photo" in res.data
+
+
+def test_create_room_type_valid_image_extension(client, auth, app):
+    image_filename = "test123.svg"
+
+    data = {
+        "type_name": "Double Room",
+        "base_price_per_night": "95",
+        "amenities": "Single bed, sea views, shower",
+        "max_occupants": 2,
+        "modified_by_id": 1,
+    }
+    data["photo"] = (BytesIO(b"abcdef"), image_filename)
+
+    # auth.login()
+    assert client.get("api/room-types").status_code == 200
+    res = client.post("api/room-types", data=data, content_type="multipart/form-data")
+    assert res.status_code == 400
+    assert b"Not a valid file extension type: test123.svg" in res.data
+
+
+def test_update_room_type(client, auth, app):
+    image_filename = "test123.jpg"
+
+    data = {
+        "type_name": "Single",
+        "base_price_per_night": "95",
+        "amenities": "Single bed, sea views, shower",
+        "max_occupants": "1",
+        "modified_by_id": 1,
+    }
+    data["photo"] = (BytesIO(b"abcdef"), image_filename)
+
+    # auth.login()
+    assert client.get("api/room-types").status_code == 200
+    res = client.put("api/room-types/1", data=data, content_type="multipart/form-data")
+    assert res.status_code == 204
+
+    file_path = os.path.join(app.static_folder, room_image_location(), image_filename)
+    assert os.path.exists(file_path), f"Expected file {file_path} not found"
+
+    # cleanup
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+
+def test_update_room_type_missing_fields(client, auth, app):
+    image_filename = "test123.jpg"
+
+    data = {
+        # "type_name" missing,
+        "base_price_per_night": "95",
+        "amenities": "Single bed, sea views, shower",
+        "max_occupants": "1",
+        "modified_by_id": 1,
+    }
+    data["photo"] = (BytesIO(b"abcdef"), image_filename)
+
+    # auth.login()
+    assert client.get("api/room-types/1").status_code == 200
+    res = client.put("api/room-types/1", data=data, content_type="multipart/form-data")
+    assert res.status_code == 400
+    assert b"Missing required parameter: type_name" in res.data
+
+
+def test_update_room_type_valid_fields_type(client, auth, app):
+    image_filename = "test123.jpg"
+
+    data = {
+        "type_name": "Single",
+        "base_price_per_night": "not a number",
+        "amenities": "Single bed, sea views, shower",
+        "max_occupants": "1",
+        "modified_by_id": 1,
+    }
+    data["photo"] = (BytesIO(b"abcdef"), image_filename)
+
+    # auth.login()
+    assert client.get("api/room-types/1").status_code == 200
+    res = client.put("api/room-types/1", data=data, content_type="multipart/form-data")
+    assert res.status_code == 400
+    assert b"Invalid value for field: base_price_per_night" in res.data
+
+
+def test_update_room_type_missing_image(client, auth, app):
+    data = {
+        "type_name": "Single",
+        "base_price_per_night": "95",
+        "amenities": "Single bed, sea views, shower",
+        "max_occupants": "1",
+        "modified_by_id": 1,
+    }
+    data["photo"] = None
+
+    # auth.login()
+    assert client.get("api/room-types/1").status_code == 200
+    res = client.put("api/room-types/1", data=data, content_type="multipart/form-data")
+    assert res.status_code == 400
+    assert b"Missing required file: photo" in res.data
+
+
+def test_update_room_type_not_found(client, auth, app):
+    image_filename = "test123.jpg"
+
+    data = {
+        "type_name": "Single",
+        "base_price_per_night": "95",
+        "amenities": "Single bed, sea views, shower",
+        "max_occupants": "1",
+        "modified_by_id": 1,
+    }
+    data["photo"] = (BytesIO(b"abcdef"), image_filename)
+
+    # auth.login()
+    assert client.get("api/room-types").status_code == 200
+    res = client.put("api/room-types/3", data=data, content_type="multipart/form-data")
+    assert res.status_code == 404
+
+
+def test_delete_room_type(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/room-types/1",
+    )
+    assert res.status_code == 204
+
+    with app.app_context():
+        count_query = db.func.count(RoomTypes.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 1
+
+
+def test_delete_room_type_not_found(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/room-types/3",
+    )
+    assert res.status_code == 404
+
+    with app.app_context():
+        count_query = db.func.count(RoomTypes.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
 
 # @pytest.mark.parametrize(
 #     "path",

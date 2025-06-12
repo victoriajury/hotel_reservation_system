@@ -21,7 +21,7 @@ from .resources import (
 
 def create_app(test_config=None):
     # create and configure the app
-    app = Flask(__name__)
+    app = Flask(__name__, static_url_path="")
     CORS(app, resources={r"/api/*": {"origins": "*"}})
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///reservations.sqlite"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -106,6 +106,11 @@ def create_app(test_config=None):
         invoice_items.InvoiceItemByInvoiceResource,
         "/api/invoice-items/invoice/<int:invoice_id>",
         endpoint="invoice_items_by_invoice",
+    )
+    api.add_resource(
+        invoice_items.InvoiceItemResource,
+        "/api/invoice-items",
+        endpoint="create_invoice_item",
     )
     api.add_resource(
         invoice_items.InvoiceItemResource,

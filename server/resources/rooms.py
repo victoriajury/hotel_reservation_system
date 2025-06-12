@@ -1,7 +1,17 @@
-from flask import jsonify
-from flask_restful import Resource
+from flask import jsonify, make_response
+from flask_restful import HTTPException, Resource, reqparse
 from server.database import db
 from server.models import Rooms
+from werkzeug.exceptions import NotFound
+
+parser = reqparse.RequestParser()
+required_fields = [
+    "room_number",
+    "room_type",
+    "modified_by_id",
+]
+for arg in required_fields:
+    parser.add_argument(arg, type=int, required=True)
 
 
 class RoomResource(Resource):
@@ -11,146 +21,69 @@ class RoomResource(Resource):
             rooms = [data.to_dict() for data in query.all()]
 
             return jsonify(rooms)
+
         else:
-            room = (
-                db.session.execute(db.select(Rooms).filter_by(id=room_id))
-                .scalar_one()
-                .to_dict()
+            try:
+                room = db.get_or_404(Rooms, room_id).to_dict()
+                return jsonify(room)
+            except NotFound:
+                response = make_response("Room not found.", 404)
+                return response
+
+    def post(self):
+        try:
+            fields = parser.parse_args()
+
+            new_room = Rooms(
+                room_number=fields["room_number"],
+                room_type=fields["room_type"],
+                modified_by_id=fields["modified_by_id"],
             )
 
-        return jsonify(room)
+            db.session.add(new_room)
+            db.session.commit()
 
+            response = make_response(new_room.to_dict(), 201)
 
-# from datetime import datetime
+        except HTTPException as e:
+            response = make_response(e.data, e.code)
 
-# from flask import Blueprint, flash, g, redirect, render_template, request, url_for
-# from server.auth import login_required
-# from server.db import get_db
-# from server.db_queries import (
-#     delete_by_id,
-#     format_sql_query_columns,
-#     format_sql_update_columns,
-#     get_all_rows,
-#     get_row_by_id,
-#     sql_insert_placeholders,
-# )
-# from server.helpers import format_required_field_error
+        return response
 
-# bp = Blueprint("rooms", __name__, url_prefix="/rooms")
-# table = "rooms"
+    def put(self, room_id):
+        try:
+            room = db.get_or_404(Rooms, room_id)
+        except NotFound:
+            response = make_response("Room not found.", 404)
+            return response
 
+        try:
+            fields = parser.parse_args()
 
-# def get_table_fields():
-#     return [
-#         "room_number",
-#         "room_type",
-#     ]
+            room.room_number = fields["room_number"]
+            room.room_type = fields["room_type"]
+            room.modified_by_id = fields["modified_by_id"]
 
+            db.session.commit()
 
-# def get_required_fields():
-#     return [
-#         "room_number",
-#         "room_type",
-#     ]
+            response = make_response(room.to_dict(), 204)
 
+        except HTTPException as e:
+            response = make_response(e.data, e.code)
 
-# @bp.route("/")
-# @login_required
-# def index():
-#     fields = format_sql_query_columns(
-#         get_table_fields()
-#         + ["type_name", f"{table}.modified", f"{table}.modified_by_id", "username"]
-#     )
-#     join = f"""
-#     JOIN users u ON {table}.modified_by_id = u.id
-#     JOIN room_types rt ON {table}.room_type = rt.id
-#     """
+        return response
 
-#     rooms = get_all_rows(table, fields, join, order_by="room_number")
+    def delete(self, room_id):
+        # TODO: Warn if there are active bookings connected to room
+        try:
+            room = db.get_or_404(Rooms, room_id)
+        except NotFound:
+            response = make_response("Room not found.", 404)
+            return response
 
-#     return render_template("rooms/index.html", rooms=rooms)
+        db.session.delete(room)
+        db.session.commit()
 
+        response = make_response("Room deleted", 204)
 
-# def get_other_table_rows():
-#     type_names = get_all_rows("room_types", "id, type_name")
-
-#     return type_names
-
-
-# @bp.route("/create", methods=("GET", "POST"))
-# @login_required
-# def create():
-#     room_types = get_other_table_rows()
-
-#     if request.method == "POST":
-#         data = [request.form[f] for f in get_table_fields()] + [g.user["id"]]
-#         columns = format_sql_query_columns(get_table_fields() + ["modified_by_id"])
-#         placeholders = sql_insert_placeholders(len(data))
-
-#         # handle required field errors
-#         error_fields = []
-#         for required in get_required_fields():
-#             if not request.form[required]:
-#                 error_fields.append(required)
-
-#         if error_fields:
-#             flash(format_required_field_error(error_fields))
-#         else:
-#             db = get_db()
-#             db.execute(
-#                 f"INSERT INTO {table} ({columns}) VALUES ({placeholders})",
-#                 data,
-#             )
-#             db.commit()
-#             return redirect(url_for("rooms.index"))
-
-#     return render_template("rooms/create.html", room_types=room_types)
-
-
-# @bp.route("/<int:id>/update", methods=("GET", "POST"))
-# @login_required
-# def update(id):
-#     room = get_row_by_id(
-#         id,
-#         table,
-#         format_sql_query_columns(get_table_fields() + ["modified_by_id", "username"]),
-#         f" JOIN users u ON {table}.modified_by_id = u.id",
-#     )
-#     room_types = get_other_table_rows()
-
-#     if request.method == "POST":
-#         modified = datetime.now()
-#         data = [request.form[f] for f in get_table_fields()] + [
-#             modified,
-#             g.user["id"],
-#             id,
-#         ]
-#         columns = format_sql_update_columns(
-#             get_table_fields() + ["modified", "modified_by_id"]
-#         )
-
-#         # handle required field errors
-#         error_fields = []
-#         for required in get_required_fields():
-#             if not request.form[required]:
-#                 error_fields.append(required)
-
-#         if error_fields:
-#             flash(format_required_field_error(error_fields))
-#         else:
-#             db = get_db()
-#             db.execute(
-#                 f"UPDATE {table} SET {columns} WHERE id = ?",
-#                 data,
-#             )
-#             db.commit()
-#             return redirect(url_for("rooms.index"))
-
-#     return render_template("rooms/update.html", room=room, room_types=room_types)
-
-
-# @bp.route("/<int:id>/delete", methods=("POST",))
-# @login_required
-# def delete(id):
-#     delete_by_id(id, table)
-#     return redirect(url_for("rooms.index"))
+        return response

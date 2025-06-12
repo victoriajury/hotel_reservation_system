@@ -1,24 +1,91 @@
-from flask import jsonify
-from flask_restful import Resource
+from flask import jsonify, make_response
+from flask_restful import HTTPException, Resource, reqparse
 from server.database import db
 from server.models import Invoices
+from werkzeug.exceptions import NotFound
+
+parser = reqparse.RequestParser()
+required_fields = [
+    "reservation_id",
+    "modified_by_id",
+]
+for arg in required_fields:
+    parser.add_argument(arg, required=True)
+
+# optional fields
+parser.add_argument("amount_paid")
 
 
 class InvoiceResource(Resource):
     def get(self, invoice_id=None):
         if invoice_id is None:
+            # Return all invoices
             query = db.session.execute(db.select(Invoices)).scalars()
             invoices = [data.to_dict() for data in query.all()]
-
             return jsonify(invoices)
+
         else:
-            invoice = (
-                db.session.execute(db.select(Invoices).filter_by(id=invoice_id))
-                .scalar_one()
-                .to_dict()
+            try:
+                invoice = db.get_or_404(Invoices, invoice_id).to_dict()
+                return jsonify(invoice)
+            except NotFound:
+                response = make_response("Invoice not found.", 404)
+                return response
+
+    def post(self):
+        try:
+            fields = parser.parse_args()
+
+            new_invoice = Invoices(
+                reservation_id=fields["reservation_id"],
+                modified_by_id=fields["modified_by_id"],
             )
 
-            return jsonify(invoice)
+            db.session.add(new_invoice)
+            db.session.commit()
+
+            response = make_response(new_invoice.to_dict(), 201)
+
+        except HTTPException as e:
+            response = make_response(e.data, e.code)
+
+        return response
+
+    def put(self, invoice_id):
+        try:
+            invoice = db.get_or_404(Invoices, invoice_id)
+        except NotFound:
+            response = make_response("Invoice not found.", 404)
+            return response
+
+        try:
+            fields = parser.parse_args()
+
+            invoice.reservation_id = fields["reservation_id"]
+            invoice.modified_by_id = fields["modified_by_id"]
+
+            db.session.commit()
+
+            response = make_response(invoice.to_dict(), 204)
+
+        except HTTPException as e:
+            response = make_response(e.data, e.code)
+
+        return response
+
+    def delete(self, invoice_id):
+        try:
+            invoice = db.get_or_404(Invoices, invoice_id)
+        except NotFound:
+            response = make_response("Invoice not found.", 404)
+            return response
+
+        db.session.delete(invoice)
+        db.session.commit()
+
+        response = make_response("Invoice deleted", 204)
+
+        return response
 
 
 # from flask import Blueprint, flash, g, redirect, render_template, request, url_for

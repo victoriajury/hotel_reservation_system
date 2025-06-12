@@ -189,3 +189,4 @@ dist-ssr
 
 # Other development files
 reservation_system/static/admin/plugins/*
+server/static/img/*

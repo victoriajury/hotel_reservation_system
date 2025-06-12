@@ -1,3 +1,9 @@
+import pytest
+from server.database import db
+from server.models import Reservations
+import datetime
+
+
 def test_get_all_reservations(client):
     response = client.get("api/reservations")
     assert response.status_code == 200
@@ -16,6 +22,18 @@ def test_get_single_reservation(client):
     assert data["start_date"] == "Fri, 17 May 2024 00:00:00 GMT"
 
 
+@pytest.mark.parametrize(
+    "path",
+    (
+        "api/reservations/3",
+        "api/reservations/123",
+    ),
+)
+def test_reservation_record_not_found(client, auth, path):
+    # test data only has 2 records, expects record 3 not found
+    # auth.login()
+    assert client.get(path).status_code == 404
+
 # def test_index(client, auth):
 #     response = client.get("/reservations/")
 #     assert b'href="/auth/login"' in response.data
@@ -30,6 +48,150 @@ def test_get_single_reservation(client):
 #     assert b"101" in response.data
 #     assert b"130.0" in response.data
 #     assert b'href="/reservations/1/update"' in response.data
+
+
+def test_create_reservation(client, auth, app):
+    data = {
+        "number_of_guests": "2",
+        "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
+        "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
+        "total_room_base_price": "120.0",
+        "special_offer_applied": "",
+        "special_offer_discount": "0",
+        "reservation_notes": "Early breakfast.",
+        "status_id": "2",
+        # "room_id": "1",
+        # "guest_id": "2",
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/reservations").status_code == 200
+    res = client.post("api/reservations", json=data)
+    assert res.status_code == 201
+
+    with app.app_context():
+        count_query = db.func.count(Reservations.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 3
+
+
+def test_create_reservation_missing_fields(client, auth, app):
+    data = {
+        # "number_of_guests" missing
+        "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
+        "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
+        "total_room_base_price": "120.0",
+        "special_offer_applied": "",
+        "special_offer_discount": "0",
+        "reservation_notes": "Early breakfast.",
+        "status_id": "2",
+        # "room_id": "1",
+        # "guest_id": "2",
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/reservations").status_code == 200
+    res = client.post("api/reservations", json=data)
+    assert res.status_code == 400
+    assert "Missing required parameter" in res.json["message"]["number_of_guests"]
+
+    with app.app_context():
+        count_query = db.func.count(Reservations.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
+
+
+def test_update_reservation(client, auth, app):
+    data = {
+        "number_of_guests": "2",
+        "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
+        "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
+        "total_room_base_price": "120.0",
+        "special_offer_applied": "",
+        "special_offer_discount": "0",
+        "reservation_notes": "Early breakfast.",
+        "status_id": "2",
+        # "room_id": "1",
+        # "guest_id": "2",
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/reservations").status_code == 200
+    res = client.put("api/reservations/1", json=data)
+    assert res.status_code == 204
+
+
+def test_update_reservation_missing_fields(client, auth, app):
+    data = {
+        # "number_of_guests" missing
+        "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
+        "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
+        "total_room_base_price": "120.0",
+        "special_offer_applied": "",
+        "special_offer_discount": "0",
+        "reservation_notes": "Early breakfast.",
+        "status_id": "2",
+        # "room_id": "1",
+        # "guest_id": "2",
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/reservations/1").status_code == 200
+    res = client.put("api/reservations/1", json=data)
+    assert res.status_code == 400
+    assert "Missing required parameter" in res.json["message"]["number_of_guests"]
+
+
+def test_update_reservation_not_found(client, auth, app):
+    data = {
+        "number_of_guests": "2",
+        "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
+        "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
+        "total_room_base_price": "120.0",
+        "special_offer_applied": "",
+        "special_offer_discount": "0",
+        "reservation_notes": "Early breakfast.",
+        "status_id": "2",
+        # "room_id": "1",
+        # "guest_id": "2",
+        "modified_by_id": 1,
+    }
+
+    # auth.login()
+    assert client.get("api/reservations").status_code == 200
+    res = client.put("api/reservations/3", json=data)
+    assert res.status_code == 404
+
+
+def test_delete_reservation(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/reservations/1",
+    )
+    assert res.status_code == 204
+
+    with app.app_context():
+        count_query = db.func.count(Reservations.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 1
+
+
+def test_delete_reservation_not_found(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/reservations/3",
+    )
+    assert res.status_code == 404
+
+    with app.app_context():
+        count_query = db.func.count(Reservations.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
+
 
 
 # @pytest.mark.parametrize(
@@ -60,7 +222,7 @@ def test_get_single_reservation(client):
 
 # def test_create(client, auth, app):
 #     data = {
-#         "number_of_guests": "2",
+#         "number_of_reservations": "2",
 #         "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
 #         "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
 #         "total_room_base_price": "120.0",
@@ -69,7 +231,7 @@ def test_get_single_reservation(client):
 #         "reservation_notes": "Early breakfast.",
 #         "status_id": "2",
 #         "room_id": "1",
-#         "guest_id": "2",
+#         "reservation_id": "2",
 #     }
 
 #     auth.login()
@@ -102,7 +264,7 @@ def test_get_single_reservation(client):
 # def test_create_with_redirect(client, auth, app, redirect_url, expected):
 #     # assert that creating a reservation redirects to calendar view
 #     data = {
-#         "number_of_guests": "2",
+#         "number_of_reservations": "2",
 #         "start_date": (datetime.datetime.now() + datetime.timedelta(days=5)).date(),
 #         "end_date": (datetime.datetime.now() + datetime.timedelta(days=7)).date(),
 #         "total_room_base_price": "120.0",
@@ -111,7 +273,7 @@ def test_get_single_reservation(client):
 #         "reservation_notes": "Early breakfast.",
 #         "status_id": "2",
 #         "room_id": "1",
-#         "guest_id": "2",
+#         "reservation_id": "2",
 #     }
 
 #     auth.login()
@@ -130,7 +292,7 @@ def test_get_single_reservation(client):
 
 # def test_update_with_invoice(client, auth, app):
 #     data = {
-#         "number_of_guests": "1",
+#         "number_of_reservations": "1",
 #         "start_date": (
 #             datetime.datetime.now() + datetime.timedelta(days=8)
 #         ).date(),  # 5 nights changes to 7
@@ -140,7 +302,7 @@ def test_get_single_reservation(client):
 #         "special_offer_discount": "0",
 #         "reservation_notes": "Early breakfast.",
 #         "status_id": "2",
-#         "guest_id": "1",
+#         "reservation_id": "1",
 #         "room_id": "2",
 #     }
 
@@ -170,12 +332,12 @@ def test_get_single_reservation(client):
 #             == (datetime.datetime.now() + datetime.timedelta(days=15)).date()
 #         )
 #         assert res["reservation_notes"] == "Early breakfast."
-#         assert res["number_of_guests"] == 1
+#         assert res["number_of_reservations"] == 1
 
 #         res = db.execute(
-#             "SELECT * FROM join_guests_reservations WHERE reservation_id = 2"
+#             "SELECT * FROM join_reservations_reservations WHERE reservation_id = 2"
 #         ).fetchone()
-#         assert res["guest_id"] == 1
+#         assert res["reservation_id"] == 1
 
 #         res = db.execute(
 #             "SELECT * FROM join_rooms_reservations WHERE reservation_id = 2"
@@ -197,7 +359,7 @@ def test_get_single_reservation(client):
 
 # def test_update_with_no_existing_invoice(client, auth, app):
 #     data = {
-#         "number_of_guests": "1",
+#         "number_of_reservations": "1",
 #         "start_date": (
 #             datetime.datetime.now() + datetime.timedelta(days=8)
 #         ).date(),  # 3 nights changes to 1
@@ -207,7 +369,7 @@ def test_get_single_reservation(client):
 #         "special_offer_discount": "0",
 #         "reservation_notes": "Early breakfast.",
 #         "status_id": "2",
-#         "guest_id": "2",
+#         "reservation_id": "2",
 #         "room_id": "2",
 #     }
 
@@ -228,12 +390,12 @@ def test_get_single_reservation(client):
 #             == (datetime.datetime.now() + datetime.timedelta(days=9)).date()
 #         )
 #         assert res["reservation_notes"] == "Early breakfast."
-#         assert res["number_of_guests"] == 1
+#         assert res["number_of_reservations"] == 1
 
 #         res = db.execute(
-#             "SELECT * FROM join_guests_reservations WHERE reservation_id = 1"
+#             "SELECT * FROM join_reservations_reservations WHERE reservation_id = 1"
 #         ).fetchone()
-#         assert res["guest_id"] == 2
+#         assert res["reservation_id"] == 2
 
 #         res = db.execute(
 #             "SELECT * FROM join_rooms_reservations WHERE reservation_id = 1"
@@ -274,7 +436,7 @@ def test_get_single_reservation(client):
 # def test_update_with_redirect(client, auth, app, redirect_url, expected):
 #     # assert that updating a reservation redirects to calendar view
 #     data = {
-#         "number_of_guests": "2",
+#         "number_of_reservations": "2",
 #         "start_date": (datetime.datetime.now() + datetime.timedelta(days=5)).date(),
 #         "end_date": (datetime.datetime.now() + datetime.timedelta(days=7)).date(),
 #         "total_room_base_price": "120.0",
@@ -283,7 +445,7 @@ def test_get_single_reservation(client):
 #         "reservation_notes": "Early breakfast.",
 #         "status_id": "2",
 #         "room_id": "1",
-#         "guest_id": "2",
+#         "reservation_id": "2",
 #     }
 
 #     auth.login()
@@ -303,7 +465,7 @@ def test_get_single_reservation(client):
 # )
 # def test_create_update_validate_form_fields(client, auth, path):
 #     data = {
-#         "number_of_guests": "",
+#         "number_of_reservations": "",
 #         "start_date": "",
 #         "end_date": "",
 #         "total_room_base_price": "",
@@ -311,15 +473,15 @@ def test_get_single_reservation(client):
 #         "special_offer_discount": "",
 #         "reservation_notes": "",
 #         "status_id": "2",
-#         "guest_id": "",
+#         "reservation_id": "",
 #         "room_id": "2",
 #     }
 #     auth.login()
 #     response = client.post(path, data=data)
-#     assert b"Number Of Guests is required." in response.data
+#     assert b"Number Of Reservations is required." in response.data
 #     assert b"Start Date is required." in response.data
 #     assert b"End Date is required." in response.data
-#     assert b"Guest Id is required." in response.data
+#     assert b"Reservation Id is required." in response.data
 
 
 # @pytest.mark.parametrize(
@@ -337,7 +499,7 @@ def test_get_single_reservation(client):
 # )
 # def test_create_validate_collisions(client, auth, start_date, end_date, room_id):
 #     data = {
-#         "number_of_guests": "2",
+#         "number_of_reservations": "2",
 #         "start_date": start_date,
 #         "end_date": end_date,
 #         "total_room_base_price": "120.0",
@@ -345,7 +507,7 @@ def test_get_single_reservation(client):
 #         "special_offer_discount": "0",
 #         "reservation_notes": "",
 #         "status_id": "2",
-#         "guest_id": "2",
+#         "reservation_id": "2",
 #         "room_id": room_id,
 #     }
 #     auth.login()
@@ -364,7 +526,7 @@ def test_get_single_reservation(client):
 # )
 # def test_update_validate_collisions(client, auth, start_date, end_date):
 #     create_data = {
-#         "number_of_guests": "2",
+#         "number_of_reservations": "2",
 #         "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
 #         "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
 #         "total_room_base_price": "120.0",
@@ -372,11 +534,11 @@ def test_get_single_reservation(client):
 #         "special_offer_discount": "0",
 #         "reservation_notes": "",
 #         "status_id": "2",
-#         "guest_id": "2",
+#         "reservation_id": "2",
 #         "room_id": "1",
 #     }
 #     update_data = {
-#         "number_of_guests": "2",
+#         "number_of_reservations": "2",
 #         "start_date": (
 #             datetime.datetime.now() + datetime.timedelta(days=start_date)
 #         ).date(),
@@ -388,7 +550,7 @@ def test_get_single_reservation(client):
 #         "special_offer_discount": "0",
 #         "reservation_notes": "Moved booking",
 #         "status_id": "2",
-#         "guest_id": "2",
+#         "reservation_id": "2",
 #         "room_id": "1",
 #     }
 #     auth.login()
@@ -410,7 +572,7 @@ def test_get_single_reservation(client):
 #     client, auth, path, start_date, end_date
 # ):
 #     data = {
-#         "number_of_guests": "2",
+#         "number_of_reservations": "2",
 #         "start_date": (
 #             datetime.datetime.now() + datetime.timedelta(days=start_date)
 #         ).date(),
@@ -422,7 +584,7 @@ def test_get_single_reservation(client):
 #         "special_offer_discount": "0",
 #         "reservation_notes": "",
 #         "status_id": "2",
-#         "guest_id": "1",
+#         "reservation_id": "1",
 #         "room_id": "1",
 #     }
 #     auth.login()
@@ -442,7 +604,7 @@ def test_get_single_reservation(client):
 # )
 # def test_create_validate_booking_in_the_past(client, auth, path, start_date, end_date):
 #     data = {
-#         "number_of_guests": "2",
+#         "number_of_reservations": "2",
 #         "start_date": start_date,
 #         "end_date": end_date,
 #         "total_room_base_price": "120.0",
@@ -450,7 +612,7 @@ def test_get_single_reservation(client):
 #         "special_offer_discount": "0",
 #         "reservation_notes": "",
 #         "status_id": "2",
-#         "guest_id": "1",
+#         "reservation_id": "1",
 #         "room_id": "1",
 #     }
 #     auth.login()
@@ -472,7 +634,7 @@ def test_get_single_reservation(client):
 #         post = db.execute("SELECT * FROM reservations WHERE id = 1").fetchone()
 #         assert post is None
 #         post = db.execute(
-#             "SELECT * FROM join_guests_reservations WHERE reservation_id = 1"
+#             "SELECT * FROM join_reservations_reservations WHERE reservation_id = 1"
 #         ).fetchone()
 #         assert post is None
 #         post = db.execute(
@@ -499,7 +661,7 @@ def test_get_single_reservation(client):
 #         post = db.execute("SELECT * FROM reservations WHERE id = 1").fetchone()
 #         assert post is None
 #         post = db.execute(
-#             "SELECT * FROM join_guests_reservations WHERE reservation_id = 1"
+#             "SELECT * FROM join_reservations_reservations WHERE reservation_id = 1"
 #         ).fetchone()
 #         assert post is None
 #         post = db.execute(

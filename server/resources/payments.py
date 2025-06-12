@@ -1,188 +1,90 @@
-from flask import jsonify
-from flask_restful import Resource
+from flask import jsonify, make_response
+from flask_restful import HTTPException, Resource, reqparse
 from server.database import db
 from server.models import Payments
+from werkzeug.exceptions import NotFound
+
+parser = reqparse.RequestParser()
+required_fields = [
+    "invoice_id",
+    "amount",
+    "modified_by_id",
+]
+for arg in required_fields:
+    parser.add_argument(arg, required=True)
+
+# optional fields
+# parser.add_argument("")
 
 
 class PaymentResource(Resource):
     def get(self, payment_id=None):
         if payment_id is None:
+            # Return all payments
             query = db.session.execute(db.select(Payments)).scalars()
             payments = [data.to_dict() for data in query.all()]
-
             return jsonify(payments)
         else:
-            payment = (
-                db.session.execute(db.select(Payments).filter_by(id=payment_id))
-                .scalar_one()
-                .to_dict()
+            try:
+                payment = db.get_or_404(Payments, payment_id).to_dict()
+                return jsonify(payment)
+            except NotFound:
+                response = make_response("Payment not found.", 404)
+                return response
+
+    def post(self):
+        try:
+            fields = parser.parse_args()
+
+            new_payment = Payments(
+                invoice_id=fields["invoice_id"],
+                amount=fields["amount"],
+                modified_by_id=fields["modified_by_id"],
             )
 
-            return jsonify(payment)
+            db.session.add(new_payment)
+            db.session.commit()
 
+            response = make_response(new_payment.to_dict(), 201)
 
-# from datetime import datetime
+        except HTTPException as e:
+            response = make_response(e.data, e.code)
 
-# from flask import Blueprint, flash, g, redirect, render_template, request, url_for
-# from server.auth import login_required
-# from server.db import get_db
-# from server.db_queries import (
-#     format_sql_query_columns,
-#     format_sql_update_columns,
-#     get_all_rows,
-#     get_row_by_id,
-#     sql_insert_placeholders,
-# )
-# from server.helpers import format_required_field_error
+        return response
 
-# bp = Blueprint("payments", __name__, url_prefix="/payments")
-# table = "payments"
+    def put(self, payment_id):
+        try:
+            payment = db.get_or_404(Payments, payment_id)
+        except NotFound:
+            response = make_response("Payment not found.", 404)
+            return response
 
+        try:
+            fields = parser.parse_args()
 
-# def get_table_fields():
-#     return [
-#         "invoice_id",
-#         "amount",
-#     ]
+            payment.invoice_id = fields["invoice_id"]
+            payment.amount = fields["amount"]
+            payment.modified_by_id = fields["modified_by_id"]
 
+            db.session.commit()
 
-# def get_required_fields():
-#     return [
-#         "amount",
-#     ]
+            response = make_response(payment.to_dict(), 204)
 
+        except HTTPException as e:
+            response = make_response(e.data, e.code)
 
-# @bp.route("/")
-# @login_required
-# def index():
-#     # returns sum of invoice totals
-#     fields = format_sql_query_columns(
-#         get_table_fields()
-#         + [
-#             "end_date",
-#             "g.name",
-#             "invoices.reservation_id",
-#             f"{table}.created",
-#             f"{table}.modified",
-#             f"{table}.modified_by_id",
-#             "username",
-#         ]
-#     )
-#     join = f"""
-#     JOIN users u ON {table}.modified_by_id = u.id
-#     JOIN invoices ON {table}.invoice_id = invoices.id
-#     JOIN reservations res ON res.id = invoices.reservation_id
-#     JOIN join_guests_reservations gr ON res.id = gr.reservation_id
-#     JOIN guests g ON gr.guest_id = g.id
-#     """
+        return response
 
-#     payments = get_all_rows(table, fields, join, order_by=f"{table}.created")
+    def delete(self, payment_id):
+        try:
+            payment = db.get_or_404(Payments, payment_id)
+        except NotFound:
+            response = make_response("Payment not found.", 404)
+            return response
 
-#     return render_template("payments/index.html", payments=payments)
+        db.session.delete(payment)
+        db.session.commit()
 
+        response = make_response("Payment deleted", 204)
 
-# def get_paid_to_date(invoice_id):
-#     rows = get_all_rows(
-#         table,
-#         "SUM(amount) as total",
-#         f"WHERE invoice_id = {invoice_id} GROUP BY invoice_id",
-#     )
-#     return rows[0]["total"]
-
-
-# @bp.route("/create", methods=("GET", "POST"))
-# @login_required
-# def create():
-#     reservation_id = request.args.get("reservation_id")
-#     if request.method == "POST":
-#         invoice_id = request.form["invoice_id"]
-
-#         data = [request.form[f] for f in get_table_fields()] + [g.user["id"]]
-#         columns = format_sql_query_columns(get_table_fields() + ["modified_by_id"])
-#         placeholders = sql_insert_placeholders(len(data))
-
-#         # handle required field errors
-#         error_fields = []
-#         for required in get_required_fields():
-#             if not request.form[required]:
-#                 error_fields.append(required)
-
-#         if error_fields:
-#             flash(format_required_field_error(error_fields))
-#         else:
-#             db = get_db()
-#             db.execute(
-#                 f"INSERT INTO {table} ({columns}) VALUES ({placeholders})",
-#                 data,
-#             )
-#             # update invoice amount_paid
-#             db.execute(
-#                 "UPDATE invoices SET amount_paid = ? WHERE id = ?",
-#                 (get_paid_to_date(invoice_id), invoice_id),
-#             )
-#             db.commit()
-#             previous_page = request.args.get("redirect")
-#             return redirect(
-#                 url_for(
-#                     "invoices.view",
-#                     id=invoice_id,
-#                     reservation_id=reservation_id,
-#                     redirect=previous_page,
-#                 )
-#             )
-
-#     return render_template("payments/create.html", reservation_id=reservation_id)
-
-
-# @bp.route("/<int:id>/update", methods=("GET", "POST"))
-# @login_required
-# def update(id):
-#     reservation_id = request.args.get("reservation_id")
-#     items = get_row_by_id(id, table, format_sql_query_columns(get_table_fields()))
-
-#     if request.method == "POST":
-#         modified = datetime.now()
-#         invoice_id = request.form["invoice_id"]
-
-#         data = [request.form[f] for f in get_table_fields()] + [
-#             modified,
-#             g.user["id"],
-#             id,
-#         ]
-#         columns = format_sql_update_columns(
-#             get_table_fields() + ["modified", "modified_by_id"]
-#         )
-
-#         # handle required field errors
-#         error_fields = []
-#         for required in get_required_fields():
-#             if not request.form[required]:
-#                 error_fields.append(required)
-
-#         if error_fields:
-#             flash(format_required_field_error(error_fields))
-#         else:
-#             db = get_db()
-#             db.execute(
-#                 f"UPDATE {table} SET {columns} WHERE id = ?",
-#                 data,
-#             )
-#             # update invoice amount_paid
-#             db.execute(
-#                 "UPDATE invoices SET amount_paid = ? WHERE id = ?",
-#                 (get_paid_to_date(invoice_id), invoice_id),
-#             )
-#             db.commit()
-#             previous_page = request.args.get("redirect")
-#             return redirect(
-#                 url_for(
-#                     "invoices.view",
-#                     id=invoice_id,
-#                     reservation_id=reservation_id,
-#                     redirect=previous_page,
-#                 )
-#             )
-
-#     return render_template(
-#         "payments/update.html", items=items, reservation_id=reservation_id
-#     )
+        return response

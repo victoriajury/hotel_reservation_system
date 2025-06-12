@@ -2,6 +2,7 @@
 import { DataModel, DataModelId, DataSource, DataSourceCache } from '@toolpad/core/Crud';
 import { z } from 'zod';
 
+
 export interface Guest extends DataModel {
   id: number;
   name: string;
@@ -13,6 +14,7 @@ export interface Guest extends DataModel {
   county: string;
   postcode: string;
   guest_notes: string;
+  modified: string;
 }
 
 // Base URL for Flask API
@@ -36,7 +38,7 @@ export async function createGuest(newGuest: Omit<Guest, 'id'>): Promise<Guest> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(newGuest),
   });
-  if (!res.ok) throw new Error('Failed to create guest');
+  if (!res.ok) throw new Error(`Failed to create guest: ${(await res?.text())}`);
   return await res.json();
 }
 
@@ -62,14 +64,15 @@ export const guestsDataSource: DataSource<Guest> = {
   fields: [
     { field: 'id', headerName: 'ID' },
     { field: 'name', headerName: 'Name', width: 140 },
-    { field: 'email', headerName: 'Email', width: 140 },
+    { field: 'email', headerName: 'Email', width: 200, flex: 1 },
     { field: 'telephone', headerName: 'Telephone', width: 140 },
     { field: 'address_1', headerName: 'Address 1', width: 140 },
     { field: 'address_2', headerName: 'Address 2', width: 140 },
     { field: 'city', headerName: 'City', width: 140 },
     { field: 'county', headerName: 'County', width: 140 },
     { field: 'postcode', headerName: 'Postcode', width: 140 },
-    { field: 'guest_notes', headerName: 'Notes', width: 140 },
+    { field: 'guest_notes', headerName: 'Notes', width: 200, flex: 1 },
+    { field: 'modified', headerName: 'Date last modified', width: 225 },
   ],
   getMany: async ({ paginationModel, filterModel, sortModel }) => {
     const guestsStore = await getGuests();
@@ -144,7 +147,10 @@ export const guestsDataSource: DataSource<Guest> = {
       ...data,
     } as Guest;
 
-    createGuest(newGuest);
+    const res = createGuest(newGuest);
+    if (!res) {
+      throw new Error('Guest not created.');
+    }
 
     return newGuest;
   },
@@ -168,10 +174,13 @@ export const guestsDataSource: DataSource<Guest> = {
   },
   validate: z.object({
     name: z.string({ required_error: 'Name is required' }).nonempty('Name is required'),
-    age: z.number({ required_error: 'Age is required' }).min(18, 'Age must be at least 18'),
-    joinDate: z
-      .string({ required_error: 'Join date is required' })
-      .nonempty('Join date is required'),
+    email: z.string({ required_error: 'Email is required' }).nonempty('Email is required'),
+    telephone: z.string({ required_error: 'Telephone is required' }).nonempty('Telephone is required'),
+    address_1: z.string({ required_error: 'Address 1 is required' }).nonempty('Address 1 is required'),
+    address_2: z.string({ required_error: 'Address 2 is required' }).nonempty('Address 2 is required'),
+    city: z.string({ required_error: 'City is required' }).nonempty('City is required'),
+    county: z.string({ required_error: 'County is required' }).nonempty('County is required'),
+    postcode: z.string({ required_error: 'Postcode is required' }).nonempty('Postcode is required'),
   })['~standard'].validate,
 };
 

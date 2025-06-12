@@ -1,4 +1,7 @@
-# from werkzeug.security import check_password_hash
+import pytest
+from server.database import db
+from server.models import Users
+from werkzeug.security import check_password_hash
 
 
 def test_get_all_users(client):
@@ -19,19 +22,123 @@ def test_get_single_user(client):
     assert data["username"] == "Alice"
 
 
-# def test_index(client, auth):
-#     response = client.get("/users/")
-#     assert b'href="/auth/login"' in response.data
-#     assert b"Username" not in response.data
-#     assert b"Edit" not in response.data
-#     assert response.headers["Location"] == "/auth/login"
+@pytest.mark.parametrize(
+    "path",
+    (
+        "api/users/3",
+        "api/users/123",
+    ),
+)
+def test_user_record_not_found(client, auth, path):
+    # test data only has 2 records, expects record 3 not found
+    # auth.login()
+    assert client.get(path).status_code == 404
 
-#     auth.login()
-#     response = client.get("/users/")
-#     assert b"Log out" in response.data
-#     assert b"Username" in response.data
-#     assert b"test" in response.data
-#     assert b'href="/users/1/update"' in response.data
+
+def test_create_user(client, auth, app):
+    data = {
+        "username": "test_username",
+        "password": "password",
+    }
+
+    # auth.login()
+    assert client.get("api/users").status_code == 200
+    res = client.post("api/users", json=data)
+    assert res.status_code == 201
+
+    with app.app_context():
+        user = db.session.execute(db.select(Users).filter_by(username="test_username")).scalar_one()
+    assert check_password_hash(user.password, data["password"])
+
+    with app.app_context():
+        count_query = db.func.count(Users.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 3
+
+
+def test_create_user_missing_fields(client, auth, app):
+    data = {
+        # "username": "test_username",
+        "password": "password",
+    }
+
+    # auth.login()
+    assert client.get("api/users").status_code == 200
+    res = client.post("api/users", json=data)
+    assert res.status_code == 400
+    assert "Missing required parameter" in res.json["message"]["username"]
+
+    with app.app_context():
+        count_query = db.func.count(Users.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
+
+
+def test_update_user(client, auth, app):
+    data = {
+        "username": "test_username",
+        "password": "password",
+    }
+
+    # auth.login()
+    assert client.get("api/users").status_code == 200
+    res = client.put("api/users/1", json=data)
+    assert res.status_code == 204
+
+    with app.app_context():
+        user = db.session.execute(db.select(Users).filter_by(username="test_username")).scalar_one()
+    assert check_password_hash(user.password, data["password"])
+
+
+def test_update_user_missing_fields(client, auth, app):
+    data = {
+        # "username": "test_username",
+        "password": "password",
+    }
+
+    # auth.login()
+    assert client.get("api/users/1").status_code == 200
+    res = client.put("api/users/1", json=data)
+    assert res.status_code == 400
+    assert "Missing required parameter" in res.json["message"]["username"]
+
+
+def test_update_user_not_found(client, auth, app):
+    data = {
+        "username": "test_username",
+        "password": "password",
+    }
+
+    # auth.login()
+    assert client.get("api/users").status_code == 200
+    res = client.put("api/users/3", json=data)
+    assert res.status_code == 404
+
+
+def test_delete_user(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/users/1",
+    )
+    assert res.status_code == 204
+
+    with app.app_context():
+        count_query = db.func.count(Users.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 1
+
+
+def test_delete_user_not_found(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/users/3",
+    )
+    assert res.status_code == 404
+
+    with app.app_context():
+        count_query = db.func.count(Users.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
 
 
 # @pytest.mark.parametrize(
