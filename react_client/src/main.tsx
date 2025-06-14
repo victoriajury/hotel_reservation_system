@@ -1,13 +1,14 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+
 import App from './App'
 import DashboardLayout from './layouts/DashboardLayout';
 import HomePage from './pages';
 import Calendar from './pages/Calendar';
 import SpecialOffers from './pages/SpecialOffers';
 import Reservations from './pages/Reservations';
-import Guests from './pages/Guests';
+import Guests, {loader as guestLoader} from './pages/Guests';
 import Invoices from './pages/Invoices';
 import Payments from './pages/Payments';
 import ReservationStatus from './pages/ReservationStatus';
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
           {
             path: 'guests/:guestId?/*',
             Component: Guests,
+            loader: guestLoader,
           },
           {
             path: 'invoices/:invoiceId?/*',
