@@ -5,8 +5,8 @@ import Typography from '@mui/joy/Typography';
 
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
-import OrderTable from '../layouts/components/OrderTable';
-import OrderList from '../layouts/components/OrderList';
+import DataTable from '../layouts/components/DataTable';
+import DataList from '../layouts/components/DataList';
 
 export default function UsersPage() {
   
@@ -36,9 +36,9 @@ export default function UsersPage() {
         </Button>
       </Box>
       {/* Desktop View */}
-      <OrderTable />
+      <DataTable />
       {/* Mobile View */}
-      <OrderList />
+      <DataList />
     </>
   );
 }

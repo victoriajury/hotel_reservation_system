@@ -261,7 +261,7 @@ function RowMenu() {
     </Dropdown>
   );
 }
-export default function OrderTable() {
+export default function DataTable() {
   const [order, setOrder] = React.useState<Order>('desc');
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [open, setOpen] = React.useState(false);
@@ -359,7 +359,7 @@ export default function OrderTable() {
         {renderFilters()}
       </Box>
       <Sheet
-        className="OrderTableContainer"
+        className="DataTableContainer"
         variant="outlined"
         sx={{
           display: { xs: 'none', sm: 'initial' },
