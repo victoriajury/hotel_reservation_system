@@ -130,30 +130,30 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
                 />
               </th>
               {columns.map((col) => (
-              <th key={col.key as string} style={{ padding: '12px 6px' }}>
-                <Link
-                  underline="none"
-                  color="primary"
-                  component="button"
-                  onClick={() => setOrder(order === 'asc' ? 'desc' : 'asc')}
-                  endDecorator={<ArrowDropDownIcon />}
-                  sx={[
-                    {
-                      fontWeight: 'lg',
-                      '& svg': {
-                        transition: '0.2s',
-                        transform:
-                          order === 'desc' ? 'rotate(0deg)' : 'rotate(180deg)',
+                <th key={col.key as string} style={{ padding: '12px 6px' }}>
+                  <Link
+                    underline="none"
+                    color="primary"
+                    component="button"
+                    onClick={() => setOrder(order === 'asc' ? 'desc' : 'asc')}
+                    endDecorator={<ArrowDropDownIcon />}
+                    sx={[
+                      {
+                        fontWeight: 'lg',
+                        '& svg': {
+                          transition: '0.2s',
+                          transform:
+                            order === 'desc' ? 'rotate(0deg)' : 'rotate(180deg)',
+                        },
                       },
-                    },
-                    order === 'desc'
-                      ? { '& svg': { transform: 'rotate(0deg)' } }
-                      : { '& svg': { transform: 'rotate(180deg)' } },
-                  ]}
-                >
-                  {col.label}
-                </Link>
-              </th>
+                      order === 'desc'
+                        ? { '& svg': { transform: 'rotate(0deg)' } }
+                        : { '& svg': { transform: 'rotate(180deg)' } },
+                    ]}
+                  >
+                    {col.label}
+                  </Link>
+                </th>
               ))}
               {/* Actions col */}
               <th style={{ width: 140, padding: '12px 6px' }}> </th>

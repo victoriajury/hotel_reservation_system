@@ -24,7 +24,7 @@ export interface Guest extends DataModel {
 }
 
 export interface RoomType extends DataModel {
-  room_type_name: string;
+  type_name: string;
   base_price_per_night: number;
   amenities: string;
   photo: string;
