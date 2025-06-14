@@ -9,7 +9,7 @@ import Calendar from './pages/Calendar';
 import SpecialOffers, { loader as offersLoader } from './pages/SpecialOffers';
 import Reservations, { loader as reservationsLoader }  from './pages/Reservations';
 import Guests, { loader as guestsLoader } from './pages/Guests';
-import Invoices from './pages/Invoices';
+import Invoices, { loader as invoicesLoader } from './pages/Invoices';
 import Payments from './pages/Payments';
 import ReservationStatus from './pages/ReservationStatus';
 import RoomTypes from './pages/RoomTypes';
@@ -52,6 +52,7 @@ const router = createBrowserRouter([
           {
             path: 'invoices/:invoiceId?/*',
             Component: Invoices,
+            loader: invoicesLoader,
           },
           {
             path: 'payments/:paymentId?/*',

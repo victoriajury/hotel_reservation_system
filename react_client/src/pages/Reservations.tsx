@@ -21,22 +21,27 @@ const reservationsColumns = [
   {
     key: 'start_date',
     label: 'Check-In',
-    render: (guest: Reservation) =>
-      new Date(guest.modified).toLocaleString(),
+    render: (reservation: Reservation) =>
+      new Date(reservation.modified).toLocaleString(),
   },
   {
     key: 'end_date',
     label: 'Check-Out',
-    render: (guest: Reservation) =>
-      new Date(guest.modified).toLocaleString(),
+    render: (reservation: Reservation) =>
+      new Date(reservation.modified).toLocaleString(),
   },
   { key: 'status', label: 'Status' },
-  { key: 'total_room_base_price', label: 'Price' },
+  { 
+    key: 'total_room_base_price', 
+    label: 'Price',
+    render: (reservation: Reservation) =>
+      '\u00A3 ' + String(reservation.total_room_base_price.toFixed(2)),
+  },
   {
     key: 'modified',
     label: 'Last Modified',
-    render: (guest: Reservation) =>
-      new Date(guest.modified).toLocaleString(),
+    render: (reservation: Reservation) =>
+      new Date(reservation.modified).toLocaleString(),
   },
 ];
 
