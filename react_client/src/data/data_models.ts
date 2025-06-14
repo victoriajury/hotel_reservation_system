@@ -34,7 +34,7 @@ export interface RoomType extends DataModel {
 
 export interface Room extends DataModel {
   room_number: number;
-  room_type: string;
+  room_type: number;
   modified: string;
 }
 
@@ -48,42 +48,42 @@ export interface Reservation extends DataModel {
   number_of_guests: string;
   start_date: string;
   end_date: string;
-  total_room_base_price: string;
-  special_offer_applied: string;
-  special_offer_discount: string;
+  total_room_base_price: number;
+  special_offer_applied: number;
+  special_offer_discount: number;
   reservation_notes: string;
-  status_id: string;
+  status_id: number;
   modified: string;
 }
 
 export interface SpecialOffer extends DataModel {
   title: string;
-  room_type: string;
-  price_per_night: string;
+  room_type_name: string;
+  price_per_night: number;
   start_date: string;
   end_date: string;
-  is_enabled: string;
+  is_enabled: boolean;
   modified: string;
 }
 
 export interface Invoice extends DataModel {
-  reservation_id: string;
-  amount_paid: string;
+  reservation_id: number;
+  amount_paid: number;
   modified: string;
 }
 
 export interface InvoiceItem extends DataModel {
   invoice_id: string;
   item_description: string;
-  is_room: string;
-  quantity: string;
-  price: string;
-  total: string;
+  is_room: boolean;
+  quantity: number;
+  price: number;
+  total: number;
   modified: string;
 }
 
 export interface Payment extends DataModel {
-  invoice_id: string;
-  amount: string;
+  invoice_id: number;
+  amount: number;
   modified: string;
 }

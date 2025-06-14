@@ -6,9 +6,9 @@ import App from './App'
 import DashboardLayout from './layouts/DashboardLayout';
 import HomePage from './pages';
 import Calendar from './pages/Calendar';
-import SpecialOffers from './pages/SpecialOffers';
-import Reservations, {loader as reservationsLoader}  from './pages/Reservations';
-import Guests, {loader as guestsLoader} from './pages/Guests';
+import SpecialOffers, { loader as offersLoader } from './pages/SpecialOffers';
+import Reservations, { loader as reservationsLoader }  from './pages/Reservations';
+import Guests, { loader as guestsLoader } from './pages/Guests';
 import Invoices from './pages/Invoices';
 import Payments from './pages/Payments';
 import ReservationStatus from './pages/ReservationStatus';
@@ -42,6 +42,7 @@ const router = createBrowserRouter([
           {
             path: 'special-offers/:specialOfferId?/*',
             Component: SpecialOffers,
+            loader: offersLoader,
           },
           {
             path: 'guests/:guestId?/*',

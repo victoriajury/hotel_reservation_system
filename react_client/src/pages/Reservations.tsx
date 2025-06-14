@@ -18,13 +18,13 @@ export async function loader() {
 }
 
 const reservationsColumns = [
-  { 
+  {
     key: 'start_date',
     label: 'Check-In',
     render: (guest: Reservation) =>
       new Date(guest.modified).toLocaleString(),
-  }, 
-  { 
+  },
+  {
     key: 'end_date',
     label: 'Check-Out',
     render: (guest: Reservation) =>
