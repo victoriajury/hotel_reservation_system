@@ -3,7 +3,7 @@ import Box from '@mui/joy/Box';
 import Typography from '@mui/joy/Typography';
 
 
-export default function HomePage() {
+export default function Calendar() {
   
 
   return (
