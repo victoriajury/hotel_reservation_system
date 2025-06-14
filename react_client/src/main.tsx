@@ -7,8 +7,8 @@ import DashboardLayout from './layouts/DashboardLayout';
 import HomePage from './pages';
 import Calendar from './pages/Calendar';
 import SpecialOffers from './pages/SpecialOffers';
-import Reservations from './pages/Reservations';
-import Guests, {loader as guestLoader} from './pages/Guests';
+import Reservations, {loader as reservationsLoader}  from './pages/Reservations';
+import Guests, {loader as guestsLoader} from './pages/Guests';
 import Invoices from './pages/Invoices';
 import Payments from './pages/Payments';
 import ReservationStatus from './pages/ReservationStatus';
@@ -37,6 +37,7 @@ const router = createBrowserRouter([
           {
             path: 'reservations/:reservationId?/*',
             Component: Reservations,
+            loader: reservationsLoader,
           },
           {
             path: 'special-offers/:specialOfferId?/*',
@@ -45,7 +46,7 @@ const router = createBrowserRouter([
           {
             path: 'guests/:guestId?/*',
             Component: Guests,
-            loader: guestLoader,
+            loader: guestsLoader,
           },
           {
             path: 'invoices/:invoiceId?/*',

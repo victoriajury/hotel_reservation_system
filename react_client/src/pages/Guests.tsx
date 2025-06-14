@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useLoaderData } from 'react-router-dom';
 import { getGuests } from '../data/guests';
+import { Guest } from '../data/data_models';
 
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
@@ -10,8 +11,6 @@ import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
 import DataTable from '../layouts/components/DataTable';
 import DataList from '../layouts/components/DataList';
-
-import { Guest } from '../data/data_models';
 
 export async function loader() {
   const guests = await getGuests();

@@ -44,7 +44,7 @@ export interface ReservationStatus extends DataModel {
   bg_color: string;
 }
 
-export interface Reservations extends DataModel {
+export interface Reservation extends DataModel {
   number_of_guests: string;
   start_date: string;
   end_date: string;
@@ -56,7 +56,7 @@ export interface Reservations extends DataModel {
   modified: string;
 }
 
-export interface SpecialOffers extends DataModel {
+export interface SpecialOffer extends DataModel {
   title: string;
   room_type: string;
   price_per_night: string;
@@ -66,13 +66,13 @@ export interface SpecialOffers extends DataModel {
   modified: string;
 }
 
-export interface Invoices extends DataModel {
+export interface Invoice extends DataModel {
   reservation_id: string;
   amount_paid: string;
   modified: string;
 }
 
-export interface InvoiceItems extends DataModel {
+export interface InvoiceItem extends DataModel {
   invoice_id: string;
   item_description: string;
   is_room: string;
@@ -82,7 +82,7 @@ export interface InvoiceItems extends DataModel {
   modified: string;
 }
 
-export interface Payments extends DataModel {
+export interface Payment extends DataModel {
   invoice_id: string;
   amount: string;
   modified: string;
