@@ -14,6 +14,7 @@ import ReservationStatus from './pages/ReservationStatus';
 import RoomTypes from './pages/RoomTypes';
 import Rooms from './pages/Rooms';
 import Users from './pages/Users';
+import Error from './pages/Error';
 
 
 const router = createBrowserRouter([
@@ -68,6 +69,10 @@ const router = createBrowserRouter([
             path: 'users/:userId?/*',
             Component: Users,
           },
+          {
+            path: '*',
+            Component: Error
+          }
         ],
       },
     ],
