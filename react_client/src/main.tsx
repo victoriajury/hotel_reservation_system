@@ -10,11 +10,11 @@ import SpecialOffers, { loader as offersLoader } from './pages/SpecialOffers';
 import Reservations, { loader as reservationsLoader }  from './pages/Reservations';
 import Guests, { loader as guestsLoader } from './pages/Guests';
 import Invoices, { loader as invoicesLoader } from './pages/Invoices';
-import Payments from './pages/Payments';
-import ReservationStatus from './pages/ReservationStatus';
-import RoomTypes from './pages/RoomTypes';
-import Rooms from './pages/Rooms';
-import Users from './pages/Users';
+import Payments, { loader as paymentsLoader } from './pages/Payments';
+import ReservationStatus, { loader as reservationStatusLoader } from './pages/ReservationStatus';
+import RoomTypes, { loader as roomTypesLoader } from './pages/RoomTypes';
+import Rooms, { loader as roomsLoader } from './pages/Rooms';
+import Users, { loader as usersLoader }  from './pages/Users';
 import Error from './pages/Error';
 
 
@@ -57,22 +57,27 @@ const router = createBrowserRouter([
           {
             path: 'payments/:paymentId?/*',
             Component: Payments,
+            loader: paymentsLoader,
           },
           {
             path: 'reservation-statuses/:reservationStatusId?/*',
             Component: ReservationStatus,
+            loader: reservationStatusLoader,
           },
           {
             path: 'room-types/:roomTypeId?/*',
             Component: RoomTypes,
+            loader: roomTypesLoader,
           },
           {
             path: 'rooms/:roomId?/*',
             Component: Rooms,
+            loader: roomsLoader,
           },
           {
             path: 'users/:userId?/*',
             Component: Users,
+            loader: usersLoader,
           },
           {
             path: '*',

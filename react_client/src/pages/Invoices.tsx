@@ -19,7 +19,7 @@ export async function loader() {
 }
 
 const invoiceColumns = [
-  { key: 'reservation_id', label: 'Reservation' },
+  { key: 'reservation_id', label: 'Booking No.' },
   { 
     key: 'amount_paid', 
     label: 'Amount Paid',
