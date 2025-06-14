@@ -4,7 +4,7 @@ import Typography from '@mui/joy/Typography';
 
 
 export default function HomePage() {
-
+  
 
   return (
     <>
@@ -20,7 +20,7 @@ export default function HomePage() {
         }}
       >
         <Typography level="h2" component="h1">
-          Dashboard
+          Calendar
         </Typography>
       </Box>
     </>

@@ -26,6 +26,8 @@ It is a full-stack application using the Flask framework for the REST API backen
 
     I had used a Bootstrap/jQuery dashboard template (<https://adminlte.io/>) to style the frontend, but I am considering using the Material UI React library (<https://mui.com/>) instead.
 
+  - [Joy UI Installation Guide](https://v6.mui.com/joy-ui/getting-started/installation/)
+
 ## Setup environment
 
 This project was developed using Linux. Commands for running in a Windows enviroment will be a little different. I will put instructions here later.
@@ -111,22 +113,6 @@ $ npm --version
 10.9.2
 ```
 
-### Install and Setup Toolpad Core
-
-``` bash
-npx create-toolpad-app@latest
-✔ Enter path of directory to bootstrap new app: react_client
-✔ Which framework would you like to use? Vite
-✔ Would you like to enable authentication? no
-```
-
-Run the following to get started:
-
-``` bash
-  cd react_client
-  npm run dev
-```
-
 ## Run the application
 
 ### Initialise database
@@ -147,15 +133,34 @@ flask --app server/app run --debug
 
 ###
 
-If flask runs successfully, you should be able to click the link in terminal:
+If flask runs successfully, you should see:
 
 ``` bash
 * Running on http://127.0.0.1:5000
 ```
 
+### Run the React frontend
+
+Run the following to start the React frontend:
+
+``` bash
+  cd react_client
+  npm run dev
+```
+
+If running successfully, you should be able to open the link in your browser:
+
+```bash
+  VITE v6.3.5  ready in 211 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+```
+
 Log in to the system as username 'admin' with password 'dev'.
 
-### Run the tests
+### Running the tests
 
 #### Coverage with Pytest
 
@@ -237,7 +242,7 @@ coverage xml
   - [ ] Integrate with 3rd-party payment gateways
   - [ ] Accounting reports
 
-- ### Code
+- ### Python API
 
   - [x] Refactor row query functions
   - [ ] Would type hints help?
