@@ -56,11 +56,6 @@ export default function GuestsPage() {
           Download PDF
         </Button>
       </Box>
-      <Box sx={{ mb: 2 }}>
-        <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
-          {guests.length} guests found
-        </Typography>
-      </Box>
       {/* Desktop View */}
       <DataTable data={guests} columns={guestColumns} />
       {/* Mobile View */}

@@ -3,6 +3,7 @@ import { useLoaderData } from 'react-router-dom';
 import { getRoomTypes } from '../data/room_types';
 import { RoomType } from '../data/data_models';
 
+import Avatar from '@mui/joy/Avatar';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import Typography from '@mui/joy/Typography';
@@ -11,7 +12,6 @@ import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
 import DataTable from '../layouts/components/DataTable';
 import DataList from '../layouts/components/DataList';
-import Avatar from '@mui/joy/Avatar';
 
 export async function loader() {
   const roomTypes = await getRoomTypes();
