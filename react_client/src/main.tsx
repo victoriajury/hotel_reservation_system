@@ -9,6 +9,7 @@ import Calendar from './pages/Calendar';
 import SpecialOffers, { loader as offersLoader } from './pages/SpecialOffers';
 import Reservations, { loader as reservationsLoader }  from './pages/Reservations';
 import Guests, { loader as guestsLoader } from './pages/Guests';
+import GuestProfile from './pages/GuestProfile';
 import Invoices, { loader as invoicesLoader } from './pages/Invoices';
 import Payments, { loader as paymentsLoader } from './pages/Payments';
 import ReservationStatus, { loader as reservationStatusLoader } from './pages/ReservationStatus';
@@ -45,9 +46,13 @@ const router = createBrowserRouter([
             loader: offersLoader,
           },
           {
-            path: 'guests/:guestId?/*',
+            path: 'guests',
             Component: Guests,
             loader: guestsLoader,
+          },
+          {
+            path: 'guest-profile/:guestId?/*',
+            Component: GuestProfile,
           },
           {
             path: 'invoices/:invoiceId?/*',

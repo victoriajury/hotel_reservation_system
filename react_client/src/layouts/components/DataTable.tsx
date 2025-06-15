@@ -68,8 +68,6 @@ function RowMenu() {
       </MenuButton>
       <Menu size="sm" sx={{ minWidth: 140 }}>
         <MenuItem>Edit</MenuItem>
-        <MenuItem>Rename</MenuItem>
-        <MenuItem>Move</MenuItem>
         <Divider />
         <MenuItem color="danger">Delete</MenuItem>
       </Menu>
@@ -156,7 +154,7 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
                 </th>
               ))}
               {/* Actions col */}
-              <th style={{ width: 140, padding: '12px 6px' }}> </th>
+              <th style={{ width: 50, padding: '12px 6px' }}> </th>
             </tr>
           </thead>
           <tbody>
@@ -191,9 +189,6 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
                 {/* Row actions */}
                 <td>
                   <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                    <Link level="body-xs" component="button">
-                      Download
-                    </Link>
                     <RowMenu />
                   </Box>
                 </td>
