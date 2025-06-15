@@ -22,13 +22,13 @@ const reservationsColumns = [
     key: 'start_date',
     label: 'Check-In',
     render: (reservation: Reservation) =>
-      new Date(reservation.modified).toLocaleString(),
+      new Date(reservation.modified).toLocaleDateString(),
   },
   {
     key: 'end_date',
     label: 'Check-Out',
     render: (reservation: Reservation) =>
-      new Date(reservation.modified).toLocaleString(),
+      new Date(reservation.modified).toLocaleDateString(),
   },
   { key: 'status', label: 'Status' },
   { 

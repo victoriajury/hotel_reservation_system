@@ -160,6 +160,7 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
             </tr>
           </thead>
           <tbody>
+            {/* Data row */}
             {[...data].sort(getComparator(order, 'id')).map((row) => (
               <tr key={row.id}>
                 <td style={{ textAlign: 'center', width: 120 }}>
@@ -187,6 +188,7 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
                   </td>
                 ))}
 
+                {/* Row actions */}
                 <td>
                   <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                     <Link level="body-xs" component="button">
