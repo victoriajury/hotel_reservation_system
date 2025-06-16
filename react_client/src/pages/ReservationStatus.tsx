@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useLoaderData } from 'react-router-dom';
-import { getReservationStatuses } from '../data/reservation_statuses';
+import { getReservationStatuses } from '../data/reservation_status';
 import { ReservationStatus } from '../data/data_models';
 
 import Box from '@mui/joy/Box';

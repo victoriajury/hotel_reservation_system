@@ -341,7 +341,7 @@ export default function GuestProfile() {
               </CardOverflow>
             </Card>
             <Modal open={open} onClose={() => setOpen(false)}>
-              <ModalDelete id={guest.id} onDelete={handleDelete} setOpen={setOpen} />
+              <ModalDelete id={guest.id} objName='Guest' onDelete={handleDelete} setOpen={setOpen} />
             </Modal>
           </React.Fragment>
         }

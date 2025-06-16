@@ -16,11 +16,12 @@ import ModalDelete from './ModalDelete';
 
 interface RowActionProps {
   id: DataModelId;
-  editPath: string;
+  objName: string;
+  editPath?: string;
   onDelete?: (id: DataModelId) => void;
 }
 
-export default function DataTableRowActions({ id, editPath, onDelete }: RowActionProps) {
+export default function DataTableRowActions({ id, objName, editPath, onDelete }: RowActionProps) {
   const [open, setOpen] = React.useState<boolean>(false);
   const navigate = useNavigate();
 
@@ -45,7 +46,7 @@ export default function DataTableRowActions({ id, editPath, onDelete }: RowActio
       </Dropdown>
       {onDelete &&
       <Modal open={open} onClose={() => setOpen(false)}>
-        <ModalDelete id={id} onDelete={onDelete} setOpen={setOpen} />
+        <ModalDelete id={id} objName={objName} onDelete={onDelete} setOpen={setOpen} />
       </Modal>
       }
     </React.Fragment>

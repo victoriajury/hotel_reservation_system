@@ -87,7 +87,7 @@ export default function GuestsPage() {
         </Button>
       </Box>
       {/* Desktop View */}
-      <DataTable data={guests} columns={guestColumns} editPath='/guest-profile' onDelete={handleDelete} />
+      <DataTable data={guests} columns={guestColumns} objName="Guest" editPath='/guest-profile' onDelete={handleDelete} />
       {/* Mobile View */}
       <DataList />
     </>

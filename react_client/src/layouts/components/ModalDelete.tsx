@@ -12,20 +12,21 @@ import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 
 interface ModalProps {
   id: DataModelId;
+  objName: string;
   onDelete: (id: DataModelId) => void;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function ModalDelete({ id, onDelete, setOpen }: ModalProps) {
+export default function ModalDelete({ id, objName, onDelete, setOpen }: ModalProps) {
   return (
     <ModalDialog variant="outlined" role="alertdialog">
       <DialogTitle>
         <DeleteRoundedIcon />
-        Delete Guest
+        Delete {objName}
       </DialogTitle>
       <Divider />
       <DialogContent>
-        Are you sure you want to delete this guest?
+        Are you sure you want to delete this {objName.toLowerCase()}?
       </DialogContent>
       <DialogActions>
         <Button variant="solid" color="danger" onClick={() => { setOpen(false); onDelete(id) }}>

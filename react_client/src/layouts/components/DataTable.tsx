@@ -28,7 +28,8 @@ export interface TableColumn<T> {
 interface DataTableProps<T extends DataModel> {
   data: T[];
   columns: TableColumn<T>[];
-  editPath: string;
+  objName: string;
+  editPath?: string;
   onDelete?: (id: DataModelId) => void;
 }
 
@@ -56,7 +57,7 @@ function getComparator<Key extends keyof any>(
     : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
-export default function DataTable<T extends DataModel>({ data, columns, editPath, onDelete }: DataTableProps<T>) {
+export default function DataTable<T extends DataModel>({ data, columns, objName, editPath, onDelete }: DataTableProps<T>) {
   const [order, setOrder] = React.useState<Order>('desc');
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   return (
@@ -173,7 +174,7 @@ export default function DataTable<T extends DataModel>({ data, columns, editPath
                 {/* Row actions */}
                 <td>
                   <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                    <DataTableRowActions editPath={editPath} id={row.id} onDelete={onDelete} />
+                    <DataTableRowActions id={row.id} objName={objName} editPath={editPath} onDelete={onDelete} />
                   </Box>
                 </td>
               </tr>

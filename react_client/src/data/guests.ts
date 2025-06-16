@@ -33,14 +33,7 @@ export async function updateGuest(id: DataModelId, updatedGuest: Partial<Guest>)
     });
     if (!res.ok) throw new Error('Failed to update guest');
     const text = await res.text();
-    if (text) {
-        const json = JSON.parse(text);
-        console.log('json: ', json);
-        return json;
-    }
-    else {
-        return undefined
-    }
+    return text ? JSON.parse(text) : undefined;
 }
 
 export async function deleteGuest(id: DataModelId): Promise<void> {

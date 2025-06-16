@@ -51,15 +51,15 @@ const router = createBrowserRouter([
             loader: guestsLoader,
           },
           {
-            path: 'guest-profile/:guestId?',
-            Component: GuestProfile,
-            action: guestProfileAction,
-            loader: guestProfileLoader,
-          },
-          {
             path: 'guest-profile/new',
             Component: GuestProfile,
             action: guestProfileAction,
+          },
+          {
+            path: 'guest-profile/:guestId',
+            Component: GuestProfile,
+            action: guestProfileAction,
+            loader: guestProfileLoader,
           },
           {
             path: 'invoices/:invoiceId?/*',
@@ -72,7 +72,7 @@ const router = createBrowserRouter([
             loader: paymentsLoader,
           },
           {
-            path: 'reservation-statuses/:reservationStatusId?/*',
+            path: 'reservation-status/:reservationStatusId?/*',
             Component: ReservationStatus,
             loader: reservationStatusLoader,
           },
