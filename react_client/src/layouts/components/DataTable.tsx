@@ -1,36 +1,35 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import * as React from 'react';
+import { DataModelId, DataModel } from '../../data/data_models';
+
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
-import Divider from '@mui/joy/Divider';
 import Link from '@mui/joy/Link';
 import Table from '@mui/joy/Table';
 import Sheet from '@mui/joy/Sheet';
 import Checkbox from '@mui/joy/Checkbox';
 import IconButton, { iconButtonClasses } from '@mui/joy/IconButton';
 import Typography from '@mui/joy/Typography';
-import Menu from '@mui/joy/Menu';
-import MenuButton from '@mui/joy/MenuButton';
-import MenuItem from '@mui/joy/MenuItem';
-import Dropdown from '@mui/joy/Dropdown';
 
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
-import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 
 import DataTableSearchFilters from './DataTableSearchFilters';
-import { DataModel } from '../../data/data_models';
+import DataTableRowActions from './DataTableRowActions';
 
 export interface TableColumn<T> {
   key: keyof T;
   label: string;
+  width?: number;
   render?: (row: T) => React.ReactNode;
 }
 
 interface DataTableProps<T extends DataModel> {
   data: T[];
   columns: TableColumn<T>[];
+  editPath: string;
+  onDelete?: (id: DataModelId) => void;
 }
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
@@ -57,25 +56,7 @@ function getComparator<Key extends keyof any>(
     : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
-function RowMenu() {
-  return (
-    <Dropdown>
-      <MenuButton
-        slots={{ root: IconButton }}
-        slotProps={{ root: { variant: 'plain', color: 'neutral', size: 'sm' } }}
-      >
-        <MoreHorizRoundedIcon />
-      </MenuButton>
-      <Menu size="sm" sx={{ minWidth: 140 }}>
-        <MenuItem>Edit</MenuItem>
-        <Divider />
-        <MenuItem color="danger">Delete</MenuItem>
-      </Menu>
-    </Dropdown>
-  );
-}
-
-export default function DataTable<T extends DataModel>({ data, columns }: DataTableProps<T>) {
+export default function DataTable<T extends DataModel>({ data, columns, editPath, onDelete }: DataTableProps<T>) {
   const [order, setOrder] = React.useState<Order>('desc');
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   return (
@@ -128,7 +109,10 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
                 />
               </th>
               {columns.map((col) => (
-                <th key={col.key as string} style={{ padding: '12px 6px' }}>
+                <th
+                  key={col.key as string}
+                  style={col.width ? { width: col.width, padding: '12px 6px' } : { padding: '12px 6px' }}
+                >
                   <Link
                     underline="none"
                     color="primary"
@@ -189,7 +173,7 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
                 {/* Row actions */}
                 <td>
                   <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                    <RowMenu />
+                    <DataTableRowActions editPath={editPath} id={row.id} onDelete={onDelete} />
                   </Box>
                 </td>
               </tr>

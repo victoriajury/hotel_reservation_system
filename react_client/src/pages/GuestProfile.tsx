@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useLoaderData, redirect, Form, useParams } from 'react-router-dom';
-import { createGuest, getGuest, updateGuest } from '../data/guests';
+import { useLoaderData, redirect, Form, useParams, useNavigate } from 'react-router-dom';
+import { createGuest, getGuest, updateGuest, deleteGuest } from '../data/guests';
 import { DataModelId, Guest } from '../data/data_models';
 
 import Alert from '@mui/joy/Alert';
@@ -20,12 +20,14 @@ import Tab, { tabClasses } from '@mui/joy/Tab';
 import Card from '@mui/joy/Card';
 import CardActions from '@mui/joy/CardActions';
 import CardOverflow from '@mui/joy/CardOverflow';
+import Modal from '@mui/joy/Modal';
 
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 
 import CountrySelector from '../layouts/components/CountrySelector';
+import ModalDelete from '../layouts/components/ModalDelete';
 
 export function getGuestId() {
   const params: any = useParams()
@@ -41,11 +43,6 @@ export async function loader({ params }: { params: { guestId?: string } }) {
     return guest;
   }
   return redirect(`/guests`);
-}
-
-export function getGuestData() {
-  const guest = useLoaderData();
-  return guest
 }
 
 export async function action({ request }: { request: Request }) {
@@ -80,25 +77,27 @@ export async function action({ request }: { request: Request }) {
 
   else {
     const guest = await createGuest(newGuest);
-    return redirect(`/guest-profile/${guest.id}`);    
+    return redirect(`/guest-profile/${guest.id}`);
   }
 }
 
-export default function GuestProfile() { 
+export default function GuestProfile() {
+  let navigate = useNavigate();
+  const [open, setOpen] = React.useState<boolean>(false);
   const isEditMode = (getGuestId()) ? true : false;
-  
+
   let guest = [];
   if (isEditMode) {
-    guest = getGuestData();
+    guest = useLoaderData();
   }
 
   const [tabIndex, setTabIndex] = React.useState(0);
   const sections = [
-    { label: 'Guest Info', ref: React.useRef<HTMLDivElement>(null) },
-    { label: 'Notes', ref: React.useRef<HTMLDivElement>(null) },
-    { label: 'Bookings', ref: React.useRef<HTMLDivElement>(null) },
-    { label: 'Reviews', ref: React.useRef<HTMLDivElement>(null) },
-    { label: 'Settings', ref: React.useRef<HTMLDivElement>(null) },
+    { label: 'Guest Info', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: true },
+    { label: 'Notes', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: true  },
+    { label: 'Bookings', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false  },
+    { label: 'Reviews', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false  },
+    { label: 'Settings', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false  },
   ];
 
   const handleTabChange = (
@@ -117,6 +116,11 @@ export default function GuestProfile() {
 
   const scrollOffset = 60;
 
+  const handleDelete = async (id: DataModelId) => {
+    await deleteGuest(id.toString())
+    navigate('/guests')
+  };
+  
   return (
     <Box sx={{ flex: 1, width: '100%' }}>
       <Box
@@ -124,7 +128,7 @@ export default function GuestProfile() {
           position: 'sticky',
           top: { sm: -67, md: -77 },
           bgcolor: 'background.body',
-          zIndex: 9995,
+          zIndex: 900,
         }}
       >
         <Box sx={{ px: { xs: 2, md: 6 } }}>
@@ -154,9 +158,11 @@ export default function GuestProfile() {
               },
             }}
           >
-            {sections.map((section) => (
-              <Tab sx={{ borderRadius: '6px 6px 0 0' }} key={section.label}>{section.label}</Tab>
-            ))}
+            { sections.map((section) => 
+              !isEditMode && !section.showOnNewPage
+              ? ""
+              : <Tab sx={{ borderRadius: '6px 6px 0 0' }} key={section.label}>{section.label}</Tab>
+            )}
           </TabList>
         </Tabs>
       </Box>
@@ -171,167 +177,174 @@ export default function GuestProfile() {
         }}
       >
         <Form method="post" name="guest-form">
-        {isEditMode && <input type="hidden" defaultValue={guest.id} name="id" /> }
+          {isEditMode && <input type="hidden" defaultValue={guest.id} name="id" />}
 
-        <Card key={sections[0].label} ref={sections[0].ref} sx={{ scrollMarginTop: scrollOffset }}>
-          <Box sx={{ mb: 1 }}>
-            <Typography level="title-md">Guest Info</Typography>
-            <Typography level="body-sm">
-              Guest name, address and contact details.
-            </Typography>
-          </Box>
-          <Divider />
+          <Card key={sections[0].label} ref={sections[0].ref} sx={{ scrollMarginTop: scrollOffset }}>
+            <Box sx={{ mb: 1 }}>
+              <Typography level="title-md">Guest Info</Typography>
+              <Typography level="body-sm">
+                Guest name, address and contact details.
+              </Typography>
+            </Box>
+            <Divider />
 
-          <Stack
-            direction="column"
-            spacing={3}
-            sx={{ display: { xs: 'flex', md: 'flex' }, my: 1 }}
-          >
-            <Stack spacing={2}>
-              {/* Name */}
-              <Stack spacing={1} sx={{ flexGrow: 1 }}>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input size="sm" placeholder="Name" name="name" defaultValue={guest.name} />
-                </FormControl>
-              </Stack>
+            <Stack
+              direction="column"
+              spacing={3}
+              sx={{ display: { xs: 'flex', md: 'flex' }, my: 1 }}
+            >
+              <Stack spacing={2}>
+                {/* Name */}
+                <Stack spacing={1} sx={{ flexGrow: 1 }}>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input size="sm" placeholder="Name" name="name" defaultValue={guest.name} />
+                  </FormControl>
+                </Stack>
 
-              {/* Phone & Email */}
-              <Stack direction="row" spacing={2} sx={{ flexGrow: 1 }}>
-                <FormControl sx={{ flexGrow: 1 }}>
-                  <FormLabel>Email</FormLabel>
-                  <Input
-                    size="sm"
-                    type="email"
-                    startDecorator={<EmailRoundedIcon />}
-                    placeholder="email@example.com"
-                    name="email"
-                    defaultValue={guest.email}
-                    sx={{ flexGrow: 1 }}
-                  />
-                </FormControl>
-                <FormControl>
-                  <FormLabel>Telephone</FormLabel>
-                  <Input 
-                    size="sm"
-                    startDecorator={<PhoneRoundedIcon />}
-                    placeholder="07123 456 789"
-                    name="telephone"
-                     defaultValue={guest.telephone}
-                  />
-                </FormControl>
-              </Stack>
+                {/* Phone & Email */}
+                <Stack direction="row" spacing={2} sx={{ flexGrow: 1 }}>
+                  <FormControl sx={{ flexGrow: 1 }}>
+                    <FormLabel>Email</FormLabel>
+                    <Input
+                      size="sm"
+                      type="email"
+                      startDecorator={<EmailRoundedIcon />}
+                      placeholder="email@example.com"
+                      name="email"
+                      defaultValue={guest.email}
+                      sx={{ flexGrow: 1 }}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Telephone</FormLabel>
+                    <Input
+                      size="sm"
+                      startDecorator={<PhoneRoundedIcon />}
+                      placeholder="07123 456 789"
+                      name="telephone"
+                      defaultValue={guest.telephone}
+                    />
+                  </FormControl>
+                </Stack>
 
-              {/* Address */}
-              <Stack direction="column"  spacing={2} sx={{ flexGrow: 1 }}>
-                <FormControl
-                  sx={{
-                    display: {
-                      sm: 'flex-column',
-                      md: 'flex-row',
-                    },
-                  }}
+                {/* Address */}
+                <Stack direction="column" spacing={2} sx={{ flexGrow: 1 }}>
+                  <FormControl
+                    sx={{
+                      display: {
+                        sm: 'flex-column',
+                        md: 'flex-row',
+                      },
+                    }}
                   >
-                  <FormLabel>Address</FormLabel>
-                  <Input sx={{ mb: 1}} size="sm" placeholder="Address Line 1" name="address_1" defaultValue={guest.address_1} />
-                  <Input sx={{ mb: 1}}  size="sm" placeholder="Address Line 2" name="address_2" defaultValue={guest.address_2} />
-                  <Input sx={{ mb: 1}}  size="sm" placeholder="City" name="city" defaultValue={guest.city}/>
-                  <Stack direction="row" spacing={2}>
-                    <Input size="sm" placeholder="Postcode" name="postcode" defaultValue={guest.postcode} />
-                    <Input size="sm" placeholder="County/Region" name="county" defaultValue={guest.county} sx={{ flexGrow: 1 }} />
-                  </Stack>
-                </FormControl>
-                <div>
-                <CountrySelector />
-                </div>
+                    <FormLabel>Address</FormLabel>
+                    <Input sx={{ mb: 1 }} size="sm" placeholder="Address Line 1" name="address_1" defaultValue={guest.address_1} />
+                    <Input sx={{ mb: 1 }} size="sm" placeholder="Address Line 2" name="address_2" defaultValue={guest.address_2} />
+                    <Input sx={{ mb: 1 }} size="sm" placeholder="City" name="city" defaultValue={guest.city} />
+                    <Stack direction="row" spacing={2}>
+                      <Input size="sm" placeholder="Postcode" name="postcode" defaultValue={guest.postcode} />
+                      <Input size="sm" placeholder="County/Region" name="county" defaultValue={guest.county} sx={{ flexGrow: 1 }} />
+                    </Stack>
+                  </FormControl>
+                  <div>
+                    <CountrySelector />
+                  </div>
+                </Stack>
               </Stack>
             </Stack>
-          </Stack>
-          <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
-            <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
-              <Button size="sm" variant="outlined" color="neutral">
-                Cancel
-              </Button>
-              <Button size="sm" variant="solid" type="submit">
-                Save
-              </Button>
-            </CardActions>
-          </CardOverflow>
-        </Card>
+            <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+              <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
+                <Button size="sm" variant="outlined" color="neutral" onClick={() => navigate('/guests')}>
+                  Cancel
+                </Button>
+                <Button size="sm" variant="solid" type="submit">
+                  Save
+                </Button>
+              </CardActions>
+            </CardOverflow>
+          </Card>
         </Form>
         <Form method="post" name="guest-form">
-        <Card key={sections[1].label} ref={sections[1].ref} sx={{ scrollMarginTop: scrollOffset }}>
-          <Box sx={{ mb: 1 }}>
-            <Typography level="title-md">Notes</Typography>
-            <Typography level="body-sm">
-              Include any special request, dietary requirements, etc. (Notes are not shared with guests.)
-            </Typography>
-          </Box>
-          <Divider />
-          <Stack spacing={2} sx={{ my: 1 }}>
-            <Textarea
-              size="sm"
-              minRows={4}
-              sx={{ mt: 1.5 }}
-              placeholder="Special requests, notes, etc."
-              name="guest_notes"
-              defaultValue={guest.guest_notes}
+          <Card key={sections[1].label} ref={sections[1].ref} sx={{ scrollMarginTop: scrollOffset }}>
+            <Box sx={{ mb: 1 }}>
+              <Typography level="title-md">Notes</Typography>
+              <Typography level="body-sm">
+                Include any special request, dietary requirements, etc. (Notes are not shared with guests.)
+              </Typography>
+            </Box>
+            <Divider />
+            <Stack spacing={2} sx={{ my: 1 }}>
+              <Textarea
+                size="sm"
+                minRows={4}
+                sx={{ mt: 1.5 }}
+                placeholder="Special requests, notes, etc."
+                name="guest_notes"
+                defaultValue={guest.guest_notes}
               />
-            <FormHelperText color="danger" sx={{ mt: 0.75, fontSize: 'xs' }}>
-              <Alert color="danger">Do not store payment or card details here.</Alert>
-            </FormHelperText>
-          </Stack>
-          <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
-            <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
-              <Button size="sm" variant="outlined" color="neutral">
-                Cancel
-              </Button>
-              <Button size="sm" variant="solid" type="submit">
-                Save
-              </Button>
-            </CardActions>
-          </CardOverflow>
-        </Card>
+              <FormHelperText color="danger" sx={{ mt: 0.75, fontSize: 'xs' }}>
+                <Alert color="danger">Do not store payment or card details here.</Alert>
+              </FormHelperText>
+            </Stack>
+            <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+              <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
+                <Button size="sm" variant="outlined" color="neutral" onClick={() => navigate('/guests')}>
+                  Cancel
+                </Button>
+                <Button size="sm" variant="solid" type="submit">
+                  Save
+                </Button>
+              </CardActions>
+            </CardOverflow>
+          </Card>
         </Form>
-        <Card key={sections[2].label} ref={sections[2].ref} sx={{ scrollMarginTop: scrollOffset }}>
-          <Box sx={{ mb: 1 }}>
-            <Typography level="title-md">Bookings</Typography>
-            <Typography level="body-sm">
-              Previous reservations.
-            </Typography>
-          </Box>
-          <Divider />
-          <Stack spacing={2} sx={{ my: 1 }}>
+        {isEditMode &&
+          <React.Fragment>
+            <Card key={sections[2].label} ref={sections[2].ref} sx={{ scrollMarginTop: scrollOffset }}>
+              <Box sx={{ mb: 1 }}>
+                <Typography level="title-md">Bookings</Typography>
+                <Typography level="body-sm">
+                  Previous reservations.
+                </Typography>
+              </Box>
+              <Divider />
+              <Stack spacing={2} sx={{ my: 1 }}>
 
-          </Stack>
-        </Card>
-        <Card key={sections[3].label} ref={sections[3].ref} sx={{ scrollMarginTop: scrollOffset }}>
-          <Box sx={{ mb: 1 }}>
-            <Typography level="title-md">Reviews</Typography>
-            <Typography level="body-sm">
-              Guest reviews and comments.
-            </Typography>
-          </Box>
-          <Divider />
-          <Stack spacing={2} sx={{ my: 1 }}>
+              </Stack>
+            </Card>
+            <Card key={sections[3].label} ref={sections[3].ref} sx={{ scrollMarginTop: scrollOffset }}>
+              <Box sx={{ mb: 1 }}>
+                <Typography level="title-md">Reviews</Typography>
+                <Typography level="body-sm">
+                  Guest reviews and comments.
+                </Typography>
+              </Box>
+              <Divider />
+              <Stack spacing={2} sx={{ my: 1 }}>
 
-          </Stack>
-        </Card>
-        <Card key={sections[4].label} ref={sections[4].ref} sx={{ scrollMarginTop: scrollOffset }}>
-          <Box sx={{ mb: 1 }}>
-            <Typography level="title-md">Settings</Typography>
-          </Box>
-          <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
-            <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
-              <Button size="sm" variant="outlined" color="neutral">
-                Cancel
-              </Button>
-              <Button size="sm" startDecorator={<DeleteRoundedIcon />} variant="solid" color='danger'>
-                Delete guest
-              </Button>
-            </CardActions>
-          </CardOverflow>
-        </Card>
+              </Stack>
+            </Card>
+            <Card key={sections[4].label} ref={sections[4].ref} sx={{ scrollMarginTop: scrollOffset }}>
+              <Box sx={{ mb: 1 }}>
+                <Typography level="title-md">Settings</Typography>
+              </Box>
+              <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+                <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
+                  <Button size="sm" variant="outlined" color="neutral" onClick={() => navigate('/guests')}>
+                    Cancel
+                  </Button>
+                  <Button size="sm" startDecorator={<DeleteRoundedIcon />} variant="solid" color='danger' onClick={() => setOpen(true)} >
+                    Delete guest
+                  </Button>
+                </CardActions>
+              </CardOverflow>
+            </Card>
+            <Modal open={open} onClose={() => setOpen(false)}>
+              <ModalDelete id={guest.id} onDelete={handleDelete} setOpen={setOpen} />
+            </Modal>
+          </React.Fragment>
+        }
       </Stack>
     </Box>
   );
