@@ -25,14 +25,13 @@ export async function createRoomType(newRoomType: Omit<RoomType, 'id'>): Promise
     return await res.json();
 }
 
-export async function updateRoomType(id: DataModelId, updated: Partial<RoomType>): Promise<RoomType> {
+export async function updateRoomType(id: DataModelId, updated: Partial<RoomType>): Promise<void> {
     const res = await fetch(`${API_BASE_URL}/room-types/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
     });
     if (!res.ok) throw new Error('Failed to update room type');
-    return await res.json();
 }
 
 export async function deleteRoomType(id: DataModelId): Promise<void> {

@@ -25,14 +25,13 @@ export async function createInvoice(newInvoice: Omit<Invoice, 'id'>): Promise<In
     return await res.json();
 }
 
-export async function updateInvoice(id: DataModelId, updated: Partial<Invoice>): Promise<Invoice> {
+export async function updateInvoice(id: DataModelId, updated: Partial<Invoice>): Promise<void> {
     const res = await fetch(`${API_BASE_URL}/invoices/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
     });
     if (!res.ok) throw new Error('Failed to update invoice');
-    return await res.json();
 }
 
 export async function deleteInvoice(id: DataModelId): Promise<void> {

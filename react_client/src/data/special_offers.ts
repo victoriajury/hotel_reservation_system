@@ -25,14 +25,13 @@ export async function createSpecialOffer(newSpecialOffer: Omit<SpecialOffer, 'id
     return await res.json();
 }
 
-export async function updateSpecialOffer(id: DataModelId, updated: Partial<SpecialOffer>): Promise<SpecialOffer> {
+export async function updateSpecialOffer(id: DataModelId, updated: Partial<SpecialOffer>): Promise<void> {
     const res = await fetch(`${API_BASE_URL}/special-offers/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
     });
     if (!res.ok) throw new Error('Failed to update special offer');
-    return await res.json();
 }
 
 export async function deleteSpecialOffer(id: DataModelId): Promise<void> {

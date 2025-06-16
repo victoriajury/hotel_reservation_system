@@ -25,14 +25,13 @@ export async function createPayment(newPayment: Omit<Payment, 'id'>): Promise<Pa
     return await res.json();
 }
 
-export async function updatePayment(id: DataModelId, updated: Partial<Payment>): Promise<Payment> {
+export async function updatePayment(id: DataModelId, updated: Partial<Payment>): Promise<void> {
     const res = await fetch(`${API_BASE_URL}/payments/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
     });
     if (!res.ok) throw new Error('Failed to update payment');
-    return await res.json();
 }
 
 export async function deletePayment(id: DataModelId): Promise<void> {

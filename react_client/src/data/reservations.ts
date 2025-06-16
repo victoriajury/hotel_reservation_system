@@ -25,14 +25,13 @@ export async function createReservation(newreservation: Omit<Reservation, 'id'>)
     return await res.json();
 }
 
-export async function updateReservation(id: DataModelId, updated: Partial<Reservation>): Promise<Reservation> {
+export async function updateReservation(id: DataModelId, updated: Partial<Reservation>): Promise<void> {
     const res = await fetch(`${API_BASE_URL}/reservations/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
     });
     if (!res.ok) throw new Error('Failed to update reservation');
-    return await res.json();
 }
 
 export async function deleteReservation(id: DataModelId): Promise<void> {

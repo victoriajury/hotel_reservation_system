@@ -25,14 +25,13 @@ export async function createUser(newUser: Omit<User, 'id'>): Promise<User> {
     return await res.json();
 }
 
-export async function updateUser(id: DataModelId, updated: Partial<User>): Promise<User> {
+export async function updateUser(id: DataModelId, updated: Partial<User>): Promise<void> {
     const res = await fetch(`${API_BASE_URL}/users/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated),
     });
     if (!res.ok) throw new Error('Failed to update user');
-    return await res.json();
 }
 
 export async function deleteUser(id: DataModelId): Promise<void> {
