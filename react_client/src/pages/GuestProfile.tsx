@@ -1,4 +1,8 @@
 import * as React from 'react';
+import { useLoaderData, redirect, Form, useParams } from 'react-router-dom';
+import { createGuest, getGuest, updateGuest } from '../data/guests';
+import { DataModelId, Guest } from '../data/data_models';
+
 import Alert from '@mui/joy/Alert';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
@@ -23,9 +27,71 @@ import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 
 import CountrySelector from '../layouts/components/CountrySelector';
 
+export function getGuestId() {
+  const params: any = useParams()
+  if (params?.guestId) {
+    return Number(params?.guestId) as DataModelId
+  }
+  return null
+}
 
+export async function loader({ params }: { params: { guestId?: string } }) {
+  if (params.guestId) {
+    const guest = await getGuest(params.guestId);
+    return guest;
+  }
+  return redirect(`/guests`);
+}
 
-export default function GuestProfile() {
+export function getGuestData() {
+  const guest = useLoaderData();
+  return guest
+}
+
+export async function action({ request }: { request: Request }) {
+  const formData = await request.formData();
+  const newGuest: Omit<Guest, "id"> = {
+    name: formData.get('name') as string,
+    email: formData.get('email') as string,
+    telephone: formData.get('telephone') as string,
+    address_1: formData.get('address_1') as string,
+    address_2: formData.get('address_2') as string,
+    city: formData.get('city') as string,
+    postcode: formData.get('postcode') as string,
+    county: formData.get('county') as string,
+    // country: formData.get('country') as string,
+    guest_notes: formData.get('guest_notes') as string,
+    modified_by_id: 1,
+  };
+
+  const id = formData.get('id') as number | null;
+
+  let updatedGuest: Guest | null = null;
+  updatedGuest = {
+    ...newGuest,
+  } as Guest;
+
+  if (updatedGuest && id != null) {
+    const guest = await updateGuest(id, updatedGuest);
+    if (guest) {
+      return redirect(`/guest-profile/${guest.id}`);
+    }
+  }
+
+  else {
+    const guest = await createGuest(newGuest);
+    return redirect(`/guest-profile/${guest.id}`);    
+  }
+}
+
+export default function GuestProfile() { 
+  const isEditMode = (getGuestId()) ? true : false;
+  
+  let guest = [];
+  if (isEditMode) {
+    guest = getGuestData();
+  }
+
   const [tabIndex, setTabIndex] = React.useState(0);
   const sections = [
     { label: 'Guest Info', ref: React.useRef<HTMLDivElement>(null) },
@@ -104,6 +170,9 @@ export default function GuestProfile() {
           py: { xs: 2, md: 3 },
         }}
       >
+        <Form method="post" name="guest-form">
+        {isEditMode && <input type="hidden" defaultValue={guest.id} name="id" /> }
+
         <Card key={sections[0].label} ref={sections[0].ref} sx={{ scrollMarginTop: scrollOffset }}>
           <Box sx={{ mb: 1 }}>
             <Typography level="title-md">Guest Info</Typography>
@@ -123,7 +192,7 @@ export default function GuestProfile() {
               <Stack spacing={1} sx={{ flexGrow: 1 }}>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input size="sm" placeholder="Name" />
+                  <Input size="sm" placeholder="Name" name="name" defaultValue={guest.name} />
                 </FormControl>
               </Stack>
 
@@ -136,6 +205,8 @@ export default function GuestProfile() {
                     type="email"
                     startDecorator={<EmailRoundedIcon />}
                     placeholder="email@example.com"
+                    name="email"
+                    defaultValue={guest.email}
                     sx={{ flexGrow: 1 }}
                   />
                 </FormControl>
@@ -145,6 +216,8 @@ export default function GuestProfile() {
                     size="sm"
                     startDecorator={<PhoneRoundedIcon />}
                     placeholder="07123 456 789"
+                    name="telephone"
+                     defaultValue={guest.telephone}
                   />
                 </FormControl>
               </Stack>
@@ -160,12 +233,12 @@ export default function GuestProfile() {
                   }}
                   >
                   <FormLabel>Address</FormLabel>
-                  <Input sx={{ mb: 1}} size="sm" placeholder="Address Line 1" />
-                  <Input sx={{ mb: 1}}  size="sm" placeholder="Address Line 2" />
-                  <Input sx={{ mb: 1}}  size="sm" placeholder="City" />
+                  <Input sx={{ mb: 1}} size="sm" placeholder="Address Line 1" name="address_1" defaultValue={guest.address_1} />
+                  <Input sx={{ mb: 1}}  size="sm" placeholder="Address Line 2" name="address_2" defaultValue={guest.address_2} />
+                  <Input sx={{ mb: 1}}  size="sm" placeholder="City" name="city" defaultValue={guest.city}/>
                   <Stack direction="row" spacing={2}>
-                    <Input size="sm" placeholder="Postcode" />
-                    <Input size="sm" placeholder="County/Region" sx={{ flexGrow: 1 }} />
+                    <Input size="sm" placeholder="Postcode" name="postcode" defaultValue={guest.postcode} />
+                    <Input size="sm" placeholder="County/Region" name="county" defaultValue={guest.county} sx={{ flexGrow: 1 }} />
                   </Stack>
                 </FormControl>
                 <div>
@@ -179,12 +252,14 @@ export default function GuestProfile() {
               <Button size="sm" variant="outlined" color="neutral">
                 Cancel
               </Button>
-              <Button size="sm" variant="solid">
+              <Button size="sm" variant="solid" type="submit">
                 Save
               </Button>
             </CardActions>
           </CardOverflow>
         </Card>
+        </Form>
+        <Form method="post" name="guest-form">
         <Card key={sections[1].label} ref={sections[1].ref} sx={{ scrollMarginTop: scrollOffset }}>
           <Box sx={{ mb: 1 }}>
             <Typography level="title-md">Notes</Typography>
@@ -199,7 +274,9 @@ export default function GuestProfile() {
               minRows={4}
               sx={{ mt: 1.5 }}
               placeholder="Special requests, notes, etc."
-            />
+              name="guest_notes"
+              defaultValue={guest.guest_notes}
+              />
             <FormHelperText color="danger" sx={{ mt: 0.75, fontSize: 'xs' }}>
               <Alert color="danger">Do not store payment or card details here.</Alert>
             </FormHelperText>
@@ -209,12 +286,13 @@ export default function GuestProfile() {
               <Button size="sm" variant="outlined" color="neutral">
                 Cancel
               </Button>
-              <Button size="sm" variant="solid">
+              <Button size="sm" variant="solid" type="submit">
                 Save
               </Button>
             </CardActions>
           </CardOverflow>
         </Card>
+        </Form>
         <Card key={sections[2].label} ref={sections[2].ref} sx={{ scrollMarginTop: scrollOffset }}>
           <Box sx={{ mb: 1 }}>
             <Typography level="title-md">Bookings</Typography>

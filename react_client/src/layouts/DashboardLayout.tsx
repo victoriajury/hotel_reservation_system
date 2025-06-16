@@ -30,7 +30,7 @@ export default function DashboardLayout() {
           component="main"
           className="MainContent"
           sx={{
-            ...(location.pathname != '/guest-profile') 
+            ...(!location.pathname.includes('/guest-profile')) 
             ? { px: { xs: 2, md: 6 } } : {},
             pt: {
               xs: 'calc(12px + var(--Header-height))',
@@ -48,7 +48,7 @@ export default function DashboardLayout() {
           }}
         >
           <Box sx={{
-            ...(location.pathname == '/guest-profile') 
+            ...(location.pathname.includes('/guest-profile')) 
             ? { px: { xs: 2, md: 6 } } : {},
             display: 'flex', 
             alignItems: 'center', 

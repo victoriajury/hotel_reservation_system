@@ -25,14 +25,22 @@ export async function createGuest(newGuest: Omit<Guest, 'id'>): Promise<Guest> {
     return await res.json();
 }
 
-export async function updateGuest(id: DataModelId, updated: Partial<Guest>): Promise<Guest> {
+export async function updateGuest(id: DataModelId, updatedGuest: Partial<Guest>): Promise<Guest | undefined> {
     const res = await fetch(`${API_BASE_URL}/guests/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
+        body: JSON.stringify(updatedGuest),
     });
     if (!res.ok) throw new Error('Failed to update guest');
-    return await res.json();
+    const text = await res.text();
+    if (text) {
+        const json = JSON.parse(text);
+        console.log('json: ', json);
+        return json;
+    }
+    else {
+        return undefined
+    }
 }
 
 export async function deleteGuest(id: DataModelId): Promise<void> {
