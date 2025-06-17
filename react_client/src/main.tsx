@@ -8,6 +8,7 @@ import HomePage from './pages';
 import Calendar from './pages/Calendar';
 import SpecialOffers, { loader as offersLoader } from './pages/SpecialOffers';
 import Reservations, { loader as reservationsLoader }  from './pages/Reservations';
+import ReservationView, { loader as reservationViewLoader, action as reservationViewAction  }  from './pages/ReservationView';
 import Guests, { loader as guestsLoader } from './pages/Guests';
 import GuestProfile, { loader as guestProfileLoader, action as guestProfileAction }  from './pages/GuestProfile';
 import Invoices, { loader as invoicesLoader } from './pages/Invoices';
@@ -36,9 +37,20 @@ const router = createBrowserRouter([
             Component: Calendar,
           },
           {
-            path: 'reservations/:reservationId?/*',
+            path: 'reservations',
             Component: Reservations,
             loader: reservationsLoader,
+          },
+          {
+            path: 'reservations/new',
+            Component: ReservationView,
+            action: reservationViewAction,
+          },
+          {
+            path: 'reservations/:reservationId',
+            Component: ReservationView,
+            action: reservationViewAction,
+            loader: reservationViewLoader,
           },
           {
             path: 'special-offers/:specialOfferId?/*',
