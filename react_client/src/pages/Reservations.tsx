@@ -1,52 +1,97 @@
 import * as React from 'react';
 import { useLoaderData } from 'react-router-dom';
 import { getReservations } from '../data/reservations';
-import { Reservation } from '../data/data_models';
+import { getReservationStatuses } from '../data/reservation_status';
+import { Reservation, ReservationStatus } from '../data/data_models';
 
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
+import Chip from '@mui/joy/Chip';
 import Typography from '@mui/joy/Typography';
 
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import BlockIcon from '@mui/icons-material/Block';
+import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
+import InventoryRoundedIcon from '@mui/icons-material/InventoryRounded';
+import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 
 import DataTable from '../layouts/components/DataTable';
 import DataList from '../layouts/components/DataList';
 
 export async function loader() {
   const reservations = await getReservations();
-  return { reservations };
+  const statuses = await getReservationStatuses();
+
+  return { reservations, statuses };
 }
 
-const reservationsColumns = [
-  {
-    key: 'start_date',
-    label: 'Check-In',
-    render: (reservation: Reservation) =>
-      new Date(reservation.modified).toLocaleDateString(),
-  },
-  {
-    key: 'end_date',
-    label: 'Check-Out',
-    render: (reservation: Reservation) =>
-      new Date(reservation.modified).toLocaleDateString(),
-  },
-  { key: 'status', label: 'Status' },
-  { 
-    key: 'total_room_base_price', 
-    label: 'Price',
-    render: (reservation: Reservation) =>
-      '\u00A3 ' + String(reservation.total_room_base_price.toFixed(2)),
-  },
-  {
-    key: 'modified',
-    label: 'Last Modified',
-    render: (reservation: Reservation) =>
-      new Date(reservation.modified).toLocaleString(),
-  },
-];
+
 
 export default function ReservationsPage() {
-  const { reservations } = useLoaderData();
+  const { reservations, statuses } = useLoaderData();
+
+  const reservationsColumns = [
+    {
+      key: 'id',
+      label: 'Booking No.',
+      width: 120,
+      render: (reservation: Reservation) =>
+        "#" + String(reservation.id).padStart(5, '0')
+    },
+    {
+      key: 'start_date',
+      label: 'Check-In',
+      width: 120,
+      render: (reservation: Reservation) =>
+        new Date(reservation.modified).toLocaleDateString(),
+    },
+    {
+      key: 'end_date',
+      label: 'Check-Out',
+      width: 120,
+      render: (reservation: Reservation) =>
+        new Date(reservation.modified).toLocaleDateString(),
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (reservation: Reservation) =>
+        <Chip
+          variant="soft"
+          size="sm"
+          startDecorator={
+            (statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status as String).includes('Paid') ? <CheckRoundedIcon /> :
+              statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status === 'Pending' ? <HourglassTopRoundedIcon /> :
+                statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status === 'Confirmed' ? <InventoryRoundedIcon /> :
+                  statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status === 'Cancelled' ? <BlockIcon /> :
+                    statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status === 'Checked-in' ? <LoginRoundedIcon /> :
+                      null
+          }
+          sx={{
+            background: (
+              statuses.find((status: ReservationStatus) => status.status === reservation.status)?.bg_color
+            )
+          }}
+        >
+          {reservation.status}
+        </Chip>
+
+    },
+    {
+      key: 'total_room_base_price',
+      label: 'Price',
+      render: (reservation: Reservation) =>
+        '\u00A3 ' + String(reservation.total_room_base_price.toFixed(2)),
+    },
+    {
+      key: 'modified',
+      label: 'Last Modified',
+      render: (reservation: Reservation) =>
+        new Date(reservation.modified).toLocaleString(),
+    },
+  ];
+
   return (
     <>
       <Box

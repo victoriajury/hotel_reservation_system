@@ -52,7 +52,7 @@ export interface Reservation extends DataModel {
   special_offer_applied: number;
   special_offer_discount: number;
   reservation_notes: string;
-  status_id: number;
+  status: string;
   modified: string;
 }
 
