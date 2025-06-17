@@ -25,9 +25,6 @@ import Grid from '@mui/joy/Grid';
 import Input from '@mui/joy/Input';
 import Modal from '@mui/joy/Modal';
 import Stack from '@mui/joy/Stack';
-import Tab, { tabClasses } from '@mui/joy/Tab';
-import TabList from '@mui/joy/TabList';
-import Tabs from '@mui/joy/Tabs';
 import Textarea from '@mui/joy/Textarea';
 import Typography from '@mui/joy/Typography';
 
@@ -39,6 +36,7 @@ import InfoOutlined from '@mui/icons-material/InfoOutlined';
 
 import CountrySelector from '../layouts/components/CountrySelector';
 import ModalDelete from '../layouts/components/ModalDelete';
+import PageSectionTabs from '../layouts/components/PageSectionTabs';
 
 export function getGuestId() {
   const params: any = useParams()
@@ -131,28 +129,13 @@ export default function GuestProfile() {
     guest = useLoaderData();
   }
 
-  const [tabIndex, setTabIndex] = React.useState(0);
   const sections = [
-    { label: 'Guest Info', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: true },
-    { label: 'Notes', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: true },
-    { label: 'Bookings', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
-    { label: 'Reviews', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
-    { label: 'Settings', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
+    { label: 'Guest Info', desc: 'Guest name, address and contact details.', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: true },
+    { label: 'Notes', desc: 'Include any special request, dietary requirements, etc. (Notes are not shared with guests.)',  ref: React.useRef<HTMLDivElement>(null), showOnNewPage: true },
+    { label: 'Bookings', desc:'Previous reservations.',  ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
+    { label: 'Reviews', desc:'Guest reviews and comments.',  ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
+    { label: 'Settings', desc:'',  ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
   ];
-
-  const handleTabChange = (
-    _event: React.SyntheticEvent<Element, Event> | null,
-    newValue: string | number | null
-  ) => {
-    if (newValue === null) return;
-    const index = typeof newValue === 'number' ? newValue : Number(newValue);
-    setTabIndex(index);
-    const section = sections[index];
-
-    if (section?.ref.current) {
-      section.ref.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   const scrollOffset = 60;
 
@@ -176,35 +159,7 @@ export default function GuestProfile() {
             Guest profile
           </Typography>
         </Box>
-        <Tabs value={tabIndex} defaultValue={undefined} onChange={handleTabChange} sx={{ bgcolor: 'transparent' }}>
-          <TabList
-            tabFlex={1}
-            size="sm"
-            sx={{
-              pl: { xs: 0, md: 4 },
-              justifyContent: 'left',
-              [`&& .${tabClasses.root}`]: {
-                fontWeight: '600',
-                flex: 'initial',
-                color: 'text.tertiary',
-                [`&.${tabClasses.selected}`]: {
-                  bgcolor: 'transparent',
-                  color: 'text.primary',
-                  '&::after': {
-                    height: '2px',
-                    bgcolor: 'primary.500',
-                  },
-                },
-              },
-            }}
-          >
-            {sections.map((section) =>
-              !isEditMode && !section.showOnNewPage
-                ? ""
-                : <Tab sx={{ borderRadius: '6px 6px 0 0' }} key={section.label}>{section.label}</Tab>
-            )}
-          </TabList>
-        </Tabs>
+        <PageSectionTabs sections={sections} isEditMode={isEditMode} />
       </Box>
       <Stack
         spacing={4}
@@ -223,9 +178,9 @@ export default function GuestProfile() {
             <Card key={sections[0].label} ref={sections[0].ref} sx={{ scrollMarginTop: scrollOffset }}>
               <Box sx={{ mb: 1 }}>
                 <Typography level="title-md">Guest Info</Typography>
-                <Typography level="body-sm">
-                  Guest name, address and contact details.
-                </Typography>
+                {sections[0].desc && <Typography level="body-sm">
+                  {sections[0].desc}
+                </Typography>}
               </Box>
               <Divider />
 
@@ -360,9 +315,9 @@ export default function GuestProfile() {
             <Card key={sections[1].label} ref={sections[1].ref} sx={{ scrollMarginTop: scrollOffset }}>
               <Box sx={{ mb: 1 }}>
                 <Typography level="title-md">Notes</Typography>
-                <Typography level="body-sm">
-                  Include any special request, dietary requirements, etc. (Notes are not shared with guests.)
-                </Typography>
+                {sections[1].desc && <Typography level="body-sm">
+                  {sections[1].desc}
+                </Typography>}
               </Box>
               <Divider />
               <Stack spacing={2} sx={{ my: 1 }}>
@@ -396,9 +351,9 @@ export default function GuestProfile() {
             <Card key={sections[2].label} ref={sections[2].ref} sx={{ scrollMarginTop: scrollOffset }}>
               <Box sx={{ mb: 1 }}>
                 <Typography level="title-md">Bookings</Typography>
-                <Typography level="body-sm">
-                  Previous reservations.
-                </Typography>
+                {sections[2].desc && <Typography level="body-sm">
+                  {sections[2].desc}
+                </Typography>}
               </Box>
               <Divider />
               <Stack spacing={2} sx={{ my: 1 }}>
@@ -408,9 +363,9 @@ export default function GuestProfile() {
             <Card key={sections[3].label} ref={sections[3].ref} sx={{ scrollMarginTop: scrollOffset }}>
               <Box sx={{ mb: 1 }}>
                 <Typography level="title-md">Reviews</Typography>
-                <Typography level="body-sm">
-                  Guest reviews and comments.
-                </Typography>
+                {sections[3].desc && <Typography level="body-sm">
+                  {sections[3].desc}
+                </Typography>}
               </Box>
               <Divider />
               <Stack spacing={2} sx={{ my: 1 }}>
@@ -420,6 +375,9 @@ export default function GuestProfile() {
             <Card key={sections[4].label} ref={sections[4].ref} sx={{ scrollMarginTop: scrollOffset }}>
               <Box sx={{ mb: 1 }}>
                 <Typography level="title-md">Settings</Typography>
+                {sections[4].desc && <Typography level="body-sm">
+                  {sections[4].desc}
+                </Typography>}
               </Box>
               <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
                 <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
