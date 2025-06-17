@@ -11,7 +11,7 @@ export async function getUsers(): Promise<User[]> {
 
 export async function getUser(id: DataModelId): Promise<User> {
     const res = await fetch(`${API_BASE_URL}/users/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch users');
+    if (!res.ok) throw new Error('Failed to fetch user');
     return await res.json();
 }
 

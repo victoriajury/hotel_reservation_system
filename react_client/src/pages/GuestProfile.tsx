@@ -1,6 +1,9 @@
 /*
 TO DO:
+- Add viewMode to disable inputs whrn edit button clicked.
 - Enable save button only on change
+- Newsletter preferences
+- Populate sections from database
 */
 
 import * as React from 'react';

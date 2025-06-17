@@ -11,15 +11,15 @@ export async function getReservations(): Promise<Reservation[]> {
 
 export async function getReservation(id: DataModelId): Promise<Reservation> {
     const res = await fetch(`${API_BASE_URL}/reservations/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch reservations');
+    if (!res.ok) throw new Error('Failed to fetch reservation');
     return await res.json();
 }
 
-export async function createReservation(newreservation: Omit<Reservation, 'id'>): Promise<Reservation> {
+export async function createReservation(newReservation: Omit<Reservation, 'id'>): Promise<Reservation> {
     const res = await fetch(`${API_BASE_URL}/reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newreservation),
+        body: JSON.stringify(newReservation),
     });
     if (!res.ok) throw new Error(`Failed to create reservation: ${(await res?.text())}`);
     return await res.json();

@@ -11,7 +11,7 @@ export async function getSpecialOffers(): Promise<SpecialOffer[]> {
 
 export async function getSpecialOffer(id: DataModelId): Promise<SpecialOffer> {
     const res = await fetch(`${API_BASE_URL}/special-offers/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch special offers');
+    if (!res.ok) throw new Error('Failed to fetch special offer');
     return await res.json();
 }
 
