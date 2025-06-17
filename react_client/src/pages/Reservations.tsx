@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useLoaderData } from 'react-router-dom';
+import { useLoaderData, useNavigate } from 'react-router-dom';
 import { getReservations } from '../data/reservations';
 import { getReservationStatuses } from '../data/reservation_status';
 import { Reservation, ReservationStatus } from '../data/data_models';
@@ -8,6 +8,7 @@ import Avatar from '@mui/joy/Avatar';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import Chip from '@mui/joy/Chip';
+import Link from '@mui/joy/Link';
 import Typography from '@mui/joy/Typography';
 
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
@@ -27,9 +28,8 @@ export async function loader() {
   return { reservations, statuses };
 }
 
-
-
 export default function ReservationsPage() {
+  const navigate = useNavigate();
   const { reservations, statuses } = useLoaderData();
 
   const reservationsColumns = [
@@ -38,21 +38,23 @@ export default function ReservationsPage() {
       label: 'Booking No.',
       width: 120,
       render: (reservation: Reservation) =>
-        "#" + String(reservation.id).padStart(5, '0')
+        <Link onClick={() => navigate(`/reservations/${reservation.id}`)}>
+          #{String(reservation.id).padStart(5, '0')}
+        </Link>
     },
     {
       key: 'start_date',
       label: 'Check-In',
       width: 120,
       render: (reservation: Reservation) =>
-        new Date(reservation.modified).toLocaleDateString(),
+        new Date(reservation.start_date).toLocaleDateString(),
     },
     {
       key: 'end_date',
       label: 'Check-Out',
       width: 120,
       render: (reservation: Reservation) =>
-        new Date(reservation.modified).toLocaleDateString(),
+        new Date(reservation.end_date).toLocaleDateString(),
     },
     {
       key: 'guest_name',
@@ -62,7 +64,7 @@ export default function ReservationsPage() {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Avatar size="sm">{reservation.guest_name.charAt(0)}</Avatar>
           <div>
-            <Typography level="body-xs">{reservation.guest_name}</Typography><br/>
+            <Typography level="body-xs"><Link onClick={() => navigate(`/guest-profile/${reservation.guest_id}`)}>{reservation.guest_name}</Link></Typography><br/>
             <Typography level="body-xs">{reservation.guest_email}</Typography>
           </div>
         </Box>
@@ -85,7 +87,7 @@ export default function ReservationsPage() {
           }
           sx={{
             background: (
-              statuses.find((status: ReservationStatus) => status.status === reservation.status)?.bg_color
+              statuses.find((status: ReservationStatus) => status.status === reservation.status)?.bg_color+'aa' /* with opacity set for dark mode */
             )
           }}
         >

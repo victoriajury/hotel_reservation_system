@@ -46,6 +46,7 @@ export interface ReservationStatus extends DataModel {
 
 export interface Reservation extends DataModel {
   guest_name: string;
+  guest_id: number;
   guest_telephone: string;
   guest_email: string;
   guest_address: string;
