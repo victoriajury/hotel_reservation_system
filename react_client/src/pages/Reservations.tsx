@@ -72,7 +72,7 @@ export default function ReservationsPage() {
         </Button>
       </Box>
       {/* Desktop View */}
-      <DataTable data={reservations} columns={reservationsColumns} />
+      <DataTable data={reservations} objName='Reservation' columns={reservationsColumns} />
       {/* Mobile View */}
       <DataList />
     </>

@@ -54,17 +54,17 @@ VALUES
 
 -- Insert dummy reservations
 INSERT INTO reservations
-  (start_date, end_date, total_room_base_price, special_offer_applied, special_offer_discount, number_of_guests, status_id, modified_by_id)
+  (start_date, end_date, total_room_base_price, special_offer_applied, special_offer_discount, guest_id, number_of_guests, status_id, modified_by_id)
 VALUES
-  ("2024-09-17","2024-09-20",390.0,"",0,2,2,1),
-  ("2024-08-20","2024-08-25",725.0,"125 discount",125,2,4,1),
-  ("2024-09-08","2024-09-12",520.0,"",0,2,3,1),
-  ("2024-09-01","2024-09-05",460.0,"",0,2,2,1),
-  ("2024-09-03","2024-09-07",520.0,"",0,2,2,1),
-  ("2024-09-10","2024-09-14",460.0,"",0,2,2,1),
-  ("2024-09-19","2024-09-23",520.0,"",0,2,2,1),
-  ("2024-09-12","2024-09-19",1015.0,"",0,2,1,1),
-  ("2024-09-08","2024-09-12",520.0,"",0,2,3,1)
+  ("2024-09-17","2024-09-20",390.0,"",0,5,2,2,1),
+  ("2024-08-20","2024-08-25",725.0,"125 discount",125,4,2,4,1),
+  ("2024-09-08","2024-09-12",520.0,"",0,2,2,3,1),
+  ("2024-09-01","2024-09-05",460.0,"",0,8,2,2,1),
+  ("2024-09-03","2024-09-07",520.0,"",0,4,2,2,1),
+  ("2024-09-10","2024-09-14",460.0,"",0,7,2,2,1),
+  ("2024-09-19","2024-09-23",520.0,"",0,3,2,2,1),
+  ("2024-09-12","2024-09-19",1015.0,"",0,6,2,1,1),
+  ("2024-09-08","2024-09-12",520.0,"",0,1,2,3,1)
 ;
 
 INSERT INTO special_offers
@@ -95,20 +95,6 @@ INSERT INTO payments
   (invoice_id, amount, modified_by_id)
 VALUES
   (2,390,1)
-;
-
-INSERT INTO join_guests_reservations
-  (guest_id, reservation_id)
-VALUES
-  (5, 1),
-  (4, 2),
-  (2, 3),
-  (8, 4),
-  (4, 5),
-  (7, 6),
-  (3, 7),
-  (6, 8),
-  (1, 9)
 ;
 
 INSERT INTO join_rooms_reservations
