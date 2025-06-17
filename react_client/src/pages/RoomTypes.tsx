@@ -1,16 +1,50 @@
 import * as React from 'react';
+import { useLoaderData } from 'react-router-dom';
+import { getRoomTypes } from '../data/room_types';
+import { RoomType } from '../data/data_models';
+
+import Avatar from '@mui/joy/Avatar';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import Typography from '@mui/joy/Typography';
 
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
-import OrderTable from '../layouts/components/OrderTable';
-import OrderList from '../layouts/components/OrderList';
+import DataTable from '../layouts/components/DataTable';
+import DataList from '../layouts/components/DataList';
+
+export async function loader() {
+  const roomTypes = await getRoomTypes();
+  return { roomTypes };
+}
+
+const BASE_URL = 'http://127.0.0.1:5000';
+
+const roomTypesColumns = [
+  { key: 'photo', 
+    label: 'Image',
+    render: (roomTypes: RoomType) =>
+      <Avatar size="lg" src={`${BASE_URL}/img/hotel_rooms/${roomTypes.photo}`} style={{ borderRadius: "5px" }} />,
+  },
+  { key: 'type_name', label: 'Room Type Name' },
+  { 
+    key: 'base_price_per_night', 
+    label: 'Price',
+    render: (roomTypes: RoomType) =>
+      '\u00A3 ' + String(roomTypes.base_price_per_night.toFixed(2)),
+  },
+  { key: 'amenities', label: 'Amenities' },
+  { key: 'max_occupants', label: 'Max. Occupants' },
+  {
+    key: 'modified',
+    label: 'Last Modified',
+    render: (roomTypes: RoomType) =>
+      new Date(roomTypes.modified).toLocaleString(),
+  },
+];
 
 export default function RoomTypesPage() {
-  
-
+  const { roomTypes } = useLoaderData();
   return (
     <>
       <Box
@@ -36,9 +70,9 @@ export default function RoomTypesPage() {
         </Button>
       </Box>
       {/* Desktop View */}
-      <OrderTable />
+      <DataTable data={roomTypes} columns={roomTypesColumns} />
       {/* Mobile View */}
-      <OrderList />
+      <DataList />
     </>
   );
 }

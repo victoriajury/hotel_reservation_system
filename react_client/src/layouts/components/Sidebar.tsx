@@ -95,7 +95,7 @@ export default function Sidebar() {
           md: 'none',
         },
         transition: 'transform 0.4s, width 0.4s',
-        zIndex: 10000,
+        zIndex: 1000,
         height: '100dvh',
         width: 'var(--Sidebar-width)',
         top: 0,
@@ -249,7 +249,7 @@ export default function Sidebar() {
             >
               <List sx={{ gap: 0.5 }}>
                 <ListItem sx={{ mt: 0.5 }}>
-                  <NavListItemButton to="/reservation-statuses">Reservation Statuses</NavListItemButton>
+                  <NavListItemButton to="/reservation-status">Reservation Status</NavListItemButton>
                 </ListItem>
                 <ListItem>
                   <NavListItemButton to="/room-types">Room Types</NavListItemButton>

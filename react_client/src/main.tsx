@@ -1,19 +1,22 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+
 import App from './App'
 import DashboardLayout from './layouts/DashboardLayout';
 import HomePage from './pages';
 import Calendar from './pages/Calendar';
-import SpecialOffers from './pages/SpecialOffers';
-import Reservations from './pages/Reservations';
-import Guests from './pages/Guests';
-import Invoices from './pages/Invoices';
-import Payments from './pages/Payments';
-import ReservationStatus from './pages/ReservationStatus';
-import RoomTypes from './pages/RoomTypes';
-import Rooms from './pages/Rooms';
-import Users from './pages/Users';
+import SpecialOffers, { loader as offersLoader } from './pages/SpecialOffers';
+import Reservations, { loader as reservationsLoader }  from './pages/Reservations';
+import Guests, { loader as guestsLoader } from './pages/Guests';
+import GuestProfile, { loader as guestProfileLoader, action as guestProfileAction }  from './pages/GuestProfile';
+import Invoices, { loader as invoicesLoader } from './pages/Invoices';
+import Payments, { loader as paymentsLoader } from './pages/Payments';
+import ReservationStatus, { loader as reservationStatusLoader } from './pages/ReservationStatus';
+import RoomTypes, { loader as roomTypesLoader } from './pages/RoomTypes';
+import Rooms, { loader as roomsLoader } from './pages/Rooms';
+import Users, { loader as usersLoader }  from './pages/Users';
+import Error from './pages/Error';
 
 
 const router = createBrowserRouter([
@@ -35,39 +38,63 @@ const router = createBrowserRouter([
           {
             path: 'reservations/:reservationId?/*',
             Component: Reservations,
+            loader: reservationsLoader,
           },
           {
             path: 'special-offers/:specialOfferId?/*',
             Component: SpecialOffers,
+            loader: offersLoader,
           },
           {
-            path: 'guests/:guestId?/*',
+            path: 'guests',
             Component: Guests,
+            loader: guestsLoader,
+          },
+          {
+            path: 'guest-profile/new',
+            Component: GuestProfile,
+            action: guestProfileAction,
+          },
+          {
+            path: 'guest-profile/:guestId',
+            Component: GuestProfile,
+            action: guestProfileAction,
+            loader: guestProfileLoader,
           },
           {
             path: 'invoices/:invoiceId?/*',
             Component: Invoices,
+            loader: invoicesLoader,
           },
           {
             path: 'payments/:paymentId?/*',
             Component: Payments,
+            loader: paymentsLoader,
           },
           {
-            path: 'reservation-statuses/:reservationStatusId?/*',
+            path: 'reservation-status/:reservationStatusId?/*',
             Component: ReservationStatus,
+            loader: reservationStatusLoader,
           },
           {
             path: 'room-types/:roomTypeId?/*',
             Component: RoomTypes,
+            loader: roomTypesLoader,
           },
           {
             path: 'rooms/:roomId?/*',
             Component: Rooms,
+            loader: roomsLoader,
           },
           {
             path: 'users/:userId?/*',
             Component: Users,
+            loader: usersLoader,
           },
+          {
+            path: '*',
+            Component: Error
+          }
         ],
       },
     ],

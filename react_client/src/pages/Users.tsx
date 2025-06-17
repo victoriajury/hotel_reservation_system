@@ -1,16 +1,27 @@
 import * as React from 'react';
+import { useLoaderData } from 'react-router-dom';
+import { getUsers } from '../data/users';
+
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import Typography from '@mui/joy/Typography';
 
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
-import OrderTable from '../layouts/components/OrderTable';
-import OrderList from '../layouts/components/OrderList';
+import DataTable from '../layouts/components/DataTable';
+import DataList from '../layouts/components/DataList';
+
+export async function loader() {
+  const users = await getUsers();
+  return { users };
+}
+
+const usersColumns = [
+  { key: 'username', label: 'Username' },
+];
 
 export default function UsersPage() {
-  
-
+  const { users } = useLoaderData();
   return (
     <>
       <Box
@@ -36,9 +47,9 @@ export default function UsersPage() {
         </Button>
       </Box>
       {/* Desktop View */}
-      <OrderTable />
+      <DataTable data={users} columns={usersColumns} />
       {/* Mobile View */}
-      <OrderList />
+      <DataList />
     </>
   );
 }

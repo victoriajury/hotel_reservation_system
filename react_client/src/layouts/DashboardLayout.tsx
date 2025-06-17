@@ -26,10 +26,12 @@ export default function DashboardLayout() {
         <Header />
         <Sidebar />
         <Box
+          id='main-content'
           component="main"
           className="MainContent"
           sx={{
-            px: { xs: 2, md: 6 },
+            ...(!location.pathname.includes('/guest-profile')) 
+            ? { px: { xs: 2, md: 6 } } : {},
             pt: {
               xs: 'calc(12px + var(--Header-height))',
               sm: 'calc(12px + var(--Header-height))',
@@ -42,9 +44,16 @@ export default function DashboardLayout() {
             minWidth: 0,
             height: '100dvh',
             gap: 1,
+            overflow: 'auto'
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{
+            ...(location.pathname.includes('/guest-profile')) 
+            ? { px: { xs: 2, md: 6 } } : {},
+            display: 'flex', 
+            alignItems: 'center', 
+          }}
+          >
             {/* TO DO */}
             <Breadcrumbs
               size="sm"
