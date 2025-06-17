@@ -4,6 +4,7 @@ import { getReservations } from '../data/reservations';
 import { getReservationStatuses } from '../data/reservation_status';
 import { Reservation, ReservationStatus } from '../data/data_models';
 
+import Avatar from '@mui/joy/Avatar';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import Chip from '@mui/joy/Chip';
@@ -54,8 +55,22 @@ export default function ReservationsPage() {
         new Date(reservation.modified).toLocaleDateString(),
     },
     {
+      key: 'guest_name',
+      label: 'Guest',
+      width: 260,
+      render: (reservation: Reservation) =>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Avatar size="sm">{reservation.guest_name.charAt(0)}</Avatar>
+          <div>
+            <Typography level="body-xs">{reservation.guest_name}</Typography><br/>
+            <Typography level="body-xs">{reservation.guest_email}</Typography>
+          </div>
+        </Box>
+    },
+    {
       key: 'status',
       label: 'Status',
+      width: 130,
       render: (reservation: Reservation) =>
         <Chip
           variant="soft"
@@ -76,7 +91,6 @@ export default function ReservationsPage() {
         >
           {reservation.status}
         </Chip>
-
     },
     {
       key: 'total_room_base_price',
