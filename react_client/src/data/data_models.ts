@@ -96,10 +96,10 @@ export interface Payment extends DataModel {
   modified: string;
 }
 
-export interface MarketingSources extends DataModel {
+export interface MarketingSource extends DataModel {
   source_name: string;
 }
 
-export interface TransportMethods extends DataModel {
+export interface TransportMethod extends DataModel {
   transport_name: string;
 }

@@ -256,10 +256,18 @@ class MarketingSources(db.Model):  # type: ignore
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     source_name: Mapped[str] = mapped_column(String)
 
+    def to_dict(self):
+        _dict = make_dict(self)
+        return _dict
+
 
 class TransportMethods(db.Model):  # type: ignore
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     transport_name: Mapped[str] = mapped_column(String)
+
+    def to_dict(self):
+        _dict = make_dict(self)
+        return _dict
 
 
 """

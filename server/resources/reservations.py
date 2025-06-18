@@ -10,12 +10,13 @@ date_format = "%a, %d %b %Y %H:%M:%S %Z"
 
 parser = reqparse.RequestParser()
 required_fields = [
-    "number_of_guests",
     "start_date",
     "end_date",
+    "status_id",
+    "guest_id",
+    "number_of_guests",
     "total_room_base_price",
     "special_offer_discount",
-    "status_id",
     "modified_by_id",
 ]
 for arg in required_fields:
@@ -28,8 +29,11 @@ for arg in required_fields:
         parser.add_argument(arg, required=True)
 
 # optional fields
-parser.add_argument("special_offer_applied")
+parser.add_argument("special_offer_applied_title")
 parser.add_argument("reservation_notes")
+parser.add_argument("guest_arrival_time")
+parser.add_argument("guest_transport_method")
+parser.add_argument("guest_marketing_source")
 
 
 class ReservationResource(Resource):
@@ -54,14 +58,18 @@ class ReservationResource(Resource):
             fields = parser.parse_args()
 
             new_reservation = Reservations(
-                number_of_guests=fields["number_of_guests"],
                 start_date=fields["start_date"],
                 end_date=fields["end_date"],
+                status_id=fields["status_id"],
+                guest_id=fields["guest_id"],
+                number_of_guests=fields["number_of_guests"],
                 total_room_base_price=fields["total_room_base_price"],
-                special_offer_applied=fields["special_offer_applied"],
+                special_offer_applied_title=fields["special_offer_applied_title"],
                 special_offer_discount=fields["special_offer_discount"],
                 reservation_notes=fields["reservation_notes"],
-                status_id=fields["status_id"],
+                guest_arrival_time=fields["guest_arrival_time"],
+                guest_transport_method=fields["guest_transport_method"],
+                guest_marketing_source=fields["guest_marketing_source"],
                 modified_by_id=fields["modified_by_id"],
             )
 
@@ -85,14 +93,20 @@ class ReservationResource(Resource):
         try:
             fields = parser.parse_args()
 
-            reservation.number_of_guests = fields["number_of_guests"]
             reservation.start_date = fields["start_date"]
             reservation.end_date = fields["end_date"]
+            reservation.status_id = fields["status_id"]
+            reservation.guest_id = fields["guest_id"]
+            reservation.number_of_guests = fields["number_of_guests"]
             reservation.total_room_base_price = fields["total_room_base_price"]
-            reservation.special_offer_applied = fields.get("special_offer_applied")
+            reservation.special_offer_applied_title = fields.get(
+                "special_offer_applied_title"
+            )
             reservation.special_offer_discount = fields["special_offer_discount"]
             reservation.reservation_notes = fields.get("reservation_notes")
-            reservation.status_id = fields["status_id"]
+            reservation.guest_arrival_time = fields.get("guest_arrival_time")
+            reservation.guest_transport_method = fields.get("guest_transport_method")
+            reservation.guest_marketing_source = fields.get("guest_marketing_source")
             reservation.modified_by_id = fields["modified_by_id"]
 
             db.session.commit()

@@ -9,12 +9,14 @@ from .resources import (
     guests,
     invoice_items,
     invoices,
+    marketing_sources,
     payments,
     reservation_status,
     reservations,
     room_types,
     rooms,
     special_offers,
+    transport_methods,
     users,
 )
 
@@ -121,6 +123,28 @@ def create_app(test_config=None):
     api.add_resource(payments.PaymentResource, "/api/payments", endpoint="payments")
     api.add_resource(
         payments.PaymentResource, "/api/payments/<int:payment_id>", endpoint="payment"
+    )
+
+    api.add_resource(
+        marketing_sources.MarketingSourceResource,
+        "/api/marketing-sources",
+        endpoint="marketing-sources",
+    )
+    api.add_resource(
+        marketing_sources.MarketingSourceResource,
+        "/api/marketing-sources/<int:marketing_source_id>",
+        endpoint="marketing-source",
+    )
+
+    api.add_resource(
+        transport_methods.TransportMethodResource,
+        "/api/transport-methods",
+        endpoint="transport-methods",
+    )
+    api.add_resource(
+        transport_methods.TransportMethodResource,
+        "/api/transport-methods/<int:transport_method_id>",
+        endpoint="transport-method",
     )
 
     # app.register_blueprint(auth.bp)

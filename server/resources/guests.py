@@ -104,6 +104,17 @@ class GuestResource(Resource):
             response = make_response("Guest not found.", 404)
             return response
 
+        # Check if guest is referenced by any reservation
+        from server.models import Reservations
+
+        reservation = Reservations.query.filter_by(guest_id=guest_id).first()
+        if reservation:
+            response = make_response(
+                "Cannot delete guest: guest is referenced by existing reservations.",
+                400,
+            )
+            return response
+
         db.session.delete(guest)
         db.session.commit()
 
