@@ -56,12 +56,12 @@ def test_create_reservation(client, auth, app):
         "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
         "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
         "total_room_base_price": "120.0",
-        "special_offer_applied": "",
+        "special_offer_applied_title": "",
         "special_offer_discount": "0",
         "reservation_notes": "Early breakfast.",
         "status_id": "2",
+        "guest_id": "2",
         # "room_id": "1",
-        # "guest_id": "2",
         "modified_by_id": 1,
     }
 
@@ -82,12 +82,12 @@ def test_create_reservation_missing_fields(client, auth, app):
         "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
         "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
         "total_room_base_price": "120.0",
-        "special_offer_applied": "",
+        "special_offer_applied_title": "",
         "special_offer_discount": "0",
         "reservation_notes": "Early breakfast.",
         "status_id": "2",
         # "room_id": "1",
-        # "guest_id": "2",
+        "guest_id": "2",
         "modified_by_id": 1,
     }
 
@@ -109,12 +109,12 @@ def test_update_reservation(client, auth, app):
         "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
         "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
         "total_room_base_price": "120.0",
-        "special_offer_applied": "",
+        "special_offer_applied_title": "",
         "special_offer_discount": "0",
         "reservation_notes": "Early breakfast.",
         "status_id": "2",
         # "room_id": "1",
-        # "guest_id": "2",
+        "guest_id": "2",
         "modified_by_id": 1,
     }
 
@@ -130,12 +130,12 @@ def test_update_reservation_missing_fields(client, auth, app):
         "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
         "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
         "total_room_base_price": "120.0",
-        "special_offer_applied": "",
+        "special_offer_applied_title": "",
         "special_offer_discount": "0",
         "reservation_notes": "Early breakfast.",
         "status_id": "2",
         # "room_id": "1",
-        # "guest_id": "2",
+        "guest_id": "2",
         "modified_by_id": 1,
     }
 
@@ -152,12 +152,12 @@ def test_update_reservation_not_found(client, auth, app):
         "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
         "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
         "total_room_base_price": "120.0",
-        "special_offer_applied": "",
+        "special_offer_applied_title": "",
         "special_offer_discount": "0",
         "reservation_notes": "Early breakfast.",
         "status_id": "2",
         # "room_id": "1",
-        # "guest_id": "2",
+        "guest_id": "2",
         "modified_by_id": 1,
     }
 
@@ -193,7 +193,6 @@ def test_delete_reservation_not_found(client, auth, app):
         assert count == 2
 
 
-
 # @pytest.mark.parametrize(
 #     "path",
 #     (
@@ -226,7 +225,7 @@ def test_delete_reservation_not_found(client, auth, app):
 #         "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
 #         "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
 #         "total_room_base_price": "120.0",
-#         "special_offer_applied": "",
+#         "special_offer_applied_title": "",
 #         "special_offer_discount": "0",
 #         "reservation_notes": "Early breakfast.",
 #         "status_id": "2",
@@ -268,7 +267,7 @@ def test_delete_reservation_not_found(client, auth, app):
 #         "start_date": (datetime.datetime.now() + datetime.timedelta(days=5)).date(),
 #         "end_date": (datetime.datetime.now() + datetime.timedelta(days=7)).date(),
 #         "total_room_base_price": "120.0",
-#         "special_offer_applied": "",
+#         "special_offer_applied_title": "",
 #         "special_offer_discount": "0",
 #         "reservation_notes": "Early breakfast.",
 #         "status_id": "2",
@@ -298,7 +297,7 @@ def test_delete_reservation_not_found(client, auth, app):
 #         ).date(),  # 5 nights changes to 7
 #         "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
 #         "total_room_base_price": "120.0",
-#         "special_offer_applied": "",
+#         "special_offer_applied_title": "",
 #         "special_offer_discount": "0",
 #         "reservation_notes": "Early breakfast.",
 #         "status_id": "2",
@@ -365,7 +364,7 @@ def test_delete_reservation_not_found(client, auth, app):
 #         ).date(),  # 3 nights changes to 1
 #         "end_date": (datetime.datetime.now() + datetime.timedelta(days=9)).date(),
 #         "total_room_base_price": "120.0",
-#         "special_offer_applied": "",
+#         "special_offer_applied_title": "",
 #         "special_offer_discount": "0",
 #         "reservation_notes": "Early breakfast.",
 #         "status_id": "2",
@@ -440,7 +439,7 @@ def test_delete_reservation_not_found(client, auth, app):
 #         "start_date": (datetime.datetime.now() + datetime.timedelta(days=5)).date(),
 #         "end_date": (datetime.datetime.now() + datetime.timedelta(days=7)).date(),
 #         "total_room_base_price": "120.0",
-#         "special_offer_applied": "",
+#         "special_offer_applied_title": "",
 #         "special_offer_discount": "0",
 #         "reservation_notes": "Early breakfast.",
 #         "status_id": "2",
@@ -469,7 +468,7 @@ def test_delete_reservation_not_found(client, auth, app):
 #         "start_date": "",
 #         "end_date": "",
 #         "total_room_base_price": "",
-#         "special_offer_applied": "",
+#         "special_offer_applied_title": "",
 #         "special_offer_discount": "",
 #         "reservation_notes": "",
 #         "status_id": "2",
@@ -503,7 +502,7 @@ def test_delete_reservation_not_found(client, auth, app):
 #         "start_date": start_date,
 #         "end_date": end_date,
 #         "total_room_base_price": "120.0",
-#         "special_offer_applied": "",
+#         "special_offer_applied_title": "",
 #         "special_offer_discount": "0",
 #         "reservation_notes": "",
 #         "status_id": "2",
@@ -530,7 +529,7 @@ def test_delete_reservation_not_found(client, auth, app):
 #         "start_date": (datetime.datetime.now() + datetime.timedelta(days=10)).date(),
 #         "end_date": (datetime.datetime.now() + datetime.timedelta(days=15)).date(),
 #         "total_room_base_price": "120.0",
-#         "special_offer_applied": "",
+#         "special_offer_applied_title": "",
 #         "special_offer_discount": "0",
 #         "reservation_notes": "",
 #         "status_id": "2",
@@ -546,7 +545,7 @@ def test_delete_reservation_not_found(client, auth, app):
 #             datetime.datetime.now() + datetime.timedelta(days=end_date)
 #         ).date(),
 #         "total_room_base_price": "120.0",
-#         "special_offer_applied": "",
+#         "special_offer_applied_title": "",
 #         "special_offer_discount": "0",
 #         "reservation_notes": "Moved booking",
 #         "status_id": "2",
@@ -580,7 +579,7 @@ def test_delete_reservation_not_found(client, auth, app):
 #             datetime.datetime.now() + datetime.timedelta(days=end_date)
 #         ).date(),
 #         "total_room_base_price": "120.0",
-#         "special_offer_applied": "",
+#         "special_offer_applied_title": "",
 #         "special_offer_discount": "0",
 #         "reservation_notes": "",
 #         "status_id": "2",
@@ -608,7 +607,7 @@ def test_delete_reservation_not_found(client, auth, app):
 #         "start_date": start_date,
 #         "end_date": end_date,
 #         "total_room_base_price": "120.0",
-#         "special_offer_applied": "",
+#         "special_offer_applied_title": "",
 #         "special_offer_discount": "0",
 #         "reservation_notes": "",
 #         "status_id": "2",
