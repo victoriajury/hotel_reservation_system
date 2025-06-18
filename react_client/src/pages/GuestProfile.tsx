@@ -58,7 +58,7 @@ export async function action({ request }: { request: Request }) {
   const formData = await request.formData();
 
   const newGuest: Omit<Guest, "id"> = {
-    name: formData.get('name') as string,
+    guest_name: formData.get('guest_name') as string,
     email: formData.get('email') as string,
     telephone: formData.get('telephone') as string,
     address_1: formData.get('address_1') as string,
@@ -74,7 +74,7 @@ export async function action({ request }: { request: Request }) {
   // Form validation
   const errors: Record<string, string> = {};
   const required = [
-    newGuest.name,
+    newGuest.guest_name,
     newGuest.email,
     newGuest.telephone,
     newGuest.address_1,
@@ -83,7 +83,7 @@ export async function action({ request }: { request: Request }) {
     newGuest.county,
   ]
 
-  const fieldNames = ['name', 'email', 'telephone', 'address_1', 'city', 'postcode', 'county'];
+  const fieldNames = ['guest_name', 'email', 'telephone', 'address_1', 'city', 'postcode', 'county'];
 
   fieldNames.forEach((key, idx) => {
     if (!required[idx] || (typeof required[idx] === "string" && required[idx].trim() === "")) {
@@ -193,12 +193,12 @@ export default function GuestProfile() {
                   {/* Name */}
                   <Stack spacing={1} sx={{ flexGrow: 1 }}>
                     <FormLabel>Name</FormLabel>
-                    <FormControl error={errors?.name}>
-                      <Input size="sm" placeholder="Name" name="name" defaultValue={guest.name} />
-                      {errors?.name ?
+                    <FormControl error={errors?.guest_name}>
+                      <Input size="sm" placeholder="Name" name="guest_name" defaultValue={guest.guest_name} />
+                      {errors?.guest_name ?
                         <FormHelperText>
                           <InfoOutlined />
-                          {errors.name}
+                          {errors.guest_name}
                         </FormHelperText> : null}
                     </FormControl>
                   </Stack>

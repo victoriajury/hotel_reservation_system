@@ -11,7 +11,7 @@ export interface User extends DataModel {
 }
 
 export interface Guest extends DataModel {
-  name: string;
+  guest_name: string;
   email: string;
   telephone: string;
   address_1: string;
@@ -45,19 +45,22 @@ export interface ReservationStatus extends DataModel {
 }
 
 export interface Reservation extends DataModel {
-  guest_name: string;
+  start_date: string;
+  end_date: string;
+  status: string;
   guest_id: number;
+  guest_name: string;
   guest_telephone: string;
   guest_email: string;
   guest_address: string;
   number_of_guests: string;
-  start_date: string;
-  end_date: string;
   total_room_base_price: number;
-  special_offer_applied: number;
+  special_offer_applied_title: string;
   special_offer_discount: number;
   reservation_notes: string;
-  status: string;
+  guest_arrival_time: string;
+  guest_transport_method: string;
+  guest_marketing_source: string;
   modified: string;
 }
 
@@ -91,4 +94,12 @@ export interface Payment extends DataModel {
   invoice_id: number;
   amount: number;
   modified: string;
+}
+
+export interface MarketingSources extends DataModel {
+  source_name: string;
+}
+
+export interface TransportMethods extends DataModel {
+  transport_name: string;
 }

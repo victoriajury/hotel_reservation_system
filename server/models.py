@@ -27,7 +27,7 @@ class Users(db.Model):  # type: ignore
 
 class Guests(db.Model):  # type: ignore
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String)
+    guest_name: Mapped[str] = mapped_column(String)
     email: Mapped[str] = mapped_column(String)
     telephone: Mapped[str] = mapped_column(String)
     address_1: Mapped[str] = mapped_column(String)
@@ -115,15 +115,18 @@ class ReservationStatus(db.Model):  # type: ignore
 
 class Reservations(db.Model):  # type: ignore
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    guest_id: Mapped[int] = mapped_column(Integer, ForeignKey("guests.id"))
-    number_of_guests: Mapped[int] = mapped_column(Integer)
     start_date: Mapped[datetime.datetime] = mapped_column(DateTime)
     end_date: Mapped[datetime.datetime] = mapped_column(DateTime)
+    status_id: Mapped[int] = mapped_column(ForeignKey("reservation_status.id"))
+    guest_id: Mapped[int] = mapped_column(Integer, ForeignKey("guests.id"))
+    number_of_guests: Mapped[int] = mapped_column(Integer)
     total_room_base_price: Mapped[float] = mapped_column(Float)
-    special_offer_applied: Mapped[Optional[str]] = mapped_column(String)
+    special_offer_applied_title: Mapped[Optional[str]] = mapped_column(String)
     special_offer_discount: Mapped[float] = mapped_column(Float, server_default="0.0")
     reservation_notes: Mapped[Optional[str]] = mapped_column(String)
-    status_id: Mapped[int] = mapped_column(ForeignKey("reservation_status.id"))
+    guest_arrival_time: Mapped[Optional[str]] = mapped_column(String)
+    guest_transport_method: Mapped[Optional[str]] = mapped_column(String)
+    guest_marketing_source: Mapped[Optional[str]] = mapped_column(String)
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime, server_default=func.now()
     )
@@ -139,7 +142,7 @@ class Reservations(db.Model):  # type: ignore
 
     def to_dict(self):
         _dict = make_dict(self)
-        _dict["guest_name"] = self.guest.name
+        _dict["guest_name"] = self.guest.guest_name
         _dict["guest_address"] = ", ".join(
             field
             for field in [
@@ -247,6 +250,16 @@ class Payments(db.Model):  # type: ignore
         _dict = make_dict(self)
         _dict["modified_by_user"] = self.modified_by_user.username
         return _dict
+
+
+class MarketingSources(db.Model):  # type: ignore
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source_name: Mapped[str] = mapped_column(String)
+
+
+class TransportMethods(db.Model):  # type: ignore
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    transport_name: Mapped[str] = mapped_column(String)
 
 
 """

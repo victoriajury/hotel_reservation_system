@@ -30,11 +30,11 @@ export default function GuestsPage() {
 
   const guestColumns = [
     {
-      key: 'name',
+      key: 'guest_name',
       label: 'Name',
       width: 150,
       render: (guest: Guest) =>
-        <Link onClick={() => navigate(`/guest-profile/${guest.id}`)}>{guest.name}</Link>
+        <Link onClick={() => navigate(`/guest-profile/${guest.id}`)}>{guest.guest_name}</Link>
     },
     {
       key: 'email',
