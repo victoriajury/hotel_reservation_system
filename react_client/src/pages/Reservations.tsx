@@ -11,11 +11,11 @@ import Chip from '@mui/joy/Chip';
 import Link from '@mui/joy/Link';
 import Typography from '@mui/joy/Typography';
 
-import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import BlockIcon from '@mui/icons-material/Block';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
 import InventoryRoundedIcon from '@mui/icons-material/InventoryRounded';
+import LibraryAddRoundedIcon from '@mui/icons-material/LibraryAddRounded';
 import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 
 import DataTable from '../layouts/components/DataTable';
@@ -101,6 +101,10 @@ export default function ReservationsPage() {
         '\u00A3 ' + String(reservation.total_room_base_price.toFixed(2)),
     },
     {
+      key: 'guest_transport_method',
+      label: 'Arriving By'
+    },
+    {
       key: 'modified',
       label: 'Last Modified',
       render: (reservation: Reservation) =>
@@ -125,11 +129,12 @@ export default function ReservationsPage() {
           Reservations
         </Typography>
         <Button
+          onClick={() => navigate('/reservations/new')}
           color="primary"
-          startDecorator={<DownloadRoundedIcon />}
+          startDecorator={<LibraryAddRoundedIcon />}
           size="sm"
         >
-          Download PDF
+          New Booking
         </Button>
       </Box>
       {/* Desktop View */}

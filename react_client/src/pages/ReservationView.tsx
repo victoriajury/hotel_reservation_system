@@ -15,7 +15,7 @@ TO DO:
 
 - Add new guest on save
 
-- Add additional info field to models
+- Add additional info fields to models
 
 - Get invoice summary
 - Get payments summary
@@ -25,7 +25,9 @@ TO DO:
 import * as React from 'react';
 import { useLoaderData, redirect, useParams, useNavigate, useFetcher, data } from 'react-router-dom';
 import { createReservation, getReservation, updateReservation } from '../data/reservations';
-import { DataModelId, Guest } from '../data/data_models';
+import { getTransportMethods } from '../data/transport_methods';
+import { getMarketingSources } from '../data/marketing_sources';
+import { DataModelId, Reservation, MarketingSource, TransportMethod } from '../data/data_models';
 
 import Alert from '@mui/joy/Alert';
 import Avatar from '@mui/joy/Avatar';
@@ -51,22 +53,24 @@ import Textarea from '@mui/joy/Textarea';
 import Typography from '@mui/joy/Typography';
 
 
-import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
-import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
+import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
+import CancelRounded from '@mui/icons-material/CancelRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import CommuteRoundedIcon from '@mui/icons-material/CommuteRounded';
+import CurrencyPoundRounded from '@mui/icons-material/CurrencyPoundRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
+import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
 import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
+import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
-import CommuteRoundedIcon from '@mui/icons-material/CommuteRounded';
-import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
+
 
 import CountrySelector from '../layouts/components/CountrySelector';
 import ModalDelete from '../layouts/components/ModalDelete';
 import PageSectionTabs from '../layouts/components/PageSectionTabs';
-import { CancelRounded, CurrencyPound } from '@mui/icons-material';
 
 
 export function getReservationId() {
@@ -88,42 +92,43 @@ export async function loader({ params }: { params: { reservationId?: string } })
 export async function action({ request }: { request: Request }) {
   const formData = await request.formData();
 
-  const newGuest: Omit<Guest, "id"> = {
-    name: formData.get('name') as string,
-    email: formData.get('email') as string,
-    telephone: formData.get('telephone') as string,
-    address_1: formData.get('address_1') as string,
-    address_2: formData.get('address_2') as string,
-    city: formData.get('city') as string,
-    postcode: formData.get('postcode') as string,
-    county: formData.get('county') as string,
-    // country: formData.get('country') as string,
-    guest_notes: formData.get('guest_notes') as string,
+  const newReservation: Omit<Reservation, "id"> = {
+    start_date: formData.get('start_date') as string,
+    end_date: formData.get('end_date') as string,
+    status_id: Number(formData.get('status_id')),
+    guest_id: Number(formData.get('guest_id')),
+    number_of_guests: Number(formData.get('number_of_guests')),
+    total_room_base_price: Number(formData.get('total_room_base_price')),
+    special_offer_applied_title: formData.get('special_offer_applied_title') as string,
+    special_offer_discount: formData.get('special_offer_discount') as string,
+    reservation_notes: formData.get('reservation_notes') as string,
+    guest_arrival_time: formData.get('guest_arrival_time') as string,
+    guest_transport_method: formData.get('guest_transport_method') as string,
+    guest_marketing_source: formData.get('guest_marketing_source') as string,
     modified_by_id: 1,
   };
 
   // Form validation
   const errors: Record<string, string> = {};
   const required = [
-    newGuest.name,
-    newGuest.email,
-    newGuest.telephone,
-    newGuest.address_1,
-    newGuest.city,
-    newGuest.postcode,
-    newGuest.county,
+    newReservation.start_date,
+    newReservation.end_date,
+    newReservation.status_id,
+    newReservation.guest_id,
+    newReservation.number_of_guests,
+    newReservation.total_room_base_price,
   ]
 
-  const fieldNames = ['name', 'email', 'telephone', 'address_1', 'city', 'postcode', 'county'];
+  const fieldNames = ['start_date', 'end_date', 'status_id', 'guest_id', 'number_of_guests', 'total_room_base_price'];
 
   fieldNames.forEach((key, idx) => {
     if (!required[idx] || (typeof required[idx] === "string" && required[idx].trim() === "")) {
       errors[key] = `${key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ')} is required`;
     }
   });
-  if (newGuest.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newGuest.email as string)) {
-    errors.email = "Invalid email address";
-  }
+  // if (newReservation.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newReservation.email as string)) {
+  //   errors.email = "Invalid email address";
+  // }
   if (Object.keys(errors).length > 0) {
     return data({ errors }, { status: 400 });
   }
@@ -131,10 +136,10 @@ export async function action({ request }: { request: Request }) {
   // Update existing
   // const id = formData.get('id') as number | null;
 
-  let updatedGuest: Guest | null = null;
+  let updatedGuest: Reservation | null = null;
   updatedGuest = {
-    ...newGuest,
-  } as Guest;
+    ...newReservation,
+  } as Reservation;
 
   // if (updatedGuest && id != null) {
   //   await updateGuest(id, updatedGuest);
@@ -147,12 +152,49 @@ export async function action({ request }: { request: Request }) {
   // }
 }
 
+export async function getAvailableRoomsList() {
+
+}
+export async function getTransportMethodsList() {
+  const transport_methods = await getTransportMethods()
+  return transport_methods
+}
+export async function getMarketingSourcesList() {
+  const marketing_sources = await getMarketingSources()
+  return marketing_sources
+}
+
 export default function ReservationView() {
   let navigate = useNavigate();
   let fetcher = useFetcher();
   let errors = fetcher.data?.errors;
 
+  const [transport_methods, setTransportMethods] = React.useState<Awaited<ReturnType<typeof getTransportMethodsList>>>([]);
+  const [marketing_sources, setMarketingSources] = React.useState<Awaited<ReturnType<typeof getMarketingSourcesList>>>([]);
+
+  React.useEffect(() => {
+    getTransportMethodsList().then(setTransportMethods);
+    getMarketingSourcesList().then(setMarketingSources);
+  }, []);
+
   const [open, setOpen] = React.useState<boolean>(false);
+  const [totalPrice, setTotalPrice] = React.useState<number>(0);
+  const [overridePrice, setOverridePrice] = React.useState('');
+
+  React.useEffect(() => {
+    if (overridePrice && Number(overridePrice) > 0) {
+      setTotalPrice(Number(overridePrice));
+    }
+  }, [overridePrice]);
+
+  const cancelOverride = () => {
+    setOverridePrice('');
+    calculateTotalPrice();
+  }
+
+  const calculateTotalPrice = () => {
+    setTotalPrice(50);
+  }
 
   const isEditMode = (getReservationId()) ? true : false;
   let reservation = [];
@@ -224,24 +266,6 @@ export default function ReservationView() {
               >
                 <Stack spacing={2}>
 
-                  {/* Select Rooms */}
-                  <Stack spacing={1} sx={{ flexGrow: 1 }}>
-                    <FormLabel>Room</FormLabel>
-                    <FormControl error={errors?.name}>
-                      <Select size='sm' placeholder="Choose a room...">
-                        <Option value={1}>Room 1</Option>
-                        <Option value={2}>Room 2</Option>
-                        <Option value={3}>Room 3</Option>
-                        <Option value={4}>Room 4</Option>
-                      </Select>
-                      {errors?.name ?
-                        <FormHelperText>
-                          <InfoOutlined />
-                          {errors.name}
-                        </FormHelperText> : null}
-                    </FormControl>
-                  </Stack>
-
                   {/* Dates */}
                   <Grid container spacing={2} sx={{ p: 0, m: 0 }}>
                     <Grid sx={{ p: 0, pr: { xs: 0, md: 1 }, pb: { xs: 2, md: 0 }, width: { xs: '100%', md: '50%' } }}>
@@ -289,14 +313,16 @@ export default function ReservationView() {
                     </Grid>
                   </Grid>
 
-                  {/* No. of Guests */}
+                  {/* Select Rooms */}
                   <Stack spacing={1} sx={{ flexGrow: 1 }}>
-                    <FormLabel>Number of Guests</FormLabel>
+                    <FormLabel>Room</FormLabel>
                     <FormControl error={errors?.name}>
-                      <RadioGroup defaultValue="outlined" orientation='horizontal' name="radio-buttons-group" sx={{ display: 'flex', gap: 2 }} >
-                        <Radio label="1" value="1" size="sm" />
-                        <Radio label="2" value="2" size="sm" />
-                      </RadioGroup>
+                      <Select size='sm' placeholder="Choose a room...">
+                        <Option value={1}>Room 1</Option>
+                        <Option value={2}>Room 2</Option>
+                        <Option value={3}>Room 3</Option>
+                        <Option value={4}>Room 4</Option>
+                      </Select>
                       {errors?.name ?
                         <FormHelperText>
                           <InfoOutlined />
@@ -305,15 +331,34 @@ export default function ReservationView() {
                     </FormControl>
                   </Stack>
 
-                  {/* Offers */}
+                  {/* No. of Guests */}
+                  <Stack spacing={1} sx={{ flexGrow: 1 }}>
+                    <FormLabel>Number of Guests</FormLabel>
+                    <FormControl error={errors?.number_of_guests}>
+                      <RadioGroup
+                        orientation='horizontal'
+                        defaultValue={reservation.number_of_guests ? reservation.number_of_guests : ""}
+                        name="number_of_guests"
+                        sx={{ display: 'flex', gap: 2 }}
+                      >
+                        <Radio label="1" value="1" size="sm" />
+                        <Radio label="2" value="2" size="sm" />
+                      </RadioGroup>
+                      {errors?.number_of_guests ?
+                        <FormHelperText>
+                          <InfoOutlined />
+                          {errors.number_of_guests}
+                        </FormHelperText> : null}
+                    </FormControl>
+                  </Stack>
+
+                  {/* Special Offers */}
                   <Stack spacing={1} sx={{ flexGrow: 1 }}>
                     <FormLabel>Special Offers Available</FormLabel>
                     <FormControl error={errors?.name}>
-
-
                       <RadioGroup
                         aria-label="platform"
-                        defaultValue="Website"
+                        defaultValue="Offer 1"
                         overlay
                         name="platform"
                         sx={{
@@ -369,38 +414,28 @@ export default function ReservationView() {
                   <Stack spacing={1} sx={{ flexGrow: 1 }}>
                     <FormLabel>Price Override</FormLabel>
                     <FormControl error={errors?.name}>
-                      {/*
-                        Use React state to control the value of the input.
-                      */}
-                      {(() => {
-                        const [overridePrice, setOverridePrice] = React.useState('');
-                        // This is a workaround to use state inside the render tree.
-                        // In a real project, lift this state up to the parent component.
-                        (ReservationView as any).overridePrice = overridePrice;
-                        (ReservationView as any).setOverridePrice = setOverridePrice;
-                        return (
-                          <Input
-                            size="sm"
-                            id="override_price"
-                            placeholder="Enter total price to override the calculated room rate."
-                            name="override_price"
-                            type='number'
-                            value={overridePrice}
-                            onChange={e => setOverridePrice(e.target.value)}
-                            startDecorator={<CurrencyPound />}
-                            endDecorator={
-                              <Button
-                                variant="soft"
-                                color="neutral"
-                                startDecorator={<CancelRounded />}
-                                onClick={() => setOverridePrice('')}
-                              >
-                                Clear
-                              </Button>
-                            }
-                          />
-                        );
-                      })()}
+
+                      <Input
+                        size="sm"
+                        id="override_price"
+                        placeholder="Enter total price to override the calculated room rate."
+                        name="override_price"
+                        type='number'
+                        value={overridePrice}
+                        onChange={e => setOverridePrice(e.target.value)}
+                        startDecorator={<CurrencyPoundRounded />}
+                        endDecorator={
+                          <Button
+                            variant="soft"
+                            color="neutral"
+                            startDecorator={<CancelRounded />}
+                            onClick={() => cancelOverride()}
+                          >
+                            Clear
+                          </Button>
+                        }
+                      />
+
                       {errors?.name ?
                         <FormHelperText>
                           <InfoOutlined />
@@ -412,13 +447,21 @@ export default function ReservationView() {
                 </Stack>
               </Stack>
               <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
-                <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
-                  <Button size="sm" variant="outlined" color="neutral" onClick={() => navigate('/guests')}>
-                    Cancel
-                  </Button>
-                  <Button size="sm" variant="solid" type="submit">
-                    Save
-                  </Button>
+                <CardActions sx={{ alignItems: 'stretch', justifyContent: 'space-between', pt: 2 }}>
+                  <Alert color='primary'>
+                    <Typography level="body-lg" sx={{ px: 2, textAlign: 'center' }}>
+                      2 nights
+                    </Typography>
+                    <Typography level="body-sm">
+                      <strong>Arrival:</strong> {new Date('2025-06-17').toDateString()}<br />
+                      <strong>Departure:</strong> {new Date('2025-06-20').toDateString()}
+                    </Typography>
+                  </Alert>
+                  <Alert color='success'>
+                    <Typography level="body-lg">
+                      Room Total: &pound;&nbsp;{totalPrice.toFixed(2)}
+                    </Typography>
+                  </Alert>
                 </CardActions>
               </CardOverflow>
             </Card>
@@ -561,6 +604,7 @@ export default function ReservationView() {
               </CardOverflow>
             </Card>
 
+            {/* Additional Info */}
             <Card key={sections[2].label} ref={sections[2].ref} sx={{ scrollMarginTop: scrollOffset }}>
               <Box sx={{ mb: 1 }}>
                 <Typography level="title-md">{sections[2].label}</Typography>
@@ -570,68 +614,89 @@ export default function ReservationView() {
               </Box>
               <Divider />
 
-
               <Stack spacing={2} sx={{ my: 1 }}>
+                <FormHelperText color="danger" sx={{ mt: 0.75, fontSize: 'xs' }}>
+                  <Alert color="danger">Do not store payment or card details here.</Alert>
+                </FormHelperText>
                 <Textarea
                   size="sm"
                   minRows={4}
                   sx={{ mt: 1.5 }}
                   placeholder="Special requests, notes, etc."
-                  name="guest_notes"
-                  defaultValue={reservation.reservation_notes}
+                  name="reservation_notes"
+                  defaultValue={reservation.reservation_notes ? reservation.reservation_notes : ""}
                 />
-                <FormHelperText color="danger" sx={{ mt: 0.75, fontSize: 'xs' }}>
-                  <Alert color="danger">Do not store payment or card details here.</Alert>
-                </FormHelperText>
 
-
-                {/* Phone & Email */}
+                {/* Arrival Time & Transport */}
                 <Grid container spacing={2} sx={{ p: 0, m: 0 }}>
                   <Grid sx={{ p: 0, pr: { xs: 0, md: 1 }, pb: { xs: 2, md: 0 }, width: { xs: '100%', md: '50%' } }}>
-                    <FormControl error={errors?.email} sx={{ flexGrow: 0 }}>
-                      <FormLabel>Arival time</FormLabel>
-                      <Input
-                        size="sm"
-                        startDecorator={<ScheduleRoundedIcon />}
-                        placeholder="Check-in time"
-                        name="arrival_time"
-                        defaultValue={reservation.arrival_time}
-                        sx={{ flexGrow: 1 }}
-                      />
-                      {errors?.email ?
+                    <FormControl error={errors?.guest_arrival_time} sx={{ flexGrow: 0 }}>
+                      <FormLabel>Arrival time</FormLabel>
+                      <Select
+                        size='sm'
+                        placeholder="Choose a time.."
+                        name="guest_arrival_time"
+                        defaultValue={reservation.guest_arrival_time ? reservation.guest_arrival_time : ""}
+                        startDecorator={<CommuteRoundedIcon />}
+                      >
+                        {Array.from({ length: 24 }, (_, i) => {
+                          const hour = i.toString().padStart(2, '0') + ':00';
+                          return (
+                            <Option key={hour} value={hour}>
+                              {hour}
+                            </Option>
+                          );
+                        })}
+                      </Select>
+                      {errors?.guest_arrival_time ?
                         <FormHelperText>
                           <InfoOutlined />
-                          {errors.email}
+                          {errors.guest_arrival_time}
                         </FormHelperText> : null}
                     </FormControl>
                   </Grid>
                   <Grid sx={{ p: 0, pl: { xs: 0, md: 1 }, width: { xs: '100%', md: '50%' } }}>
-                    <FormControl error={errors?.telephone}>
+                    <FormControl error={errors?.guest_transport_method}>
                       <FormLabel>Method of transport</FormLabel>
-                      <Input
-                        size="sm"
+                      <Select
+                        size='sm'
+                        placeholder="Choose a mode of transport..."
+                        name="guest_transport_method"
+                        defaultValue={reservation.guest_transport_method ? reservation.guest_transport_method : ""}
                         startDecorator={<CommuteRoundedIcon />}
-                        placeholder="How are they arriving?"
-                        name="telephone"
-                        defaultValue={reservation.guest_telephone}
-                      />
-                      {errors?.telephone ?
+                      >
+                        {transport_methods.map((transport: TransportMethod) => (
+                          <Option key={transport.id} value={transport.transport_name}>{transport.transport_name}</Option>
+                        ))}
+                      </Select>
+                      {errors?.guest_transport_method ?
                         <FormHelperText>
                           <InfoOutlined />
-                          {errors.telephone}
+                          {errors.guest_transport_method}
                         </FormHelperText> : null}
                     </FormControl>
                   </Grid>
                 </Grid>
 
+                {/* Marketing Source */}
                 <Stack spacing={1} sx={{ flexGrow: 1 }}>
                   <FormLabel>How did they hear about us?</FormLabel>
-                  <FormControl error={errors?.name}>
-                    <Input size="sm" startDecorator={<CampaignRoundedIcon />} placeholder="Name" name="name" />
-                    {errors?.name ?
+                  <FormControl error={errors?.guest_marketing_source}>
+                    <Select
+                      size='sm'
+                      placeholder="Choose a marketing source..."
+                      name="guest_marketing_source"
+                      defaultValue={reservation.guest_marketing_source ? reservation.guest_marketing_source : ""}
+                      startDecorator={<CampaignRoundedIcon />}
+                    >
+                      {marketing_sources.map((source: MarketingSource) => (
+                        <Option key={source.id} value={source.source_name}>{source.source_name}</Option>
+                      ))}
+                    </Select>
+                    {errors?.guest_marketing_source ?
                       <FormHelperText>
                         <InfoOutlined />
-                        {errors.name}
+                        {errors.guest_marketing_source}
                       </FormHelperText> : null}
                   </FormControl>
                 </Stack>
