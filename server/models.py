@@ -16,6 +16,14 @@ def make_dict(obj, excluded=None):
     }
 
 
+rooms_reservations = db.Table(
+    # Define joining table for many-to-many relationship
+    "join_rooms_reservations",
+    Column("room_id", ForeignKey("rooms.id"), primary_key=True),
+    Column("reservation_id", ForeignKey("reservations.id"), primary_key=True),
+)
+
+
 class Users(db.Model):  # type: ignore
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username: Mapped[str] = mapped_column(String, unique=True)
@@ -96,9 +104,18 @@ class Rooms(db.Model):  # type: ignore
     room_type_name: Mapped[RoomTypes] = relationship()
     modified_by_user: Mapped[Users] = relationship()
 
+    reservations = relationship(
+        "Reservations", secondary=rooms_reservations, back_populates="rooms"
+    )
+
     def to_dict(self):
         _dict = make_dict(self)
         _dict["room_type_name"] = self.room_type_name.type_name
+        _dict["base_price_per_night"] = self.room_type_name.base_price_per_night
+        _dict["room_photo"] = self.room_type_name.photo
+        _dict["room_max_occupants"] = self.room_type_name.max_occupants
+        _dict["room_amenities"] = self.room_type_name.amenities
+
         _dict["modified_by_user"] = self.modified_by_user.username
         return _dict
 
@@ -139,6 +156,9 @@ class Reservations(db.Model):  # type: ignore
     modified_by_user: Mapped[Users] = relationship()
 
     guest = relationship("Guests", back_populates="reservations")
+    rooms = relationship(
+        "Rooms", secondary=rooms_reservations, back_populates="reservations"
+    )
 
     def to_dict(self):
         _dict = make_dict(self)
@@ -268,14 +288,3 @@ class TransportMethods(db.Model):  # type: ignore
     def to_dict(self):
         _dict = make_dict(self)
         return _dict
-
-
-"""
-Define joining tables for many-to-many relationships
-"""
-
-rooms_reservations = db.Table(
-    "join_rooms_reservations",
-    Column("room_id", ForeignKey(Rooms.id), primary_key=True),
-    Column("reservation_id", ForeignKey(Reservations.id), primary_key=True),
-)

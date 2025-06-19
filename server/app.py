@@ -6,6 +6,7 @@ from flask_restful import Api
 from server.database import db, init_db_command
 
 from .resources import (
+    find_availability,
     guests,
     invoice_items,
     invoices,
@@ -50,6 +51,12 @@ def create_app(test_config=None):
 
     api.add_resource(users.UserResource, "/api/users", endpoint="users")
     api.add_resource(users.UserResource, "/api/users/<int:user_id>", endpoint="user")
+
+    api.add_resource(
+        find_availability.FindAvailableRoomsByDateResource,
+        "/api/find-availability/<string:start_date>/<string:end_date>",
+        endpoint="find_availability",
+    )
 
     api.add_resource(guests.GuestResource, "/api/guests", endpoint="guests")
     api.add_resource(
