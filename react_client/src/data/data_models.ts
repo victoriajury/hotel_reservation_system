@@ -71,6 +71,7 @@ export interface Reservation extends DataModel {
 
 export interface SpecialOffer extends DataModel {
   title: string;
+  room_type: number;
   room_type_name: string;
   price_per_night: number;
   start_date: string;

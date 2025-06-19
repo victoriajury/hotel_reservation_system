@@ -4,6 +4,7 @@ from flask import jsonify, make_response
 from flask_restful import HTTPException, Resource, reqparse
 from server.database import db
 from server.models import SpecialOffers
+from sqlalchemy import and_
 from werkzeug.exceptions import NotFound
 
 date_format = "%Y-%m-%d"
@@ -31,14 +32,41 @@ for arg in required_fields:
 
 
 class SpecialOfferResource(Resource):
-    def get(self, offer_id=None):
+    def get(
+        self, offer_id=None, reservation_start_date=None, reservation_end_date=None
+    ):
+        if reservation_start_date and reservation_end_date:
+            # Return offers valid during reservation dates
+            try:
+                query = db.session.execute(
+                    db.select(SpecialOffers)
+                    .filter(
+                        and_(
+                            SpecialOffers.start_date <= reservation_start_date,
+                            SpecialOffers.end_date >= reservation_end_date,
+                            SpecialOffers.is_enabled,
+                        )
+                    )
+                    .order_by(SpecialOffers.price_per_night)
+                ).scalars()
+
+                offers_by_date = [data.to_dict() for data in query.all()]
+
+                return jsonify(offers_by_date)
+
+            except NotFound:
+                response = make_response(
+                    "Special Offers not found for selected dates.", 404
+                )
+                return response
+
         if offer_id is None:
             query = db.session.execute(db.select(SpecialOffers)).scalars()
             offers = [data.to_dict() for data in query.all()]
 
             return jsonify(offers)
 
-        else:
+        elif offer_id:
             try:
                 offer = db.get_or_404(SpecialOffers, offer_id).to_dict()
                 return jsonify(offer)

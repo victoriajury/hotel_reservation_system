@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import jsonify, make_response
 from flask_restful import Resource, reqparse
 from server.database import db
-from server.models import Reservations, Rooms
+from server.models import Reservations, ReservationStatus, Rooms
 from server.models import rooms_reservations as join_table
 from sqlalchemy import and_, or_
 
@@ -34,44 +34,47 @@ class FindAvailableRoomsByDateResource(Resource):
             return response
 
         else:
-            occupied_query = (
-                db.session.query(
+            occupied_query = db.session.execute(
+                db.select(
                     Rooms.id,
                 )
-                .select_from(Rooms)
-                .join(join_table, Rooms.id == join_table.c.room_id)
-                .join(Reservations, Reservations.id == join_table.c.reservation_id)
+                .join(join_table)
+                .join(Reservations)
+                .join(ReservationStatus)
                 .filter(
-                    or_(
-                        # -- outside booking
-                        and_(
-                            start_date <= Reservations.start_date,
-                            end_date >= Reservations.end_date,
+                    and_(
+                        or_(
+                            # -- outside booking
+                            and_(
+                                start_date <= Reservations.start_date,
+                                end_date >= Reservations.end_date,
+                            ),
+                            # -- inside booking
+                            and_(
+                                start_date >= Reservations.start_date,
+                                end_date <= Reservations.end_date,
+                            ),
+                            # -- overlap start_date
+                            and_(
+                                start_date <= Reservations.start_date,
+                                end_date > Reservations.start_date,
+                            ),
+                            # -- overlap end_date
+                            and_(
+                                start_date < Reservations.end_date,
+                                end_date >= Reservations.end_date,
+                            ),
                         ),
-                        # -- inside booking
-                        and_(
-                            start_date >= Reservations.start_date,
-                            end_date <= Reservations.end_date,
-                        ),
-                        # -- overlap start_date
-                        and_(
-                            start_date <= Reservations.start_date,
-                            end_date > Reservations.start_date,
-                        ),
-                        # -- overlap end_date
-                        and_(
-                            start_date < Reservations.end_date,
-                            end_date >= Reservations.end_date,
-                        ),
+                        ReservationStatus.status != "Cancelled",
                     )
                 )
                 .distinct()
-            )
+            ).scalars()
 
-            available_query = (
+            available_query = db.session.execute(
                 # Rooms not occupied
-                db.session.query(Rooms).filter(~Rooms.id.in_(occupied_query))
-            )
+                db.select(Rooms).filter(~Rooms.id.in_(occupied_query))
+            ).scalars()
 
             availability = [data.to_dict() for data in available_query.all()]
 

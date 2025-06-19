@@ -1,15 +1,8 @@
 /*
 TO DO:
-- Get list of rooms to populate selection list
-  Function to check if room available for selected dates
-
-- Get special offers and display if they exist
-
 - Price override
   Options for per night or total
   Warn if above default rate
-
-- Total price and number of nights sumary at bottom of section
 
 - Exisitng guest selection (search as you type function)
 
@@ -26,9 +19,10 @@ import * as React from 'react';
 import { useLoaderData, redirect, useParams, useNavigate, useFetcher, data } from 'react-router-dom';
 import { createReservation, getReservation, updateReservation } from '../data/reservations';
 import { getAvailableRoomsByDate } from '../data/rooms';
+import { getSpecialOffersByReservationDate } from '../data/special_offers'
 import { getTransportMethods } from '../data/transport_methods';
 import { getMarketingSources } from '../data/marketing_sources';
-import { DataModelId, Reservation, Room, MarketingSource, TransportMethod } from '../data/data_models';
+import { DataModelId, Reservation, Room, MarketingSource, TransportMethod, SpecialOffer } from '../data/data_models';
 
 import Alert from '@mui/joy/Alert';
 import Avatar from '@mui/joy/Avatar';
@@ -157,6 +151,10 @@ export async function getAvailableRoomsByDatesList(start_date: string, end_date:
   const available_rooms = await getAvailableRoomsByDate(start_date, end_date)
   return available_rooms
 }
+export async function getSpecialOffersList(start_date: string, end_date: string) {
+  const special_offers = await getSpecialOffersByReservationDate(start_date, end_date)
+  return special_offers
+}
 export async function getTransportMethodsList() {
   const transport_methods = await getTransportMethods()
   return transport_methods
@@ -171,26 +169,31 @@ export default function ReservationView() {
   let fetcher = useFetcher();
   let errors = fetcher.data?.errors;
 
-  
   const [start_date, setStartDate] = React.useState('');
   const [end_date, setEndDate] = React.useState('');
+  const [number_of_nights, setNumberOfNights] = React.useState<number>(0);
   const [available_rooms, setAvailableRooms] = React.useState<Room[]>([]);
   const [selected_room, setSelectedRoom] = React.useState<Room>();
+  const [special_offers, setSpecialOffers] = React.useState<SpecialOffer[]>();
+  const [special_offers_by_room, setSpecialOffersByRoom] = React.useState<SpecialOffer[]>();
+  const [selected_offer, setSelectedOffer] = React.useState<SpecialOffer>();
+  const [overridePrice, setOverridePrice] = React.useState('');
+  const [totalPrice, setTotalPrice] = React.useState<number>(0);
 
   React.useEffect(() => {
     if (start_date && end_date) {
       getAvailableRoomsByDatesList(start_date, end_date).then(setAvailableRooms);
+      getSpecialOffersList(start_date, end_date).then(setSpecialOffers);
     }
+    dateDiff();
   }, [start_date, end_date]);
 
-  // React.useEffect(() =>{
-  //   if (selected_room) {
-
-  //   }
-  // }, [selected_room])
-
-  const [totalPrice, setTotalPrice] = React.useState<number>(0);
-  const [overridePrice, setOverridePrice] = React.useState('');
+  React.useEffect(() => {
+    if (selected_room) {
+      const total = calculateTotalPrice();
+      setTotalPrice(total)
+    }
+  }, [selected_room]);
 
   React.useEffect(() => {
     if (overridePrice && Number(overridePrice) > 0) {
@@ -200,11 +203,39 @@ export default function ReservationView() {
 
   const cancelOverride = () => {
     setOverridePrice('');
-    calculateTotalPrice();
+    const total = calculateTotalPrice();
+    setTotalPrice(total)
+  }
+
+  const dateDiff = () => {
+    if (!start_date || !end_date) return 0;
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    setNumberOfNights(diffDays > 0 ? diffDays : 0);
+    return diffDays > 0 ? diffDays : 0;
   }
 
   const calculateTotalPrice = () => {
-    setTotalPrice(50);
+    if (!selected_room || number_of_nights <= 0) {
+      setTotalPrice(0);
+      return 0;
+    }
+
+    let pricePerNight = selected_offer ? selected_offer.price_per_night : selected_room.base_price_per_night
+
+    return pricePerNight * number_of_nights;
+  }
+
+  const resetRoomSelection = () => {
+    setTotalPrice(0);
+    setSelectedRoom(undefined);
+    setAvailableRooms([]);
+
+    setSelectedOffer(undefined);
+    setSpecialOffers([])
+    setSpecialOffersByRoom([]);
   }
 
   const [transport_methods, setTransportMethods] = React.useState<Awaited<ReturnType<typeof getTransportMethodsList>>>([]);
@@ -297,7 +328,7 @@ export default function ReservationView() {
                           startDecorator={<LoginRoundedIcon />}
                           type='date'
                           value={start_date}
-                          onChange={e => setStartDate(e.target.value)}
+                          onChange={e => { setStartDate(e.target.value); resetRoomSelection() }}
                           defaultValue={reservation.end_date ? new Date(reservation.start_date).toISOString().split('T')[0] : ''}
                           sx={{ flexGrow: 1 }}
                         />
@@ -316,7 +347,7 @@ export default function ReservationView() {
                           startDecorator={<LogoutRoundedIcon />}
                           type='date'
                           value={end_date}
-                          onChange={e => {setEndDate(e.target.value)}}
+                          onChange={e => { setEndDate(e.target.value); resetRoomSelection() }}
                           defaultValue={reservation.end_date ? new Date(reservation.end_date).toISOString().split('T')[0] : ''}
                         />
                         {errors?.end_date ?
@@ -333,28 +364,37 @@ export default function ReservationView() {
                     <FormLabel>Room</FormLabel>
                     <FormControl error={errors?.room_id}>
                       {(!start_date || !end_date) ?
-                      <Select
-                        size='sm'
-                        placeholder="Please select check-in and check-out dates."
-                        disabled
-                        startDecorator={<BedroomParentRoundedIcon />}
-                      ></Select>
-                      :
-                      <Select
-                        size='sm'
-                        placeholder="Choose room..."
-                        name="room_id"
-                        defaultValue={reservation.room_id ? reservation.room_id : ""}
-                        startDecorator={<BedroomParentRoundedIcon />}
-                        onChange={(_event, value) => {
-                          const room = available_rooms.find(r => r.id === value);
-                          setSelectedRoom(room);
-                        }}
-                      >
-                        {available_rooms.map((room: Room) => (
-                          <Option key={room.id} value={room.id}>Room {room.room_number} - {room.room_type_name}</Option>
-                        ))}
-                      </Select>}
+                        <Select
+                          size='sm'
+                          placeholder="Please select check-in and check-out dates."
+                          disabled
+                          startDecorator={<BedroomParentRoundedIcon />}
+                        ></Select>
+                        :
+                        <Select
+                          size='sm'
+                          placeholder="Choose room..."
+                          name="room_id"
+                          defaultValue={reservation.room_id ? reservation.room_id : ""}
+                          startDecorator={<BedroomParentRoundedIcon />}
+                          onChange={(_event, room_id) => {
+                            setSelectedOffer(undefined);
+                            const room = available_rooms.find(r => r.id === room_id);
+                            setSelectedRoom(room);
+                            const offersForRoom = special_offers?.filter(offer => offer.room_type === room?.room_type) || [];
+                            setSpecialOffersByRoom(offersForRoom);
+                            setSelectedOffer(offersForRoom.length > 0 ? offersForRoom[0] : undefined);
+                          }}
+                        >
+                          {available_rooms.map((room: Room) => (
+                            <Option
+                              key={room.id}
+                              value={room.id}
+                            >
+                              Room {room.room_number} - {room.room_type_name} (Base price: &pound; {room.base_price_per_night.toFixed(2)})
+                            </Option>
+                          ))}
+                        </Select>}
                       {errors?.room_id ?
                         <FormHelperText>
                           <InfoOutlined />
@@ -362,130 +402,145 @@ export default function ReservationView() {
                         </FormHelperText> : null}
                     </FormControl>
                   </Stack>
-                  
+
                   {/* No. of Guests */}
-                  {selected_room && 
-                  <Stack spacing={1} sx={{ flexGrow: 1 }}>
-                    <FormLabel>Number of Guests</FormLabel>
-                    <FormControl error={errors?.number_of_guests}>
-                      <RadioGroup
-                        orientation='horizontal'
-                        defaultValue={reservation.number_of_guests ? reservation.number_of_guests : ""}
-                        name="number_of_guests"
-                        sx={{ display: 'flex', gap: 2 }}
-                      >
-                        {Array.from({ length: (selected_room) ? selected_room.room_max_occupants : 0 }, (_, i) => {
-                          const occupants = i + 1;
-                          return (                        
-                            <Radio
-                              key={occupants}
-                              label={occupants}
-                              value={occupants}
-                              size="sm"
-                            />
-                          );
-                        })}
-                      </RadioGroup>
-                      {errors?.number_of_guests ?
-                        <FormHelperText>
-                          <InfoOutlined />
-                          {errors.number_of_guests}
-                        </FormHelperText> : null}
-                    </FormControl>
-                  </Stack>}
+                  {selected_room &&
+                    <Stack spacing={1} sx={{ flexGrow: 1 }}>
+                      <FormLabel>Number of Guests</FormLabel>
+                      <FormControl error={errors?.number_of_guests}>
+                        <RadioGroup
+                          orientation='horizontal'
+                          defaultValue={reservation.number_of_guests ? reservation.number_of_guests : ""}
+                          name="number_of_guests"
+                          sx={{ display: 'flex', gap: 2 }}
+                        >
+                          {Array.from({ length: (selected_room) ? selected_room.room_max_occupants : 0 }, (_, i) => {
+                            const occupants = i + 1;
+                            return (
+                              <Radio
+                                key={occupants}
+                                label={occupants}
+                                value={occupants}
+                                size="sm"
+                              />
+                            );
+                          })}
+                        </RadioGroup>
+                        {errors?.number_of_guests ?
+                          <FormHelperText>
+                            <InfoOutlined />
+                            {errors.number_of_guests}
+                          </FormHelperText> : null}
+                      </FormControl>
+                    </Stack>}
 
                   {/* Special Offers */}
-                  <Stack spacing={1} sx={{ flexGrow: 1 }}>
-                    <FormLabel>Special Offers Available</FormLabel>
-                    <FormControl error={errors?.name}>
-                      <RadioGroup
-                        aria-label="platform"
-                        defaultValue="Offer 1"
-                        overlay
-                        name="platform"
-                        sx={{
-                          flexDirection: 'row',
-                          gap: 2,
-                          [`& .${radioClasses.checked}`]: {
-                            [`& .${radioClasses.action}`]: {
-                              inset: -1,
-                              border: '3px solid',
-                              borderColor: 'success.400',
+                  {special_offers_by_room && special_offers_by_room.length > 0 &&
+                    <Stack spacing={1} sx={{ flexGrow: 1 }}>
+                      <FormLabel>Special Offers Available</FormLabel>
+                      <FormControl error={errors?.name}>
+                        <RadioGroup
+                          aria-label="platform"
+                          value={selected_offer ? selected_offer.id : undefined}
+                          overlay
+                          name="platform"
+                          sx={{
+                            flexDirection: 'row',
+                            gap: 2,
+                            [`& .${radioClasses.checked}`]: {
+                              [`& .${radioClasses.action}`]: {
+                                inset: -1,
+                                border: '3px solid',
+                                borderColor: 'success.400',
+                              },
                             },
-                          },
-                          [`& .${radioClasses.radio}`]: {
-                            display: 'contents',
-                            '& > svg': {
-                              zIndex: 2,
-                              position: 'absolute',
-                              top: '-8px',
-                              right: '-8px',
-                              bgcolor: 'background.surface',
-                              borderRadius: '50%',
+                            [`& .${radioClasses.radio}`]: {
+                              display: 'contents',
+                              '& > svg': {
+                                zIndex: 2,
+                                position: 'absolute',
+                                top: '-8px',
+                                right: '-8px',
+                                bgcolor: 'background.surface',
+                                borderRadius: '50%',
 
+                              },
                             },
-                          },
-                        }}
-                      >
-                        {['Offer 1', 'Offer 2', 'Offer 3'].map((value) => (
-                          <Sheet
-                            key={value}
-                            variant="outlined"
-                            sx={{
-                              borderRadius: 'md',
-                              boxShadow: 'sm',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              gap: 1.5,
-                              p: 2,
-                              width: '50%',
-                            }}
-                          >
-                            <Radio id={value} value={value} checkedIcon={<CheckCircleRoundedIcon />} color='success' />
-                            <Avatar variant="soft" size="sm" color='success'><LocalOfferRoundedIcon /></Avatar>
-                            <FormLabel sx={{ alignSelf: 'center' }} htmlFor={value}>{value}</FormLabel>
-                          </Sheet>
-                        ))}
-                      </RadioGroup>
+                          }}
+                        >
+                          {special_offers_by_room.map((offer) => (
+                            <Sheet
+                              key={offer.id}
+                              variant="outlined"
+                              sx={{
+                                borderRadius: 'md',
+                                boxShadow: 'sm',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                p: 2,
+                                width: '50%',
+                              }}
+                              onClick={() => {
+                                setSelectedOffer(offer);
+                                if (number_of_nights > 0) {
+                                  setTotalPrice(offer.price_per_night * number_of_nights);
+                                }
+                              }}
+                            >
+                              <Radio
+                                id={String(offer.id)}
+                                value={offer.id}
+                                checkedIcon={<CheckCircleRoundedIcon />}
+                                color='success'
+                              />
+                              <Avatar variant="soft" size="sm" color='success'><LocalOfferRoundedIcon /></Avatar>
+                              <FormLabel sx={{ alignSelf: 'center', textAlign: 'center' }} htmlFor={offer.title}>
+                                {offer.title}<br />
+                                &pound; {offer.price_per_night.toFixed(2)} per night
+                              </FormLabel>
+                            </Sheet>
+                          ))}
+                        </RadioGroup>
 
-                    </FormControl>
-                  </Stack>
+                      </FormControl>
+                    </Stack>}
 
                   {/* Price Overide */}
-                  { selected_room && 
-                  <Stack spacing={1} sx={{ flexGrow: 1 }}>
-                    <FormLabel>Price Override</FormLabel>
-                    <FormControl error={errors?.name}>
+                  {selected_room &&
+                    <Stack spacing={1} sx={{ flexGrow: 1 }}>
+                      <FormLabel>Price Override</FormLabel>
+                      <FormControl error={errors?.name}>
 
-                      <Input
-                        size="sm"
-                        id="override_price"
-                        placeholder="Enter total price to override the calculated room rate."
-                        name="override_price"
-                        type='number'
-                        value={overridePrice}
-                        onChange={e => setOverridePrice(e.target.value)}
-                        startDecorator={<CurrencyPoundRounded />}
-                        endDecorator={
-                          <Button
-                            variant="soft"
-                            color="neutral"
-                            startDecorator={<CancelRounded />}
-                            onClick={() => cancelOverride()}
-                          >
-                            Clear
-                          </Button>
-                        }
-                      />
+                        <Input
+                          size="sm"
+                          id="override_price"
+                          placeholder="Enter total price to override the calculated room rate."
+                          name="override_price"
+                          type='number'
+                          value={overridePrice}
+                          onChange={e => setOverridePrice(e.target.value)}
+                          startDecorator={<CurrencyPoundRounded />}
+                          endDecorator={
+                            <Button
+                              variant="soft"
+                              color="neutral"
+                              startDecorator={<CancelRounded />}
+                              onClick={() => cancelOverride()}
+                            >
+                              Clear
+                            </Button>
+                          }
+                        />
 
-                      {errors?.name ?
-                        <FormHelperText>
-                          <InfoOutlined />
-                          {errors.name}
-                        </FormHelperText> : null}
-                    </FormControl>
-                  </Stack>}
+                        {errors?.name ?
+                          <FormHelperText>
+                            <InfoOutlined />
+                            {errors.name}
+                          </FormHelperText> : null}
+                      </FormControl>
+                    </Stack>}
 
                 </Stack>
               </Stack>
@@ -493,7 +548,9 @@ export default function ReservationView() {
                 <CardActions sx={{ alignItems: 'stretch', justifyContent: 'space-between', pt: 2 }}>
                   <Alert color='primary'>
                     <Typography level="body-lg" sx={{ px: 2, textAlign: 'center' }}>
-                      2 nights
+                      {number_of_nights && number_of_nights > 0 ?
+                        (number_of_nights == 1 ? number_of_nights + ' night' :
+                          number_of_nights + ' nights') : '-'}
                     </Typography>
                     <Typography level="body-sm">
                       <strong>Arrival:</strong> {start_date ? new Date(start_date).toDateString() : " - "}<br />

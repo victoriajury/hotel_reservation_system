@@ -105,6 +105,11 @@ def create_app(test_config=None):
         "/api/special-offers/<int:offer_id>",
         endpoint="special_offer",
     )
+    api.add_resource(
+        special_offers.SpecialOfferResource,
+        "/api/special-offers/<string:reservation_start_date>/<string:reservation_end_date>",
+        endpoint="special_offers_by_date",
+    )
 
     api.add_resource(invoices.InvoiceResource, "/api/invoices", endpoint="invoices")
     api.add_resource(
