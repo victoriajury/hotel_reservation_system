@@ -9,7 +9,7 @@ INSERT INTO users (username, password)
 INSERT INTO room_types
   (type_name, base_price_per_night, amenities, photo, max_occupants, modified_by_id)
 VALUES
-  ("Four Poster Nest", 145.0, "King-size bed, shower, bath", "four_poster_nest.jpg", 2, 1),
+  ("Four Poster Nest", 145.0, "King-size bed, shower, bath", "four_poster_nest.jpg", 3, 1),
   ("Superior Double", 130.0, "King-size bed, shower, bath", "superior_room.jpg", 2, 1),
   ("Classic Double", 115.0, "King-size bed, shower, bath", "classic_double_room.jpg", 2, 1)
 ;

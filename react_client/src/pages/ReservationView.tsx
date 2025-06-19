@@ -25,9 +25,10 @@ TO DO:
 import * as React from 'react';
 import { useLoaderData, redirect, useParams, useNavigate, useFetcher, data } from 'react-router-dom';
 import { createReservation, getReservation, updateReservation } from '../data/reservations';
+import { getAvailableRoomsByDate } from '../data/rooms';
 import { getTransportMethods } from '../data/transport_methods';
 import { getMarketingSources } from '../data/marketing_sources';
-import { DataModelId, Reservation, MarketingSource, TransportMethod } from '../data/data_models';
+import { DataModelId, Reservation, Room, MarketingSource, TransportMethod } from '../data/data_models';
 
 import Alert from '@mui/joy/Alert';
 import Avatar from '@mui/joy/Avatar';
@@ -53,6 +54,7 @@ import Textarea from '@mui/joy/Textarea';
 import Typography from '@mui/joy/Typography';
 
 
+import BedroomParentRoundedIcon from '@mui/icons-material/BedroomParentRounded';
 import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import CancelRounded from '@mui/icons-material/CancelRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -65,7 +67,6 @@ import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
 import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
-import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 
 
 import CountrySelector from '../layouts/components/CountrySelector';
@@ -152,8 +153,9 @@ export async function action({ request }: { request: Request }) {
   // }
 }
 
-export async function getAvailableRoomsList() {
-
+export async function getAvailableRoomsByDatesList(start_date: string, end_date: string) {
+  const available_rooms = await getAvailableRoomsByDate(start_date, end_date)
+  return available_rooms
 }
 export async function getTransportMethodsList() {
   const transport_methods = await getTransportMethods()
@@ -169,15 +171,24 @@ export default function ReservationView() {
   let fetcher = useFetcher();
   let errors = fetcher.data?.errors;
 
-  const [transport_methods, setTransportMethods] = React.useState<Awaited<ReturnType<typeof getTransportMethodsList>>>([]);
-  const [marketing_sources, setMarketingSources] = React.useState<Awaited<ReturnType<typeof getMarketingSourcesList>>>([]);
+  
+  const [start_date, setStartDate] = React.useState('');
+  const [end_date, setEndDate] = React.useState('');
+  const [available_rooms, setAvailableRooms] = React.useState<Room[]>([]);
+  const [selected_room, setSelectedRoom] = React.useState<Room>();
 
   React.useEffect(() => {
-    getTransportMethodsList().then(setTransportMethods);
-    getMarketingSourcesList().then(setMarketingSources);
-  }, []);
+    if (start_date && end_date) {
+      getAvailableRoomsByDatesList(start_date, end_date).then(setAvailableRooms);
+    }
+  }, [start_date, end_date]);
 
-  const [open, setOpen] = React.useState<boolean>(false);
+  // React.useEffect(() =>{
+  //   if (selected_room) {
+
+  //   }
+  // }, [selected_room])
+
   const [totalPrice, setTotalPrice] = React.useState<number>(0);
   const [overridePrice, setOverridePrice] = React.useState('');
 
@@ -195,6 +206,16 @@ export default function ReservationView() {
   const calculateTotalPrice = () => {
     setTotalPrice(50);
   }
+
+  const [transport_methods, setTransportMethods] = React.useState<Awaited<ReturnType<typeof getTransportMethodsList>>>([]);
+  const [marketing_sources, setMarketingSources] = React.useState<Awaited<ReturnType<typeof getMarketingSourcesList>>>([]);
+
+  React.useEffect(() => {
+    getTransportMethodsList().then(setTransportMethods);
+    getMarketingSourcesList().then(setMarketingSources);
+  }, []);
+
+  const [open, setOpen] = React.useState<boolean>(false);
 
   const isEditMode = (getReservationId()) ? true : false;
   let reservation = [];
@@ -275,12 +296,9 @@ export default function ReservationView() {
                           size="sm"
                           startDecorator={<LoginRoundedIcon />}
                           type='date'
+                          value={start_date}
+                          onChange={e => setStartDate(e.target.value)}
                           defaultValue={reservation.end_date ? new Date(reservation.start_date).toISOString().split('T')[0] : ''}
-                          slotProps={{
-                            input: {
-                              max: reservation.end_date ? new Date(reservation.end_date).toISOString().split('T')[0] : '',
-                            },
-                          }}
                           sx={{ flexGrow: 1 }}
                         />
                         {errors?.start_date ?
@@ -297,12 +315,9 @@ export default function ReservationView() {
                           size="sm"
                           startDecorator={<LogoutRoundedIcon />}
                           type='date'
+                          value={end_date}
+                          onChange={e => {setEndDate(e.target.value)}}
                           defaultValue={reservation.end_date ? new Date(reservation.end_date).toISOString().split('T')[0] : ''}
-                          slotProps={{
-                            input: {
-                              min: reservation.end_date ? new Date(reservation.start_date).toISOString().split('T')[0] : '',
-                            },
-                          }}
                         />
                         {errors?.end_date ?
                           <FormHelperText>
@@ -316,22 +331,40 @@ export default function ReservationView() {
                   {/* Select Rooms */}
                   <Stack spacing={1} sx={{ flexGrow: 1 }}>
                     <FormLabel>Room</FormLabel>
-                    <FormControl error={errors?.name}>
-                      <Select size='sm' placeholder="Choose a room...">
-                        <Option value={1}>Room 1</Option>
-                        <Option value={2}>Room 2</Option>
-                        <Option value={3}>Room 3</Option>
-                        <Option value={4}>Room 4</Option>
-                      </Select>
-                      {errors?.name ?
+                    <FormControl error={errors?.room_id}>
+                      {(!start_date || !end_date) ?
+                      <Select
+                        size='sm'
+                        placeholder="Please select check-in and check-out dates."
+                        disabled
+                        startDecorator={<BedroomParentRoundedIcon />}
+                      ></Select>
+                      :
+                      <Select
+                        size='sm'
+                        placeholder="Choose room..."
+                        name="room_id"
+                        defaultValue={reservation.room_id ? reservation.room_id : ""}
+                        startDecorator={<BedroomParentRoundedIcon />}
+                        onChange={(_event, value) => {
+                          const room = available_rooms.find(r => r.id === value);
+                          setSelectedRoom(room);
+                        }}
+                      >
+                        {available_rooms.map((room: Room) => (
+                          <Option key={room.id} value={room.id}>Room {room.room_number} - {room.room_type_name}</Option>
+                        ))}
+                      </Select>}
+                      {errors?.room_id ?
                         <FormHelperText>
                           <InfoOutlined />
-                          {errors.name}
+                          {errors.room_id}
                         </FormHelperText> : null}
                     </FormControl>
                   </Stack>
-
+                  
                   {/* No. of Guests */}
+                  {selected_room && 
                   <Stack spacing={1} sx={{ flexGrow: 1 }}>
                     <FormLabel>Number of Guests</FormLabel>
                     <FormControl error={errors?.number_of_guests}>
@@ -341,8 +374,17 @@ export default function ReservationView() {
                         name="number_of_guests"
                         sx={{ display: 'flex', gap: 2 }}
                       >
-                        <Radio label="1" value="1" size="sm" />
-                        <Radio label="2" value="2" size="sm" />
+                        {Array.from({ length: (selected_room) ? selected_room.room_max_occupants : 0 }, (_, i) => {
+                          const occupants = i + 1;
+                          return (                        
+                            <Radio
+                              key={occupants}
+                              label={occupants}
+                              value={occupants}
+                              size="sm"
+                            />
+                          );
+                        })}
                       </RadioGroup>
                       {errors?.number_of_guests ?
                         <FormHelperText>
@@ -350,7 +392,7 @@ export default function ReservationView() {
                           {errors.number_of_guests}
                         </FormHelperText> : null}
                     </FormControl>
-                  </Stack>
+                  </Stack>}
 
                   {/* Special Offers */}
                   <Stack spacing={1} sx={{ flexGrow: 1 }}>
@@ -411,6 +453,7 @@ export default function ReservationView() {
                   </Stack>
 
                   {/* Price Overide */}
+                  { selected_room && 
                   <Stack spacing={1} sx={{ flexGrow: 1 }}>
                     <FormLabel>Price Override</FormLabel>
                     <FormControl error={errors?.name}>
@@ -442,7 +485,7 @@ export default function ReservationView() {
                           {errors.name}
                         </FormHelperText> : null}
                     </FormControl>
-                  </Stack>
+                  </Stack>}
 
                 </Stack>
               </Stack>
@@ -453,8 +496,8 @@ export default function ReservationView() {
                       2 nights
                     </Typography>
                     <Typography level="body-sm">
-                      <strong>Arrival:</strong> {new Date('2025-06-17').toDateString()}<br />
-                      <strong>Departure:</strong> {new Date('2025-06-20').toDateString()}
+                      <strong>Arrival:</strong> {start_date ? new Date(start_date).toDateString() : " - "}<br />
+                      <strong>Departure:</strong> {end_date ? new Date(end_date).toDateString() : " - "}
                     </Typography>
                   </Alert>
                   <Alert color='success'>

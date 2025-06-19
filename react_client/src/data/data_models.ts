@@ -35,6 +35,11 @@ export interface RoomType extends DataModel {
 export interface Room extends DataModel {
   room_number: number;
   room_type: number;
+  room_type_name: string;
+  room_max_occupants: number;
+  room_amenities: string;
+  room_photo: string;
+  base_price_per_night: number;
   modified: string;
 }
 
