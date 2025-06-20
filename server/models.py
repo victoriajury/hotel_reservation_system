@@ -131,6 +131,9 @@ class ReservationStatus(db.Model):  # type: ignore
 
 
 class Reservations(db.Model):  # type: ignore
+    """
+    Reservations is the source of truth for price and offers applied to the booking.
+    """
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     start_date: Mapped[datetime.datetime] = mapped_column(DateTime)
     end_date: Mapped[datetime.datetime] = mapped_column(DateTime)
@@ -162,6 +165,7 @@ class Reservations(db.Model):  # type: ignore
 
     def to_dict(self):
         _dict = make_dict(self)
+        _dict["room_id"] = self.rooms[0].id
         _dict["guest_name"] = self.guest.guest_name
         _dict["guest_address"] = ", ".join(
             field

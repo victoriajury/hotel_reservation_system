@@ -54,8 +54,13 @@ def create_app(test_config=None):
 
     api.add_resource(
         find_availability.FindAvailableRoomsByDateResource,
+        "/api/find-availability/<string:start_date>/<string:end_date>/<int:reservation_id>",
+        endpoint="find_availability_with_reservation",
+    )
+    api.add_resource(
+        find_availability.FindAvailableRoomsByDateResource,
         "/api/find-availability/<string:start_date>/<string:end_date>",
-        endpoint="find_availability",
+        endpoint="find_availability_without_reservation",
     )
 
     api.add_resource(guests.GuestResource, "/api/guests", endpoint="guests")

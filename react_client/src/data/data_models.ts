@@ -53,6 +53,7 @@ export interface Reservation extends DataModel {
   start_date: string;
   end_date: string;
   status: string;
+  room_id: number;
   guest_id: number;
   guest_name: string;
   guest_telephone: string;

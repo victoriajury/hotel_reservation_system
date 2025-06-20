@@ -15,8 +15,12 @@ export async function getRoom(id: DataModelId): Promise<Room> {
     return await res.json();
 }
 
-export async function getAvailableRoomsByDate(start_date: string, end_date: string): Promise<Room[]> {
-    const res = await fetch(`${API_BASE_URL}/find-availability/${start_date}/${end_date}`);
+export async function getAvailableRoomsByDate(start_date: string, end_date: string, reservation_id: DataModelId | undefined): Promise<Room[]> {
+    let res;
+    if (reservation_id)
+        res = await fetch(`${API_BASE_URL}/find-availability/${start_date}/${end_date}/${reservation_id}`);
+    else
+        res = await fetch(`${API_BASE_URL}/find-availability/${start_date}/${end_date}`);
     if (!res.ok) throw new Error('Failed to fetch available rooms');
     return await res.json();
 }

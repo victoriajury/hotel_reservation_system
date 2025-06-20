@@ -28,46 +28,51 @@ for arg in required_fields:
 
 
 class FindAvailableRoomsByDateResource(Resource):
-    def get(self, start_date=None, end_date=None):
+    def get(self, reservation_id=None, start_date=None, end_date=None):
         if start_date is None or end_date is None:
             response = make_response("No start date or end date entered.", 400)
             return response
 
+        if end_date < start_date:
+            response = make_response("End date cannot be before start date.", 400)
+            return response
+
         else:
+            filters = [
+                or_(
+                    # -- outside booking
+                    and_(
+                        start_date <= Reservations.start_date,
+                        end_date >= Reservations.end_date,
+                    ),
+                    # -- inside booking
+                    and_(
+                        start_date >= Reservations.start_date,
+                        end_date <= Reservations.end_date,
+                    ),
+                    # -- overlap start_date
+                    and_(
+                        start_date <= Reservations.start_date,
+                        end_date > Reservations.start_date,
+                    ),
+                    # -- overlap end_date
+                    and_(
+                        start_date < Reservations.end_date,
+                        end_date >= Reservations.end_date,
+                    ),
+                ),
+                ReservationStatus.status != "Cancelled",
+            ]
+
+            if reservation_id is not None:
+                filters.insert(0, Reservations.id != reservation_id)
+
             occupied_query = db.session.execute(
-                db.select(
-                    Rooms.id,
-                )
+                db.select(Rooms.id)
                 .join(join_table)
                 .join(Reservations)
                 .join(ReservationStatus)
-                .filter(
-                    and_(
-                        or_(
-                            # -- outside booking
-                            and_(
-                                start_date <= Reservations.start_date,
-                                end_date >= Reservations.end_date,
-                            ),
-                            # -- inside booking
-                            and_(
-                                start_date >= Reservations.start_date,
-                                end_date <= Reservations.end_date,
-                            ),
-                            # -- overlap start_date
-                            and_(
-                                start_date <= Reservations.start_date,
-                                end_date > Reservations.start_date,
-                            ),
-                            # -- overlap end_date
-                            and_(
-                                start_date < Reservations.end_date,
-                                end_date >= Reservations.end_date,
-                            ),
-                        ),
-                        ReservationStatus.status != "Cancelled",
-                    )
-                )
+                .filter(and_(*filters))
                 .distinct()
             ).scalars()
 
