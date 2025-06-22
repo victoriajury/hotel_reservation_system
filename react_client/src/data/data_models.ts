@@ -61,6 +61,7 @@ export interface Reservation extends DataModel {
   guest_telephone: string;
   guest_email: string;
   guest_address: string;
+  number_of_guests: number;
   total_room_base_price: number;
   special_offer_applied_title: string;
   special_offer_discount: number;
