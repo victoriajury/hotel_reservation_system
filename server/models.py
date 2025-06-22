@@ -65,7 +65,7 @@ class Guests(db.Model):  # type: ignore
                 "start_date": res.start_date,
                 "end_date": res.end_date,
                 "total_room_base_price": res.total_room_base_price,
-                "special_offer_discount": res.total_room_base_price,
+                "special_offer_discount": res.special_offer_discount,
             }
             for res in self.reservations
         ]
