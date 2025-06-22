@@ -63,6 +63,7 @@ import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 
 import PageSectionTabs from '../layouts/components/PageSectionTabs';
+import ModalAddNote from '../layouts/components/ModalAddNote'
 
 
 export function getReservationId() {
@@ -85,8 +86,15 @@ export default function ReservationView() {
   const { reservation, statuses } = useLoaderData() as { reservation: Reservation; statuses: ReservationStatus[] };
   let navigate = useNavigate();
 
+  const [open, setOpen] = React.useState<boolean>(false);
+
   const roomsTotal = () => {
     return dateDiff(reservation.start_date, reservation.end_date) * reservation.rooms.reduce((sum, room) => sum + room.base_price_per_night_charged, 0)
+  }
+
+  const handleSaveNote = (note: string) => {
+    // TODO: patch reservation_notes or set up new table for multiple notes, date added etc.
+    alert("Note saved!: " + note);
   }
 
   // Page tab sections
@@ -315,7 +323,7 @@ export default function ReservationView() {
                     </Typography>
                   </CardContent>
                   <CardActions buttonFlex="1 50px">
-                    <Button variant="soft" color="neutral">
+                    <Button variant="soft" color="neutral" onClick={() => setOpen(true)}>
                       Add note
                     </Button>
                   </CardActions>
@@ -351,6 +359,7 @@ export default function ReservationView() {
 
           </Card>
 
+          {/* Billing */}
           <Card key={sections[2].label} ref={sections[2].ref} sx={{ scrollMarginTop: { xs: scrollOffset.xs, md: scrollOffset.md } }}>
             <Box sx={{ mb: 1 }}>
               <Typography level="title-md">{sections[2].label}</Typography>
@@ -407,6 +416,7 @@ export default function ReservationView() {
             </CardOverflow>
           </Card>
 
+          {/* Payments */}
           <Card key={sections[3].label} ref={sections[3].ref} sx={{ scrollMarginTop: { xs: scrollOffset.xs, md: scrollOffset.md } }}>
             <Box sx={{ mb: 1 }}>
               <Typography level="title-md">{sections[3].label}</Typography>
@@ -420,6 +430,7 @@ export default function ReservationView() {
             </Stack>
           </Card>
 
+          {/* Timeline */}
           <Card key={sections[4].label} ref={sections[4].ref} sx={{ scrollMarginTop: { xs: scrollOffset.xs, md: scrollOffset.md } }}>
             <Box sx={{ mb: 1 }}>
               <Typography level="title-md">{sections[4].label}</Typography>
@@ -500,9 +511,9 @@ export default function ReservationView() {
           </Card>
 
 
-          {/* <Modal open={open} onClose={() => setOpen(false)}>
-              <ModalDelete id={guest.id} objName='Guest' onDelete={handleDelete} setOpen={setOpen} />
-            </Modal> */}
+          <Modal open={open} onClose={() => setOpen(false)}>
+            <ModalAddNote id={reservation.id} objName='Reservation' onSave={handleSaveNote} setOpen={setOpen} />
+          </Modal>
         </Stack>
       </Stack>
 
