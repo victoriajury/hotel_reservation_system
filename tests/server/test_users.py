@@ -47,7 +47,9 @@ def test_create_user(client, auth, app):
     assert res.status_code == 201
 
     with app.app_context():
-        user = db.session.execute(db.select(Users).filter_by(username="test_username")).scalar_one()
+        user = db.session.execute(
+            db.select(Users).filter_by(username="test_username")
+        ).scalar_one()
     assert check_password_hash(user.password, data["password"])
 
     with app.app_context():
@@ -86,7 +88,9 @@ def test_update_user(client, auth, app):
     assert res.status_code == 204
 
     with app.app_context():
-        user = db.session.execute(db.select(Users).filter_by(username="test_username")).scalar_one()
+        user = db.session.execute(
+            db.select(Users).filter_by(username="test_username")
+        ).scalar_one()
     assert check_password_hash(user.password, data["password"])
 
 

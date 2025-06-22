@@ -2,6 +2,7 @@ import pytest
 from server.database import db
 from server.models import Rooms
 
+
 def test_get_all_rooms(client):
     response = client.get("api/rooms")
     assert response.status_code == 200

@@ -8,7 +8,8 @@ DROP TABLE IF EXISTS special_offers;
 DROP TABLE IF EXISTS invoices;
 DROP TABLE IF EXISTS invoice_items;
 DROP TABLE IF EXISTS payments;
-DROP TABLE IF EXISTS join_guests_reservations;
+DROP TABLE IF EXISTS marketing_sources;
+DROP TABLE IF EXISTS transport_methods;
 DROP TABLE IF EXISTS join_rooms_reservations;
 
 
@@ -20,7 +21,7 @@ CREATE TABLE users (
 
 CREATE TABLE guests (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
+  guest_name TEXT NOT NULL,
   email TEXT NOT NULL,
   telephone TEXT NOT NULL,
   address_1 TEXT NOT NULL,
@@ -59,19 +60,24 @@ CREATE TABLE rooms (
 
 CREATE TABLE reservations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  number_of_guests INTEGER NOT NULL,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
+  status_id INTEGER NOT NULL,
+  guest_id INTEGER NOT NULL,
+  number_of_guests INTEGER NOT NULL,
   total_room_base_price REAL NOT NULL,
-  special_offer_applied TEXT,
+  special_offer_applied_title TEXT,
   special_offer_discount REAL NOT NULL DEFAULT 0,
   reservation_notes TEXT,
-  status_id INTEGER NOT NULL,
+  guest_arrival_time TEXT,
+  guest_transport_method TEXT,
+  guest_marketing_source TEXT,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   modified TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   modified_by_id INTEGER NOT NULL,
   FOREIGN KEY (modified_by_id) REFERENCES users (id),
   FOREIGN KEY (status_id) REFERENCES reservation_status (id)
+  FOREIGN KEY (guest_id) REFERENCES guests (id)
 );
 
 CREATE TABLE reservation_status (
@@ -130,13 +136,16 @@ CREATE TABLE payments (
   FOREIGN KEY (invoice_id) REFERENCES invoices (id)
 );
 
-CREATE TABLE join_guests_reservations (
+CREATE TABLE marketing_sources (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  guest_id INTEGER NOT NULL,
-  reservation_id INTEGER NOT NULL,
-  FOREIGN KEY (guest_id) REFERENCES guests (id),
-  FOREIGN KEY (reservation_id) REFERENCES reservations (id)
+  source_name TEXT NOT NULL,
 );
+
+CREATE TABLE transport_methods (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  transport_name TEXT NOT NULL,
+);
+
 
 CREATE TABLE join_rooms_reservations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -145,3 +154,4 @@ CREATE TABLE join_rooms_reservations (
   FOREIGN KEY (room_id) REFERENCES rooms (id),
   FOREIGN KEY (reservation_id) REFERENCES reservations (id)
 );
+

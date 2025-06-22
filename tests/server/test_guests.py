@@ -9,8 +9,8 @@ def test_get_all_guests(client):
     data = response.get_json()
     assert isinstance(data, list)
     assert len(data) == 2
-    assert data[0]["name"] == "Alice Johnson"
-    assert data[1]["name"] == "Chris Brown"
+    assert data[0]["guest_name"] == "Alice Johnson"
+    assert data[1]["guest_name"] == "Chris Brown"
 
 
 def test_get_single_guest(client):
@@ -18,7 +18,7 @@ def test_get_single_guest(client):
     assert response.status_code == 200
     data = response.get_json()
     assert isinstance(data, dict)
-    assert data["name"] == "Alice Johnson"
+    assert data["guest_name"] == "Alice Johnson"
 
 
 @pytest.mark.parametrize(
@@ -49,7 +49,7 @@ def test_guest_record_not_found(client, auth, path):
 
 def test_create_guest(client, auth, app):
     data = {
-        "name": "Any Name",
+        "guest_name": "Any Name",
         "email": "anyemail@example.com",
         "telephone": "+44 123456789",
         "address_1": "123 Any Street",
@@ -74,7 +74,7 @@ def test_create_guest(client, auth, app):
 
 def test_create_guest_missing_fields(client, auth, app):
     data = {
-        # "name" missing
+        # "guest_name" missing
         "email": "anyemail@example.com",
         "telephone": "+44 123456789",
         "address_1": "123 Any Street",
@@ -90,7 +90,7 @@ def test_create_guest_missing_fields(client, auth, app):
     assert client.get("api/guests").status_code == 200
     res = client.post("api/guests", json=data)
     assert res.status_code == 400
-    assert "Missing required parameter" in res.json["message"]["name"]
+    assert "Missing required parameter" in res.json["message"]["guest_name"]
 
     with app.app_context():
         count_query = db.func.count(Guests.id)
@@ -100,7 +100,7 @@ def test_create_guest_missing_fields(client, auth, app):
 
 def test_update_guest(client, auth, app):
     data = {
-        "name": "Any Name",
+        "guest_name": "Any Name",
         "email": "anyemail@example.com",
         "telephone": "+44 123456789",
         "address_1": "123 Any Street",
@@ -120,7 +120,7 @@ def test_update_guest(client, auth, app):
 
 def test_update_guest_missing_fields(client, auth, app):
     data = {
-        # "name" missing
+        # "guest_name" missing
         "email": "anyemail@example.com",
         "telephone": "+44 123456789",
         "address_1": "123 Any Street",
@@ -136,12 +136,12 @@ def test_update_guest_missing_fields(client, auth, app):
     assert client.get("api/guests/1").status_code == 200
     res = client.put("api/guests/1", json=data)
     assert res.status_code == 400
-    assert "Missing required parameter" in res.json["message"]["name"]
+    assert "Missing required parameter" in res.json["message"]["guest_name"]
 
 
 def test_update_guest_not_found(client, auth, app):
     data = {
-        "name": "Any Name",
+        "guest_name": "Any Name",
         "email": "anyemail@example.com",
         "telephone": "+44 123456789",
         "address_1": "123 Any Street",
@@ -162,7 +162,7 @@ def test_update_guest_not_found(client, auth, app):
 def test_delete_guest(client, auth, app):
     # auth.login()
     res = client.delete(
-        "api/guests/1",
+        "api/guests/2",  # guest does not have existing reservation
     )
     assert res.status_code == 204
 
@@ -185,6 +185,22 @@ def test_delete_guest_not_found(client, auth, app):
         assert count == 2
 
 
+def test_delete_guest_with_existing_reservation(client, auth, app):
+    # auth.login()
+    res = client.delete(
+        "api/guests/1",
+    )
+    assert (
+        "Cannot delete guest: guest is referenced by existing reservations" in res.text
+    )
+    assert res.status_code == 400
+
+    with app.app_context():
+        count_query = db.func.count(Guests.id)
+        count = db.session.execute(count_query).scalar()
+        assert count == 2
+
+
 # @pytest.mark.parametrize(
 #     "redirect_url, expected",
 #     [
@@ -195,7 +211,7 @@ def test_delete_guest_not_found(client, auth, app):
 # )
 # def test_create_with_redirect(client, auth, app, redirect_url, expected):
 #     data = {
-#         "name": "Any Name",
+#         "guest_name": "Any Name",
 #         "email": "anyemail@example.com",
 #         "telephone": "+44 123456789",
 #         "address_1": "123 Any Street",
@@ -221,7 +237,7 @@ def test_delete_guest_not_found(client, auth, app):
 
 # def test_update(client, auth, app):
 #     data = {
-#         "name": "Any Name",
+#         "guest_name": "Any Name",
 #         "email": "updated@example.com",
 #         "telephone": "+44 123456789",
 #         "address_1": "123 Any Street",
@@ -258,7 +274,7 @@ def test_delete_guest_not_found(client, auth, app):
 # )
 # def test_update_with_redirect(client, auth, app, redirect_url, expected):
 #     data = {
-#         "name": "Any Name",
+#         "guest_name": "Any Name",
 #         "email": "updated@example.com",
 #         "telephone": "+44 123456789",
 #         "address_1": "123 Any Street",
@@ -292,7 +308,7 @@ def test_delete_guest_not_found(client, auth, app):
 # )
 # def test_create_update_validate(client, auth, path):
 #     data = {
-#         "name": "",
+#         "guest_name": "",
 #         "email": "anyemail@example.com",
 #         "telephone": "+44 123456789",
 #         "address_1": "123 Any Street",

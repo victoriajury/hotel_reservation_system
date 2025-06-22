@@ -15,6 +15,12 @@ export async function getSpecialOffer(id: DataModelId): Promise<SpecialOffer> {
     return await res.json();
 }
 
+export async function getSpecialOffersByReservationDate(start_date: string, end_date: string): Promise<SpecialOffer[]> {
+    const res = await fetch(`${API_BASE_URL}/special-offers/${start_date}/${end_date}`);
+    if (!res.ok) throw new Error('Failed to fetch special offer');
+    return await res.json();
+}
+
 export async function createSpecialOffer(newSpecialOffer: Omit<SpecialOffer, 'id'>): Promise<SpecialOffer> {
     const res = await fetch(`${API_BASE_URL}/special-offers`, {
         method: 'POST',

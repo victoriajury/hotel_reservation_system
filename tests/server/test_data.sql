@@ -22,16 +22,27 @@ VALUES
   ("Checked-in","Guest has checked into their room.", "");
 
 INSERT INTO guests 
-  (name, email, telephone, address_1, address_2, city, county, postcode, modified, modified_by_id)
+  (guest_name, email, telephone, address_1, address_2, city, county, postcode, modified, modified_by_id)
 VALUES
   ("Alice Johnson", "alice.johnson@example.com", "+44 20 7123 4581", "67 Cherry St", "Apt 2A", "Liverpool", "Merseyside", "L1 1AA", "2024-05-30 12:59:24", 1),
   ("Chris Brown", "chris.brown@example.com", "+44 20 7123 4571", "202 Birch Ln", "Ste 9", "Glasgow", "Strathclyde", "G1 5AA", "2024-01-30 08:02:01", 1);
 
 INSERT INTO reservations
-  (start_date, end_date, total_room_base_price, number_of_guests, status_id, modified_by_id)
+  (start_date,
+  end_date,
+  total_room_base_price,
+  special_offer_applied_title,
+  special_offer_discount,
+  guest_id,
+  guest_arrival_time,
+  guest_transport_method,
+  guest_marketing_source,
+  number_of_guests,
+  status_id,
+  modified_by_id)
 VALUES
-  ("2024-05-17","2024-05-20",130.0,2,1,1),
-  ("2024-05-20","2024-05-23",145.0,2,1,1);
+  ("2024-05-17","2024-05-20",130.0,"",0,1,"15:00","Car","Search Engine",2,1,1),
+  ("2024-05-20","2024-05-23",145.0,"",0,1,"16:00","Train","Email",1,2,1);
 
 
 INSERT INTO special_offers
@@ -61,11 +72,17 @@ VALUES
   (1,90,1),
   (2,50,1);
 
-INSERT INTO join_guests_reservations
-  (guest_id, reservation_id)
+INSERT INTO marketing_sources
+  (id, source_name)
 VALUES
-  (2, 1),
-  (1, 2);
+  (1, "Search Engine"),
+  (2, "Email");
+
+INSERT INTO transport_methods
+  (id, transport_name)
+VALUES
+  (1 , "Car"),
+  (2 , "Train");
 
 INSERT INTO join_rooms_reservations
   (room_id, reservation_id)

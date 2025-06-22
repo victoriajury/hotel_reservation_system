@@ -6,7 +6,7 @@ from werkzeug.exceptions import NotFound
 
 parser = reqparse.RequestParser()
 required_fields = [
-    "name",
+    "guest_name",
     "email",
     "telephone",
     "address_1",
@@ -44,7 +44,7 @@ class GuestResource(Resource):
             fields = parser.parse_args()
 
             new_guest = Guests(
-                name=fields["name"],
+                guest_name=fields["guest_name"],
                 email=fields["email"],
                 telephone=fields["telephone"],
                 address_1=fields["address_1"],
@@ -76,7 +76,7 @@ class GuestResource(Resource):
         try:
             fields = parser.parse_args()
 
-            guest.name = fields["name"]
+            guest.guest_name = fields["guest_name"]
             guest.email = fields["email"]
             guest.telephone = fields["telephone"]
             guest.address_1 = fields["address_1"]
@@ -102,6 +102,17 @@ class GuestResource(Resource):
             guest = db.get_or_404(Guests, guest_id)
         except NotFound:
             response = make_response("Guest not found.", 404)
+            return response
+
+        # Check if guest is referenced by any reservation
+        from server.models import Reservations
+
+        reservation = Reservations.query.filter_by(guest_id=guest_id).first()
+        if reservation:
+            response = make_response(
+                "Cannot delete guest: guest is referenced by existing reservations.",
+                400,
+            )
             return response
 
         db.session.delete(guest)

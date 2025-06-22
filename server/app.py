@@ -6,15 +6,18 @@ from flask_restful import Api
 from server.database import db, init_db_command
 
 from .resources import (
+    find_availability,
     guests,
     invoice_items,
     invoices,
+    marketing_sources,
     payments,
     reservation_status,
     reservations,
     room_types,
     rooms,
     special_offers,
+    transport_methods,
     users,
 )
 
@@ -48,6 +51,17 @@ def create_app(test_config=None):
 
     api.add_resource(users.UserResource, "/api/users", endpoint="users")
     api.add_resource(users.UserResource, "/api/users/<int:user_id>", endpoint="user")
+
+    api.add_resource(
+        find_availability.FindAvailableRoomsByDateResource,
+        "/api/find-availability/<string:start_date>/<string:end_date>/<int:reservation_id>",
+        endpoint="find_availability_with_reservation",
+    )
+    api.add_resource(
+        find_availability.FindAvailableRoomsByDateResource,
+        "/api/find-availability/<string:start_date>/<string:end_date>",
+        endpoint="find_availability_without_reservation",
+    )
 
     api.add_resource(guests.GuestResource, "/api/guests", endpoint="guests")
     api.add_resource(
@@ -96,6 +110,11 @@ def create_app(test_config=None):
         "/api/special-offers/<int:offer_id>",
         endpoint="special_offer",
     )
+    api.add_resource(
+        special_offers.SpecialOfferResource,
+        "/api/special-offers/<string:reservation_start_date>/<string:reservation_end_date>",
+        endpoint="special_offers_by_date",
+    )
 
     api.add_resource(invoices.InvoiceResource, "/api/invoices", endpoint="invoices")
     api.add_resource(
@@ -121,6 +140,28 @@ def create_app(test_config=None):
     api.add_resource(payments.PaymentResource, "/api/payments", endpoint="payments")
     api.add_resource(
         payments.PaymentResource, "/api/payments/<int:payment_id>", endpoint="payment"
+    )
+
+    api.add_resource(
+        marketing_sources.MarketingSourceResource,
+        "/api/marketing-sources",
+        endpoint="marketing-sources",
+    )
+    api.add_resource(
+        marketing_sources.MarketingSourceResource,
+        "/api/marketing-sources/<int:marketing_source_id>",
+        endpoint="marketing-source",
+    )
+
+    api.add_resource(
+        transport_methods.TransportMethodResource,
+        "/api/transport-methods",
+        endpoint="transport-methods",
+    )
+    api.add_resource(
+        transport_methods.TransportMethodResource,
+        "/api/transport-methods/<int:transport_method_id>",
+        endpoint="transport-method",
     )
 
     # app.register_blueprint(auth.bp)

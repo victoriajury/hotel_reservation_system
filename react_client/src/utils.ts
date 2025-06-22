@@ -24,3 +24,12 @@ export function toggleSidebar() {
     }
   }
 }
+
+export function dateDiff(start_date: string, end_date: string) {
+  if (!start_date || !end_date) return 0;
+  const start = new Date(start_date);
+  const end = new Date(end_date);
+  const diffTime = end.getTime() - start.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 0;
+}
