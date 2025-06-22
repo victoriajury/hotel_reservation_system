@@ -165,7 +165,7 @@ class Reservations(db.Model):  # type: ignore
 
     def to_dict(self):
         _dict = make_dict(self)
-        _dict["room_id"] = self.rooms[0].id
+        _dict["rooms"] = [room.to_dict() for room in self.rooms]
         _dict["guest_name"] = self.guest.guest_name
         _dict["guest_address"] = ", ".join(
             field

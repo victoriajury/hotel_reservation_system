@@ -53,7 +53,7 @@ export interface Reservation extends DataModel {
   start_date: string;
   end_date: string;
   status: string;
-  room_id: number;
+  rooms: Room[];
   guest_id: number;
   guest_name: string;
   guest_telephone: string;
@@ -68,6 +68,7 @@ export interface Reservation extends DataModel {
   guest_transport_method: string;
   guest_marketing_source: string;
   modified: string;
+  created: string;
 }
 
 export interface SpecialOffer extends DataModel {
