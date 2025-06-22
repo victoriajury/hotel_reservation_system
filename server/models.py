@@ -2,7 +2,7 @@ import datetime
 from typing import Optional
 
 from server.database import db
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
@@ -14,14 +14,6 @@ def make_dict(obj, excluded=None):
         for c in obj.__table__.columns
         if c.name not in excluded
     }
-
-
-rooms_reservations = db.Table(
-    # Define joining table for many-to-many relationship
-    "join_rooms_reservations",
-    Column("room_id", ForeignKey("rooms.id"), primary_key=True),
-    Column("reservation_id", ForeignKey("reservations.id"), primary_key=True),
-)
 
 
 class Users(db.Model):  # type: ignore
@@ -92,29 +84,40 @@ class RoomTypes(db.Model):  # type: ignore
         return _dict
 
 
+class RoomReservationAssociation(db.Model):  # type: ignore
+    __tablename__ = "join_rooms_reservations"
+    room_id = mapped_column(Integer, ForeignKey("rooms.id"), primary_key=True)
+    reservation_id = mapped_column(
+        Integer, ForeignKey("reservations.id"), primary_key=True
+    )
+    room_number_of_occupants = mapped_column(Integer)
+    room_base_price_per_night = mapped_column(Float)
+
+    rooms = relationship("Rooms", back_populates="reservations")
+    reservations = relationship("Reservations", back_populates="rooms")
+
+
 class Rooms(db.Model):  # type: ignore
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     room_number: Mapped[int] = mapped_column(Integer)
-    room_type: Mapped[int] = mapped_column(ForeignKey("room_types.id"))
+    room_type_id: Mapped[int] = mapped_column(ForeignKey("room_types.id"))
     modified: Mapped[datetime.datetime] = mapped_column(
         DateTime, server_default=func.now()
     )
     modified_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
 
-    room_type_name: Mapped[RoomTypes] = relationship()
+    room_type: Mapped[RoomTypes] = relationship()
     modified_by_user: Mapped[Users] = relationship()
 
-    reservations = relationship(
-        "Reservations", secondary=rooms_reservations, back_populates="rooms"
-    )
+    reservations = relationship("RoomReservationAssociation", back_populates="rooms")
 
     def to_dict(self):
         _dict = make_dict(self)
-        _dict["room_type_name"] = self.room_type_name.type_name
-        _dict["base_price_per_night"] = self.room_type_name.base_price_per_night
-        _dict["room_photo"] = self.room_type_name.photo
-        _dict["room_max_occupants"] = self.room_type_name.max_occupants
-        _dict["room_amenities"] = self.room_type_name.amenities
+        _dict["room_type_name"] = self.room_type.type_name
+        _dict["base_price_per_night_quoted"] = self.room_type.base_price_per_night
+        _dict["room_photo"] = self.room_type.photo
+        _dict["room_max_occupants"] = self.room_type.max_occupants
+        _dict["room_amenities"] = self.room_type.amenities
 
         _dict["modified_by_user"] = self.modified_by_user.username
         return _dict
@@ -134,6 +137,7 @@ class Reservations(db.Model):  # type: ignore
     """
     Reservations is the source of truth for price and offers applied to the booking.
     """
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     start_date: Mapped[datetime.datetime] = mapped_column(DateTime)
     end_date: Mapped[datetime.datetime] = mapped_column(DateTime)
@@ -159,13 +163,19 @@ class Reservations(db.Model):  # type: ignore
     modified_by_user: Mapped[Users] = relationship()
 
     guest = relationship("Guests", back_populates="reservations")
-    rooms = relationship(
-        "Rooms", secondary=rooms_reservations, back_populates="reservations"
-    )
+    rooms = relationship("RoomReservationAssociation", back_populates="reservations")
 
     def to_dict(self):
         _dict = make_dict(self)
-        _dict["rooms"] = [room.to_dict() for room in self.rooms]
+        _dict["rooms"] = [
+            {
+                **assoc.rooms.to_dict(),
+                "room_number_of_occupants": assoc.room_number_of_occupants,
+                "base_price_per_night_charged": assoc.room_base_price_per_night,
+            }
+            for assoc in self.rooms
+        ]
+
         _dict["guest_name"] = self.guest.guest_name
         _dict["guest_address"] = ", ".join(
             field

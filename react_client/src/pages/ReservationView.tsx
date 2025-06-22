@@ -20,6 +20,7 @@ import { useLoaderData, redirect, useParams, useNavigate } from 'react-router-do
 import { getReservationStatuses } from '../data/reservation_status';
 import { getReservation } from '../data/reservations';
 import { DataModelId, Reservation, ReservationStatus, Room } from '../data/data_models';
+import { dateDiff } from '../utils';
 
 import Alert from '@mui/joy/Alert';
 import AspectRatio from '@mui/joy/AspectRatio';
@@ -82,15 +83,9 @@ export default function ReservationView() {
   const { reservation, statuses } = useLoaderData() as { reservation: Reservation; statuses: ReservationStatus[] };
   let navigate = useNavigate();
 
-  const dateDiff = () => {
-    if (!reservation.start_date || !reservation.end_date) return 0;
-    const start = new Date(reservation.start_date);
-    const end = new Date(reservation.end_date);
-    const diffTime = end.getTime() - start.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays : 0;
+  const roomsTotal = () => {
+    return dateDiff(reservation.start_date, reservation.end_date) * reservation.rooms.reduce((sum, room) => sum + room.base_price_per_night_charged, 0)
   }
-
 
   // Page tab sections
   const sections = [
@@ -184,7 +179,7 @@ export default function ReservationView() {
               <Typography level="body-xs" sx={{ fontWeight: 'lg', mb: { xs: 0.5, md: 1 } }}>
                 Nights
               </Typography>
-              <Typography sx={{ fontWeight: 'lg', fontSize: 32 }}>{dateDiff()}</Typography>
+              <Typography sx={{ fontWeight: 'lg', fontSize: 32 }}>{dateDiff(reservation.start_date, reservation.end_date)}</Typography>
             </div>
           </Sheet>
 
@@ -210,7 +205,7 @@ export default function ReservationView() {
                 </CardOverflow>
                 <CardContent>
                   <Typography level="title-md" startDecorator={<BedroomParentRoundedIcon />}>Room: {room.room_number}</Typography>
-                  <Typography level="body-sm">{room.room_type_name}</Typography>
+                  <Typography level="body-sm">{room.room_type_name} - &pound; {room.base_price_per_night_charged.toFixed(2)}</Typography>
                 </CardContent>
               </Card>
             )}
@@ -219,7 +214,7 @@ export default function ReservationView() {
 
           <Card color='success' variant='soft'>
             <Typography level="body-md" sx={{ fontWeight: 'lg', textAlign: 'center' }}>
-              Room Total: &pound;&nbsp;{reservation.total_room_base_price.toFixed(2)}
+              {reservation.rooms.length > 1 ? "Rooms" : "Room"} Total: &pound;&nbsp;{roomsTotal().toFixed(2)}
             </Typography>
           </Card>
 
@@ -364,7 +359,7 @@ export default function ReservationView() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Total Cost</td><td>&pound; {reservation.total_room_base_price.toFixed(2)}</td>
+                    <td>Total Cost</td><td>&pound; {roomsTotal().toFixed(2)}</td>
                   </tr>
                   <tr>
                     <td>Additional charges</td><td>&pound; 0.00</td>

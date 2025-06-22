@@ -3,8 +3,7 @@ from datetime import datetime
 from flask import jsonify, make_response
 from flask_restful import Resource, reqparse
 from server.database import db
-from server.models import Reservations, ReservationStatus, Rooms
-from server.models import rooms_reservations as join_table
+from server.models import Reservations, ReservationStatus, RoomReservationAssociation, Rooms
 from sqlalchemy import and_, or_
 
 date_format = "%a, %d %b %Y %H:%M:%S %Z"
@@ -69,7 +68,7 @@ class FindAvailableRoomsByDateResource(Resource):
 
             occupied_query = db.session.execute(
                 db.select(Rooms.id)
-                .join(join_table)
+                .join(RoomReservationAssociation)
                 .join(Reservations)
                 .join(ReservationStatus)
                 .filter(and_(*filters))

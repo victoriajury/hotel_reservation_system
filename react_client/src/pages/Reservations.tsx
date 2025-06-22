@@ -3,6 +3,7 @@ import { useLoaderData, useNavigate } from 'react-router-dom';
 import { getReservations } from '../data/reservations';
 import { getReservationStatuses } from '../data/reservation_status';
 import { Reservation, ReservationStatus } from '../data/data_models';
+import { dateDiff } from '../utils';
 
 import Avatar from '@mui/joy/Avatar';
 import Box from '@mui/joy/Box';
@@ -30,7 +31,9 @@ export async function loader() {
 
 export default function ReservationsPage() {
   const navigate = useNavigate();
-  const { reservations, statuses } = useLoaderData();
+  const { reservations, statuses } = useLoaderData() as { reservations: Reservation[]; statuses: ReservationStatus[] };
+
+
 
   const reservationsColumns = [
     {
@@ -64,7 +67,7 @@ export default function ReservationsPage() {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Avatar size="sm">{reservation.guest_name.charAt(0)}</Avatar>
           <div>
-            <Typography level="body-xs"><Link onClick={() => navigate(`/guest-profile/${reservation.guest_id}`)}>{reservation.guest_name}</Link></Typography><br/>
+            <Typography level="body-xs"><Link onClick={() => navigate(`/guest-profile/${reservation.guest_id}`)}>{reservation.guest_name}</Link></Typography><br />
             <Typography level="body-xs">{reservation.guest_email}</Typography>
           </div>
         </Box>
@@ -87,7 +90,7 @@ export default function ReservationsPage() {
           }
           sx={{
             background: (
-              statuses.find((status: ReservationStatus) => status.status === reservation.status)?.bg_color+'aa' /* with opacity set for dark mode */
+              statuses.find((status: ReservationStatus) => status.status === reservation.status)?.bg_color + 'aa' /* with opacity set for dark mode */
             )
           }}
         >
@@ -98,7 +101,7 @@ export default function ReservationsPage() {
       key: 'total_room_base_price',
       label: 'Price',
       render: (reservation: Reservation) =>
-        '\u00A3 ' + String(reservation.total_room_base_price.toFixed(2)),
+        '\u00A3 ' + String((dateDiff(reservation.start_date, reservation.end_date) * reservation.rooms.reduce((sum, room) => sum + room.base_price_per_night_charged, 0)).toFixed(2))
     },
     {
       key: 'guest_transport_method',

@@ -16,7 +16,7 @@ VALUES
 
 -- Insert rooms
 INSERT INTO rooms
-  (room_number, room_type, modified_by_id)
+  (room_number, room_type_id, modified_by_id)
 VALUES
   (1, 2, 1),
   (2, 1, 1),
@@ -146,21 +146,21 @@ VALUES
 ;
 
 INSERT INTO join_rooms_reservations
-  (room_id, reservation_id)
+  (room_id, reservation_id, room_number_of_occupants, room_base_price_per_night)
 VALUES
-  (1, 1),
-  (2, 2),
-  (3, 3),
-  (4, 4),
-  (5, 5),
-  (1, 6),
-  (2, 6),
-  (4, 6),
-  (6, 6),
-  (7, 6),
-  (3, 7),
-  (2, 8),
-  (7, 9),
-  (2, 10),
-  (3, 11)
+  (1, 1, 2, 130.0),
+  (2, 2, 2, 145.0),
+  (3, 3, 2, 130.0),
+  (4, 4, 2, 115.0),
+  (5, 5, 2, 130.0),
+  (1, 6, 2, 145.0),
+  (2, 6, 2, 145.0),
+  (4, 6, 2, 145.0),
+  (6, 6, 1, 120.0),
+  (7, 6, 1, 120.0),
+  (3, 7, 2, 130.0),
+  (2, 8, 2, 145.0),
+  (7, 9, 2, 130.0),
+  (2, 10, 2, 145.0),
+  (3, 11, 2, 130.0)
 ;
