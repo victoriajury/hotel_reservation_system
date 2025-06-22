@@ -59,6 +59,8 @@ import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
+import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
+import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 
 import PageSectionTabs from '../layouts/components/PageSectionTabs';
 
@@ -204,8 +206,17 @@ export default function ReservationView() {
                   </AspectRatio>
                 </CardOverflow>
                 <CardContent>
-                  <Typography level="title-md" startDecorator={<BedroomParentRoundedIcon />}>Room: {room.room_number}</Typography>
-                  <Typography level="body-sm">{room.room_type_name} - &pound; {room.base_price_per_night_charged.toFixed(2)}</Typography>
+                  <Typography level="title-md" startDecorator={<BedroomParentRoundedIcon />}>Room: {room.room_number}
+                    {room.room_number_of_occupants > 1
+                      ? <Typography level="body-sm" startDecorator={<PeopleRoundedIcon />} sx={{ ml: 2 }}>
+                        {room.room_number_of_occupants} people
+                      </Typography>
+
+                      : <Typography level="body-sm" startDecorator={<PersonRoundedIcon />} sx={{ ml: 2 }}>
+                        {room.room_number_of_occupants} person
+                      </Typography>}
+                  </Typography>
+                  <Typography level="body-sm">{room.room_type_name} - &pound; {room.base_price_per_night_charged.toFixed(2)} per night</Typography>
                 </CardContent>
               </Card>
             )}
