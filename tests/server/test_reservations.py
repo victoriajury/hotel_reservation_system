@@ -1,7 +1,8 @@
+import datetime
+
 import pytest
 from server.database import db
 from server.models import Reservations
-import datetime
 
 
 def test_get_all_reservations(client):
@@ -33,6 +34,7 @@ def test_reservation_record_not_found(client, auth, path):
     # test data only has 2 records, expects record 3 not found
     # auth.login()
     assert client.get(path).status_code == 404
+
 
 # def test_index(client, auth):
 #     response = client.get("/reservations/")

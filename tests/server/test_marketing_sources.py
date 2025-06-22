@@ -50,9 +50,7 @@ def test_marketing_source_record_not_found(client, auth, path):
 
 
 def test_create_marketing_source(client, auth, app):
-    data = {
-        "source_name": "Search Engine"
-    }
+    data = {"source_name": "Search Engine"}
 
     # auth.login()
     assert client.get("api/marketing-sources").status_code == 200
@@ -83,9 +81,7 @@ def test_create_marketing_source_missing_fields(client, auth, app):
 
 
 def test_create_marketing_source_valid_fields_type(client, auth, app):
-    data = {
-        "source_name": ""
-    }
+    data = {"source_name": ""}
 
     # auth.login()
     assert client.get("api/marketing-sources").status_code == 200
@@ -100,9 +96,7 @@ def test_create_marketing_source_valid_fields_type(client, auth, app):
 
 
 def test_update_marketing_source(client, auth, app):
-    data = {
-        "source_name": "Search Engine"
-    }
+    data = {"source_name": "Search Engine"}
 
     # auth.login()
     assert client.get("api/marketing-sources").status_code == 200
@@ -123,9 +117,7 @@ def test_update_marketing_source_missing_fields(client, auth, app):
 
 
 def test_update_marketing_source_valid_fields_type(client, auth, app):
-    data = {
-        "source_name": ""
-    }
+    data = {"source_name": ""}
 
     # auth.login()
     assert client.get("api/marketing-sources/1").status_code == 200
@@ -135,10 +127,7 @@ def test_update_marketing_source_valid_fields_type(client, auth, app):
 
 
 def test_update_marketing_source_not_found(client, auth, app):
-    data = {
-        "source_name": "Search Engine"
-    }
-
+    data = {"source_name": "Search Engine"}
 
     # auth.login()
     assert client.get("api/marketing-sources").status_code == 200
@@ -170,6 +159,7 @@ def test_delete_marketing_source_not_found(client, auth, app):
         count_query = db.func.count(MarketingSources.id)
         count = db.session.execute(count_query).scalar()
         assert count == 2
+
 
 # @pytest.mark.parametrize(
 #     "path",

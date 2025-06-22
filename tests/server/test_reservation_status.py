@@ -33,6 +33,7 @@ def test_reservations_status_record_not_found(client, auth, path):
     # auth.login()
     assert client.get(path).status_code == 404
 
+
 # @pytest.mark.parametrize(
 #     "path",
 #     (

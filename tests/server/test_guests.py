@@ -190,7 +190,9 @@ def test_delete_guest_with_existing_reservation(client, auth, app):
     res = client.delete(
         "api/guests/1",
     )
-    assert "Cannot delete guest: guest is referenced by existing reservations" in res.text
+    assert (
+        "Cannot delete guest: guest is referenced by existing reservations" in res.text
+    )
     assert res.status_code == 400
 
     with app.app_context():

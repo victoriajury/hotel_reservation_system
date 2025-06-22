@@ -53,7 +53,7 @@ def test_create_invoice_item(client, auth, app):
         "item_description": "Drinks",
         "quantity": 2,
         "price": 23.0,
-        "modified_by_id": 1
+        "modified_by_id": 1,
     }
 
     # auth.login()
@@ -71,7 +71,7 @@ def test_create_invoice_item_missing_fields(client, auth, app):
         "item_description": "Drinks",
         "quantity": 2,
         "price": 23.0,
-        "modified_by_id": 1
+        "modified_by_id": 1,
     }
 
     # auth.login()

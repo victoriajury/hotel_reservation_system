@@ -1,9 +1,7 @@
-from io import BytesIO
-import os
+
 import pytest
 from server.database import db
 from server.models import TransportMethods
-from server.helpers import room_image_location
 
 
 def test_get_all_transport_methods(client):
@@ -171,6 +169,7 @@ def test_delete_transport_method_not_found(client, auth, app):
         count_query = db.func.count(TransportMethods.id)
         count = db.session.execute(count_query).scalar()
         assert count == 2
+
 
 # @pytest.mark.parametrize(
 #     "path",

@@ -1,9 +1,10 @@
-from io import BytesIO
 import os
+from io import BytesIO
+
 import pytest
 from server.database import db
-from server.models import RoomTypes
 from server.helpers import room_image_location
+from server.models import RoomTypes
 
 
 def test_get_all_room_types(client):
@@ -288,6 +289,7 @@ def test_delete_room_type_not_found(client, auth, app):
         count_query = db.func.count(RoomTypes.id)
         count = db.session.execute(count_query).scalar()
         assert count == 2
+
 
 # @pytest.mark.parametrize(
 #     "path",
