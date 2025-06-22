@@ -33,7 +33,13 @@ export default function ReservationsPage() {
   const navigate = useNavigate();
   const { reservations, statuses } = useLoaderData() as { reservations: Reservation[]; statuses: ReservationStatus[] };
 
-
+  const statusIcons = {
+    "Paid in Full": <CheckRoundedIcon />,
+    "Pending": <HourglassTopRoundedIcon />,
+    "Confirmed": <InventoryRoundedIcon />,
+    "Cancelled": <BlockIcon />,
+    "Checked-in": <LoginRoundedIcon />
+  }
 
   const reservationsColumns = [
     {
@@ -81,12 +87,9 @@ export default function ReservationsPage() {
           variant="soft"
           size="sm"
           startDecorator={
-            (statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status as String).includes('Paid') ? <CheckRoundedIcon /> :
-              statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status === 'Pending' ? <HourglassTopRoundedIcon /> :
-                statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status === 'Confirmed' ? <InventoryRoundedIcon /> :
-                  statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status === 'Cancelled' ? <BlockIcon /> :
-                    statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status === 'Checked-in' ? <LoginRoundedIcon /> :
-                      null
+            statusIcons[
+              (statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status || '') as keyof typeof statusIcons
+            ]
           }
           sx={{
             background: (
