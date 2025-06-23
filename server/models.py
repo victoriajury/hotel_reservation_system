@@ -56,8 +56,17 @@ class Guests(db.Model):  # type: ignore
                 "id": res.id,
                 "start_date": res.start_date,
                 "end_date": res.end_date,
-                "total_room_base_price": res.total_room_base_price,
+                "status": res.status.status,
+                "status_color": res.status.bg_color,
                 "special_offer_discount": res.special_offer_discount,
+                "rooms": [
+                    {
+                        **rooms_res_assoc.rooms.to_dict(),
+                        "room_base_price_per_night": rooms_res_assoc.room_base_price_per_night,
+                        "room_number_of_occupants": rooms_res_assoc.room_number_of_occupants,
+                    }
+                    for rooms_res_assoc in res.rooms
+                ],
             }
             for res in self.reservations
         ]
@@ -96,6 +105,9 @@ class RoomReservationAssociation(db.Model):  # type: ignore
     rooms = relationship("Rooms", back_populates="reservations")
     reservations = relationship("Reservations", back_populates="rooms")
 
+    def to_dict(self):
+        return make_dict(self)
+
 
 class Rooms(db.Model):  # type: ignore
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -114,11 +126,10 @@ class Rooms(db.Model):  # type: ignore
     def to_dict(self):
         _dict = make_dict(self)
         _dict["room_type_name"] = self.room_type.type_name
-        _dict["base_price_per_night_quoted"] = self.room_type.base_price_per_night
-        _dict["room_photo"] = self.room_type.photo
         _dict["room_max_occupants"] = self.room_type.max_occupants
         _dict["room_amenities"] = self.room_type.amenities
-
+        _dict["room_photo"] = self.room_type.photo
+        _dict["base_price_per_night_quoted"] = self.room_type.base_price_per_night
         _dict["modified_by_user"] = self.modified_by_user.username
         return _dict
 
@@ -143,7 +154,6 @@ class Reservations(db.Model):  # type: ignore
     end_date: Mapped[datetime.datetime] = mapped_column(DateTime)
     status_id: Mapped[int] = mapped_column(ForeignKey("reservation_status.id"))
     guest_id: Mapped[int] = mapped_column(Integer, ForeignKey("guests.id"))
-    number_of_guests: Mapped[int] = mapped_column(Integer)
     total_room_base_price: Mapped[float] = mapped_column(Float)
     special_offer_applied_title: Mapped[Optional[str]] = mapped_column(String)
     special_offer_discount: Mapped[float] = mapped_column(Float, server_default="0.0")
@@ -169,11 +179,11 @@ class Reservations(db.Model):  # type: ignore
         _dict = make_dict(self)
         _dict["rooms"] = [
             {
-                **assoc.rooms.to_dict(),
-                "room_number_of_occupants": assoc.room_number_of_occupants,
-                "base_price_per_night_charged": assoc.room_base_price_per_night,
+                **rooms_res_assoc.to_dict(),
+                "room_photo": rooms_res_assoc.rooms.room_type.photo,
+                "room_type_name": rooms_res_assoc.rooms.room_type.type_name,
             }
-            for assoc in self.rooms
+            for rooms_res_assoc in self.rooms
         ]
 
         _dict["guest_name"] = self.guest.guest_name
@@ -225,7 +235,6 @@ class SpecialOffers(db.Model):  # type: ignore
 class Invoices(db.Model):  # type: ignore
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     reservation_id: Mapped[int] = mapped_column(ForeignKey("reservations.id"))
-    amount_paid: Mapped[float] = mapped_column(Float, default=0)
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime, server_default=func.now()
     )
@@ -236,8 +245,65 @@ class Invoices(db.Model):  # type: ignore
 
     modified_by_user: Mapped[Users] = relationship()
 
+    reservation: Mapped[Reservations] = relationship()
+    payments = relationship("Payments", back_populates="invoice")
+    invoice_items = relationship("InvoiceItems", back_populates="invoice")
+
     def to_dict(self):
         _dict = make_dict(self)
+        _dict["reservation_start_date"] = self.reservation.start_date
+        _dict["reservation_end_date"] = self.reservation.end_date
+        _dict["guest_id"] = self.reservation.guest.id
+        _dict["guest_name"] = self.reservation.guest.guest_name
+        _dict["guest_email"] = self.reservation.guest.email
+        _dict["special_offer_discount"] = self.reservation.special_offer_discount
+        _dict["payments"] = [
+            {
+                "id": payment.id,
+                "entered_date": payment.entered_date,
+                "amount": payment.amount,
+                "modified": payment.modified,
+            }
+            for payment in self.payments
+        ]
+        _dict["amount_paid"] = sum(
+            [p.amount for p in self.payments if p.invoice_id == self.id]
+        )
+        _dict["invoice_items"] = [
+            {
+                "id": item.id,
+                "item_description": item.item_description,
+                "is_room": item.is_room,
+                "quantity": item.quantity,
+                "price": item.price,
+                "modified": item.modified,
+            }
+            for item in self.invoice_items
+        ]
+        _dict["invoice_total"] = (
+            sum(
+                [
+                    ii.price * ii.quantity
+                    for ii in self.invoice_items
+                    if ii.invoice_id == self.id
+                ]
+            )
+            - self.reservation.special_offer_discount
+        )
+        _dict["invoice_items_room_total"] = sum(
+            [
+                ii.price * ii.quantity
+                for ii in self.invoice_items
+                if ii.invoice_id == self.id and ii.is_room
+            ]
+        )
+        _dict["invoice_items_extras_total"] = sum(
+            [
+                ii.price * ii.quantity
+                for ii in self.invoice_items
+                if ii.invoice_id == self.id and not ii.is_room
+            ]
+        )
         _dict["modified_by_user"] = self.modified_by_user.username
         return _dict
 
@@ -249,7 +315,6 @@ class InvoiceItems(db.Model):  # type: ignore
     is_room: Mapped[bool] = mapped_column(Boolean, default=False)
     quantity: Mapped[int] = mapped_column(Integer)
     price: Mapped[float] = mapped_column(Float)
-    total: Mapped[float] = mapped_column(Float)
     created: Mapped[datetime.datetime] = mapped_column(
         DateTime, server_default=func.now()
     )
@@ -259,6 +324,7 @@ class InvoiceItems(db.Model):  # type: ignore
     modified_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
 
     modified_by_user: Mapped[Users] = relationship()
+    invoice: Mapped[Invoices] = relationship()
 
     def to_dict(self):
         _dict = make_dict(self)
@@ -268,6 +334,7 @@ class InvoiceItems(db.Model):  # type: ignore
 
 class Payments(db.Model):  # type: ignore
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    entered_date: Mapped[datetime.datetime] = mapped_column(DateTime)
     invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id"))
     amount: Mapped[float] = mapped_column(Float)
     created: Mapped[datetime.datetime] = mapped_column(
@@ -279,9 +346,14 @@ class Payments(db.Model):  # type: ignore
     modified_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
 
     modified_by_user: Mapped[Users] = relationship()
+    invoice: Mapped[Invoices] = relationship()
 
     def to_dict(self):
         _dict = make_dict(self)
+        _dict["reservation_id"] = self.invoice.reservation.id
+        _dict["guest_id"] = self.invoice.reservation.guest.id
+        _dict["guest_name"] = self.invoice.reservation.guest.guest_name
+        _dict["guest_email"] = self.invoice.reservation.guest.email
         _dict["modified_by_user"] = self.modified_by_user.username
         return _dict
 

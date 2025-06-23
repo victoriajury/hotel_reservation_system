@@ -11,7 +11,14 @@ export async function getInvoices(): Promise<Invoice[]> {
 
 export async function getInvoice(id: DataModelId): Promise<Invoice> {
     const res = await fetch(`${API_BASE_URL}/invoices/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch invoices');
+    if (!res.ok) throw new Error('Failed to fetch invoice');
+    return await res.json();
+}
+
+export async function getInvoiceByReservationId(id: DataModelId): Promise<Invoice | undefined> {
+    const res = await fetch(`${API_BASE_URL}/invoices/reservation/${id}`);
+    // if (!res.ok) throw new Error('Failed to fetch invoice');
+    if (!res.ok) return undefined;
     return await res.json();
 }
 

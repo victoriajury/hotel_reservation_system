@@ -19,7 +19,8 @@ import * as React from 'react';
 import { useLoaderData, redirect, useParams, useNavigate } from 'react-router-dom';
 import { getReservationStatuses } from '../data/reservation_status';
 import { getReservation } from '../data/reservations';
-import { DataModelId, Reservation, ReservationStatus, Room } from '../data/data_models';
+import { getInvoiceByReservationId } from '../data/invoices';
+import { DataModelId, Reservation, ReservationStatus, Room, Invoice } from '../data/data_models';
 import { dateDiff } from '../utils';
 
 import Alert from '@mui/joy/Alert';
@@ -61,10 +62,10 @@ import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import PaymentRoundedIcon from '@mui/icons-material/PaymentRounded';
 
 import PageSectionTabs from '../layouts/components/PageSectionTabs';
 import ModalAddNote from '../layouts/components/ModalAddNote'
-
 
 export function getReservationId() {
   const params: any = useParams()
@@ -78,18 +79,20 @@ export async function loader({ params }: { params: { reservationId?: string } })
   if (params.reservationId) {
     const reservation = await getReservation(params.reservationId);
     const statuses = await getReservationStatuses();
-    return { reservation, statuses };
+    const invoice = await getInvoiceByReservationId(params.reservationId);
+    return { reservation, statuses, invoice };
   }
   return redirect(`/reservations`);
 }
 export default function ReservationView() {
-  const { reservation, statuses } = useLoaderData() as { reservation: Reservation; statuses: ReservationStatus[] };
+  const { reservation, statuses, invoice } = useLoaderData() as { reservation: Reservation; statuses: ReservationStatus[]; invoice: Invoice };
   let navigate = useNavigate();
 
   const [open, setOpen] = React.useState<boolean>(false);
 
   const roomsTotal = () => {
-    return dateDiff(reservation.start_date, reservation.end_date) * reservation.rooms.reduce((sum, room) => sum + room.base_price_per_night_charged, 0)
+    return dateDiff(reservation.start_date, reservation.end_date) *
+      reservation.rooms.reduce((sum: number, room: Room) => sum + room.room_base_price_per_night, 0)
   }
 
   const handleSaveNote = (note: string) => {
@@ -224,7 +227,7 @@ export default function ReservationView() {
                         {room.room_number_of_occupants} person
                       </Typography>}
                   </Typography>
-                  <Typography level="body-sm">{room.room_type_name} - &pound; {room.base_price_per_night_charged.toFixed(2)} per night</Typography>
+                  <Typography level="body-sm">{room.room_type_name} - &pound; {room.room_base_price_per_night.toFixed(2)} per night</Typography>
                 </CardContent>
               </Card>
             )}
@@ -336,7 +339,8 @@ export default function ReservationView() {
                   <Typography level='body-sm' startDecorator={<ScheduleRoundedIcon sx={{ mx: 1 }} />}>
                     <Typography sx={{ fontWeight: 'lg', mr: 1 }}>Arrival Time{": "}
                       <Typography sx={{ fontWeight: 'sm' }}>{reservation.guest_arrival_time ? reservation.guest_arrival_time : " None stated"}
-                        {Number(reservation.guest_arrival_time.split(':')[0]) < 12 ? '\xa0AM' : '\xa0PM'}</Typography>
+                        {/* add non-breaking spaces to prevent orphaned AM/PM on next line */}
+                        {Number(reservation.guest_arrival_time?.split(':')[0]) < 12 ? '\xa0AM' : '\xa0PM'}</Typography>
                     </Typography>
                   </Typography>
 
@@ -355,8 +359,6 @@ export default function ReservationView() {
 
               </Grid>
             </Grid>
-
-
           </Card>
 
           {/* Billing */}
@@ -370,48 +372,85 @@ export default function ReservationView() {
             <Divider />
             <Stack spacing={2} sx={{ my: 1 }}>
 
-              <Table size='sm' sx={{ '& tr > *:not(:first-child)': { textAlign: 'right' } }}>
+              <Table size='sm' sx={{
+                '& tr > *:not(:first-child)': { textAlign: 'right' },
+                '& tr.invoice-total > *': { borderTop: '2px solid var(--TableCell-borderColor)' }
+              }}>
                 <thead>
                   <tr>
-                    <th style={{ width: '60%' }}><Typography level='body-md'>Invoice Summary</Typography></th>
+                    <th style={{ width: '60%' }}><Typography level='body-md'>
+                      {invoice ? `Invoice Summary (#INV-${String(invoice.id).padStart(5, '0')})` : 'Room Price Summary'}
+                    </Typography></th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Total Cost</td><td>&pound; {roomsTotal().toFixed(2)}</td>
+                    <td>Room Cost</td>
+                    {invoice && invoice.invoice_items_room_total ? <td>&pound; {invoice.invoice_items_room_total.toFixed(2)}</td> : <td>&pound; {roomsTotal().toFixed(2)}</td>}
                   </tr>
                   <tr>
-                    <td>Additional charges</td><td>&pound; 0.00</td>
+                    <td>Additional charges</td>
+                    {invoice && invoice.invoice_items_extras_total ? <td>&pound; {invoice.invoice_items_extras_total.toFixed(2)}</td> : <td>&pound; 0.00</td>}
                   </tr>
                   <tr>
                     <td>
                       Discount
                       {reservation.special_offer_applied_title ? (
-                        <>
+                        <React.Fragment>
                           : <LocalOfferRoundedIcon sx={{ fontSize: 16, verticalAlign: 'middle' }} /> {reservation.special_offer_applied_title}
-                        </>
+                        </React.Fragment>
                       ) : ""}
                     </td>
                     <td>&pound; {reservation.special_offer_discount ? reservation.special_offer_discount.toFixed(2) : "0.00"}</td>
                   </tr>
-                  <tr>
-                    <td>Paid to date</td><td>&pound; 0.00</td>
-                  </tr>
-                  <tr>
-                    <td>Total Due</td><td><Typography level='body-lg'>&pound; 0.00</Typography></td>
-                  </tr>
+
+                  {invoice ?
+                    <React.Fragment>
+                      <tr className='invoice-total'>
+                        <td><Typography sx={{ fontWeight: 'xl' }}>Invoice total</Typography></td>
+                        <td><Typography level='body-lg'> &pound;
+                          {(invoice.invoice_total).toFixed(2)}
+                        </Typography></td>
+                      </tr>
+                      <tr>
+                        <td>Paid to date</td><td>&pound; {invoice.amount_paid.toFixed(2)}</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          {(invoice.invoice_total - invoice.amount_paid) < 0 ?
+                            <Typography sx={{ fontWeight: 'xl' }} color='danger'>Refund Due</Typography>
+                            : 'Balance Due'}
+                        </td>
+                        <td>
+                          <Typography sx={{ fontWeight: 'xl' }} color={(invoice.invoice_total - invoice.amount_paid) == 0 ? 'success' : 'danger'}>
+                            &pound; {(invoice.invoice_total - invoice.amount_paid).toFixed(2)}
+                          </Typography>
+                        </td>
+                      </tr>
+                    </React.Fragment>
+                    :
+                    <tr className='invoice-total'>
+                      <td><Typography sx={{ fontWeight: 'xl' }}>Total Due</Typography></td>
+                      <td><Typography level='body-lg'> &pound;
+                        {(roomsTotal() - reservation.special_offer_discount)}
+                      </Typography></td>
+                    </tr>
+                  }
+
                 </tbody>
               </Table>
             </Stack>
             <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
               <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
-                <Button size="sm" variant="soft" color="success" startDecorator={<ReceiptLongRoundedIcon />}>
-                  Generate Invoice
-                </Button>
-                <Button size="sm" variant="solid" color="primary" startDecorator={<PrintRoundedIcon />}>
-                  Print Invoice
-                </Button>
+                {!invoice ?
+                  <Button size="sm" variant="soft" color="success" startDecorator={<ReceiptLongRoundedIcon />}>
+                    Generate Invoice
+                  </Button>
+                  :
+                  <Button size="sm" variant="solid" color="primary" startDecorator={<PrintRoundedIcon />}>
+                    Print Invoice
+                  </Button>}
               </CardActions>
             </CardOverflow>
           </Card>
@@ -426,8 +465,39 @@ export default function ReservationView() {
             </Box>
             <Divider />
             <Stack spacing={2} sx={{ my: 1 }}>
-
+              {invoice ?
+                <Table size='sm' sx={{
+                  '& tr > *:not(:first-child)': { textAlign: 'right' },
+                  '& tr.payments-total > *': { borderTop: '2px solid var(--TableCell-borderColor)' }
+                }}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: '60%' }}><Typography level='body-md'>Date</Typography></th>
+                      <th><Typography level='body-md'>Amount</Typography></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoice.payments.map((payment) =>
+                      <tr>
+                        <td>{new Date(payment.entered_date).toDateString()}</td><td>&pound; {payment.amount.toFixed(2)}</td>
+                      </tr>
+                    )}
+                    <tr className='payments-total'>
+                      <td><Typography sx={{ fontWeight: 'xl' }}>Payments total</Typography></td>
+                      <td><Typography sx={{ fontWeight: 'xl' }}> &pound; {invoice.amount_paid.toFixed(2)}</Typography></td>
+                    </tr>
+                  </tbody>
+                </Table>
+                :
+                <Typography level="body-sm">No payments made.</Typography>}
             </Stack>
+            <CardOverflow sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+              <CardActions sx={{ alignSelf: 'flex-end', pt: 2 }}>
+                <Button size="sm" variant="solid" color="primary" startDecorator={<PaymentRoundedIcon />}>
+                  Add Payment
+                </Button>
+              </CardActions>
+            </CardOverflow>
           </Card>
 
           {/* Timeline */}

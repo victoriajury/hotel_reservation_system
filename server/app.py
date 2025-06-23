@@ -120,6 +120,11 @@ def create_app(test_config=None):
     api.add_resource(
         invoices.InvoiceResource, "/api/invoices/<int:invoice_id>", endpoint="invoice"
     )
+    api.add_resource(
+        invoices.InvoiceByReservationResource,
+        "/api/invoices/reservation/<int:reservation_id>",
+        endpoint="invoice_by_reservation",
+    )
 
     api.add_resource(
         invoice_items.InvoiceItemByInvoiceResource,

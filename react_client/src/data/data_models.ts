@@ -20,6 +20,7 @@ export interface Guest extends DataModel {
   county: string;
   postcode: string;
   guest_notes: string;
+  reservations: Reservation[];
   modified: string;
 }
 
@@ -41,7 +42,7 @@ export interface Room extends DataModel {
   room_amenities: string;
   room_photo: string;
   base_price_per_night_quoted: number;
-  base_price_per_night_charged: number;
+  room_base_price_per_night: number;
   modified: string;
 }
 
@@ -55,20 +56,20 @@ export interface Reservation extends DataModel {
   start_date: string;
   end_date: string;
   status: string;
+  status_color: string;
   rooms: Room[];
-  guest_id: number;
-  guest_name: string;
-  guest_telephone: string;
-  guest_email: string;
-  guest_address: string;
-  number_of_guests: number;
+  guest_id?: number;
+  guest_name?: string;
+  guest_telephone?: string;
+  guest_email?: string;
+  guest_address?: string;
   total_room_base_price: number;
-  special_offer_applied_title: string;
+  special_offer_applied_title?: string;
   special_offer_discount: number;
-  reservation_notes: string;
-  guest_arrival_time: string;
-  guest_transport_method: string;
-  guest_marketing_source: string;
+  reservation_notes?: string;
+  guest_arrival_time?: string;
+  guest_transport_method?: string;
+  guest_marketing_source?: string;
   modified: string;
   created: string;
 }
@@ -86,8 +87,20 @@ export interface SpecialOffer extends DataModel {
 
 export interface Invoice extends DataModel {
   reservation_id: number;
+  reservation_start_date: string;
+  reservation_end_date: string;
+  guest_id: number;
+  guest_name: string;
+  guest_email: string;
+  special_offer_discount: number;
+  invoice_items: InvoiceItem[];
+  invoice_total: number;
+  invoice_items_room_total: number;
+  invoice_items_extras_total: number;
   amount_paid: number;
+  payments: Payment[];
   modified: string;
+  created: string;
 }
 
 export interface InvoiceItem extends DataModel {
@@ -96,13 +109,17 @@ export interface InvoiceItem extends DataModel {
   is_room: boolean;
   quantity: number;
   price: number;
-  total: number;
   modified: string;
 }
 
 export interface Payment extends DataModel {
-  invoice_id: number;
+  invoice_id?: number;
+  reservation_id?: number;
+  entered_date: string;
   amount: number;
+  guest_id?: number;
+  guest_name?: string;
+  guest_email?: string;
   modified: string;
 }
 

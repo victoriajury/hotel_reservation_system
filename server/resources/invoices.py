@@ -88,6 +88,21 @@ class InvoiceResource(Resource):
         return response
 
 
+class InvoiceByReservationResource(Resource):
+    def get(self, reservation_id):
+        # Return all invoices for a reservation
+        invoice = db.session.execute(
+            db.select(Invoices).filter_by(reservation_id=reservation_id)
+        ).scalar_one_or_none()
+
+        if invoice:
+            return jsonify(invoice.to_dict())
+
+        else:
+            response = make_response("Invoice not found.", 404)
+            return response
+
+
 # from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 # from server.auth import login_required
 # from server.db import get_db

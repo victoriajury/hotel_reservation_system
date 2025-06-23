@@ -1,11 +1,13 @@
 import * as React from 'react';
-import { useLoaderData } from 'react-router-dom';
+import { useLoaderData, useNavigate } from 'react-router-dom';
 import { getPayments } from '../data/payments';
 import { Payment } from '../data/data_models';
 
+import Avatar from '@mui/joy/Avatar'
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import Typography from '@mui/joy/Typography';
+import Link from '@mui/joy/Link';
 
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
@@ -17,24 +19,69 @@ export async function loader() {
   return { payments };
 }
 
-const paymentColumns = [
-  { key: 'invoice_id', label: 'Invoice No.' },
-  { 
-    key: 'amount', 
-    label: 'Total',
-    render: (payment: Payment) =>
-      '\u00A3 ' + String(payment.amount.toFixed(2)),
-  },
-  {
-    key: 'modified',
-    label: 'Last Modified',
-    render: (payment: Payment) =>
-      new Date(payment.modified).toLocaleString(),
-  },
-];
-
 export default function PaymentsPage() {
-  const { payments } = useLoaderData();
+  const { payments } = useLoaderData() as { payments: Payment[] };
+  const navigate = useNavigate();
+
+  const paymentColumns = [
+    {
+      key: 'invoice_id',
+      label: 'Invoice No.',
+      width: 150,
+      render: (payment: Payment) =>
+        <Link onClick={() => navigate(`/invoices/${payment.invoice_id}`)}>
+          #INV-{String(payment.invoice_id).padStart(5, '0')}
+        </Link>
+    },
+    {
+      key: 'reservation_id',
+      label: 'Booking No.',
+      width: 150,
+      render: (payment: Payment) =>
+        <Link onClick={() => navigate(`/reservations/${payment.reservation_id}`)}>
+          #{String(payment.reservation_id).padStart(5, '0')}
+        </Link>
+    },
+    {
+      key: 'entered_date',
+      label: 'Date',
+      width: 150,
+      render: (payment: Payment) =>
+        new Date(payment.entered_date).toLocaleDateString(),
+    },
+    {
+      key: 'guest_name',
+      label: 'Guest',
+      width: 260,
+      render: (payment: Payment) =>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Avatar size="sm">{payment.guest_name?.charAt(0)}</Avatar>
+          <div>
+            <Typography level="body-xs">
+              <Link onClick={() => navigate(`/guest-profile/${payment.guest_id}`)}>
+                {payment.guest_name}
+              </Link>
+            </Typography><br />
+            <Typography level="body-xs">{payment.guest_email}</Typography>
+          </div>
+        </Box>
+    },
+    {
+      key: 'amount',
+      label: 'Total',
+      width: 150,
+      render: (payment: Payment) =>
+        '\u00A3 ' + String(payment.amount.toFixed(2)),
+    },
+    {
+      key: 'modified',
+      label: 'Last Modified',
+      width: 150,
+      render: (payment: Payment) =>
+        new Date(payment.modified).toLocaleString(),
+    },
+  ];
+
   return (
     <>
       <Box
@@ -60,7 +107,7 @@ export default function PaymentsPage() {
         </Button>
       </Box>
       {/* Desktop View */}
-      <DataTable data={payments} columns={paymentColumns} />
+      <DataTable data={payments} objName='Payment' columns={paymentColumns} />
       {/* Mobile View */}
       <DataList />
     </>

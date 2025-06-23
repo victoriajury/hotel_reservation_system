@@ -63,21 +63,20 @@ INSERT INTO reservations
   guest_arrival_time,
   guest_transport_method,
   guest_marketing_source,
-  number_of_guests,
   status_id,
   modified_by_id)
 VALUES
-  ("2024-09-17","2024-09-20",390.0,"",0,5,"15:00","Car","Search Engine",2,2,1),
-  ("2024-08-20","2024-08-25",725.0,"125 discount",125,4,"16:00","Train","Booking.com",2,4,1),
-  ("2024-09-08","2024-09-12",520.0,"",0,2,"14:30","Plane","TripAdvisor",2,3,1),
-  ("2024-09-01","2024-09-05",460.0,"",0,8,"17:00","Car","Stayed Before",2,2,1),
-  ("2024-09-03","2024-09-07",520.0,"",0,4,"15:30","Bicycle","Instagram",2,5,1),
-  ("2024-09-10","2024-09-14",460.0,"",0,7,"16:15","Motorhome","Facebook",2,2,1),
-  ("2024-09-19","2024-09-23",520.0,"",0,3,"13:45","Train","Email",2,2,1),
-  ("2024-09-12","2024-09-19",1015.0,"",0,6,"15:00","Car","Recommendation",2,1,1),
-  ("2024-09-08","2024-09-12",520.0,"",0,1,"14:00","Coach","Other",2,3,1),
-  ("2025-06-15","2025-06-20",520.0,"",0,1,"14:00","Taxi","Other",2,3,1),
-  ("2025-06-08","2025-06-12",520.0,"",0,1,"14:00","Coach","",2,5,1)
+  ("2024-09-17","2024-09-20",390.0,"",0,5,"15:00","Car","Search Engine",2,1),
+  ("2024-08-20","2024-08-25",725.0,"125 discount",125,4,"16:00","Train","Booking.com",4,1),
+  ("2024-09-08","2024-09-12",520.0,"",0,2,"14:30","Plane","TripAdvisor",3,1),
+  ("2024-09-01","2024-09-05",460.0,"",0,8,"17:00","Car","Stayed Before",2,1),
+  ("2024-09-03","2024-09-07",520.0,"",0,4,"15:30","Bicycle","Instagram",5,1),
+  ("2024-09-10","2024-09-14",460.0,"",0,7,"16:15","Motorhome","Facebook",2,1),
+  ("2024-09-19","2024-09-23",520.0,"",0,3,"13:45","Train","Email",2,1),
+  ("2024-09-12","2024-09-19",1015.0,"",0,6,"15:00","Car","Recommendation",1,1),
+  ("2024-09-08","2024-09-12",520.0,"",0,1,"14:00","Coach","Other",3,1),
+  ("2025-06-15","2025-06-20",520.0,"",0,1,"14:00","Taxi","Other",3,1),
+  ("2025-06-08","2025-06-12",520.0,"",0,1,"14:00","Coach","",5,1)
 ;
 
 INSERT INTO special_offers
@@ -92,26 +91,29 @@ VALUES
 ;
 
 INSERT INTO invoices
-  (reservation_id, amount_paid, modified_by_id)
+  (reservation_id, modified_by_id)
 VALUES
-  (2, 0, 1),
-  (1, 390, 1)
+  (2, 1),
+  (1, 1)
 ;
 
 INSERT INTO invoice_items
-  (invoice_id, item_description, is_room, quantity, price, total, modified_by_id)
+  (invoice_id, item_description, is_room, quantity, price, modified_by_id)
 VALUES
-  (2, "Superior Double", 1, 3, 130.0, 390.0, 1),
-  (2, "Dinner", 0, 2, 25.0, 50.0, 1),
-  (1, "Four Poster Nest", 1, 5, 145.0, 725.0, 1),
-  (1, "Dinner", 0, 2, 25.0, 50.0, 1),
-  (1, "Drinks", 0, 4, 2.5, 10.0, 1)
+  (2, "Superior Double", 1, 3, 130.0, 1),
+  (2, "Dinner", 0, 2, 25.0, 1),
+  (1, "Four Poster Nest", 1, 5, 145.0, 1),
+  (1, "Dinner", 0, 2, 25.0, 1),
+  (1, "Drinks", 0, 4, 2.5, 1)
 ;
 
 INSERT INTO payments
-  (invoice_id, amount, modified_by_id)
+  (invoice_id, entered_date, amount, modified_by_id)
 VALUES
-  (2,390,1)
+  (2,"2025-05-30",390,1),
+  (2,"2025-05-31",90,1),
+  (2,"2025-06-02",45,1),
+  (1,"2025-05-30",600,1)
 ;
 
 
