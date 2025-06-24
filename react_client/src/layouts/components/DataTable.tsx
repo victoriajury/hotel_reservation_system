@@ -162,7 +162,7 @@ export default function DataTable<T extends DataModel>({ data, columns, objName,
                       setSelected((ids) =>
                         event.target.checked
                           ? ids.concat(String(row.id))
-                          : ids.filter((itemId) => itemId !== row.id),
+                          : ids.filter((itemId) => itemId !== String(row.id)),
                       );
                     }}
                     slotProps={{ checkbox: { sx: { textAlign: 'left' } } }}
