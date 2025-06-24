@@ -25,7 +25,7 @@ export function toggleSidebar() {
   }
 }
 
-export function dateDiff(start_date: string, end_date: string) {
+export function dateDiff(start_date: string, end_date: string): number {
   if (!start_date || !end_date) return 0;
   const start = new Date(start_date);
   const end = new Date(end_date);

@@ -1,45 +1,31 @@
 import * as React from 'react';
 import { useLoaderData, useNavigate } from 'react-router-dom';
 import { getReservations } from '../data/reservations';
-import { getReservationStatuses } from '../data/reservation_status';
-import { Reservation, ReservationStatus } from '../data/data_models';
+import { Reservation } from '../data/data_models';
 import { dateDiff } from '../utils';
 
 import Avatar from '@mui/joy/Avatar';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
-import Chip from '@mui/joy/Chip';
 import Link from '@mui/joy/Link';
 import Typography from '@mui/joy/Typography';
 
-import BlockIcon from '@mui/icons-material/Block';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
-import InventoryRoundedIcon from '@mui/icons-material/InventoryRounded';
 import LibraryAddRoundedIcon from '@mui/icons-material/LibraryAddRounded';
-import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 
+import StatusChip from '../layouts/components/StatusChip';
 import DataTable from '../layouts/components/DataTable';
 import DataList from '../layouts/components/DataList';
 
+
 export async function loader() {
   const reservations = await getReservations();
-  const statuses = await getReservationStatuses();
 
-  return { reservations, statuses };
+  return { reservations };
 }
 
 export default function ReservationsPage() {
   const navigate = useNavigate();
-  const { reservations, statuses } = useLoaderData() as { reservations: Reservation[]; statuses: ReservationStatus[] };
-
-  const statusIcons = {
-    "Paid in Full": <CheckRoundedIcon />,
-    "Pending": <HourglassTopRoundedIcon />,
-    "Confirmed": <InventoryRoundedIcon />,
-    "Cancelled": <BlockIcon />,
-    "Checked-in": <LoginRoundedIcon />
-  }
+  const { reservations } = useLoaderData() as { reservations: Reservation[] };
 
   const reservationsColumns = [
     {
@@ -71,7 +57,7 @@ export default function ReservationsPage() {
       width: 260,
       render: (reservation: Reservation) =>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Avatar size="sm">{reservation.guest_name.charAt(0)}</Avatar>
+          <Avatar size="sm">{reservation.guest_name?.charAt(0)}</Avatar>
           <div>
             <Typography level="body-xs"><Link onClick={() => navigate(`/guest-profile/${reservation.guest_id}`)}>{reservation.guest_name}</Link></Typography><br />
             <Typography level="body-xs">{reservation.guest_email}</Typography>
@@ -83,36 +69,27 @@ export default function ReservationsPage() {
       label: 'Status',
       width: 130,
       render: (reservation: Reservation) =>
-        <Chip
-          variant="soft"
-          size="sm"
-          startDecorator={
-            statusIcons[
-              (statuses.find((status: ReservationStatus) => status.status === reservation.status)?.status || '') as keyof typeof statusIcons
-            ]
-          }
-          sx={{
-            background: (
-              statuses.find((status: ReservationStatus) => status.status === reservation.status)?.bg_color + 'aa' /* with opacity set for dark mode */
-            )
-          }}
-        >
-          {reservation.status}
-        </Chip>
+        <StatusChip reservation={reservation} />
     },
     {
       key: 'total_room_base_price',
-      label: 'Price',
+      label: 'Room Cost',
+      width: 120,
       render: (reservation: Reservation) =>
-        '\u00A3 ' + String((dateDiff(reservation.start_date, reservation.end_date) * reservation.rooms.reduce((sum, room) => sum + room.base_price_per_night_charged, 0)).toFixed(2))
+        // TODO: reuse this formula to sum all room prices and give booking total
+        '\u00A3 ' + String((dateDiff(reservation.start_date, reservation.end_date)
+          * reservation.rooms.reduce((sum, room) => sum + room.room_base_price_per_night, 0))
+          .toFixed(2))
     },
     {
       key: 'guest_transport_method',
-      label: 'Arriving By'
+      label: 'Arriving By',
+      width: 120,
     },
     {
       key: 'modified',
       label: 'Last Modified',
+      width: 130,
       render: (reservation: Reservation) =>
         new Date(reservation.modified).toLocaleString(),
     },

@@ -9,7 +9,8 @@ TO DO:
 import * as React from 'react';
 import { useLoaderData, redirect, useParams, useNavigate, useFetcher, data } from 'react-router-dom';
 import { createGuest, getGuest, updateGuest, deleteGuest } from '../data/guests';
-import { DataModelId, Guest } from '../data/data_models';
+import { DataModelId, Guest, Reservation } from '../data/data_models';
+import { dateDiff } from '../utils';
 
 import Alert from '@mui/joy/Alert';
 import Box from '@mui/joy/Box';
@@ -23,8 +24,10 @@ import FormLabel from '@mui/joy/FormLabel';
 import FormHelperText from '@mui/joy/FormHelperText';
 import Grid from '@mui/joy/Grid';
 import Input from '@mui/joy/Input';
+import Link from '@mui/joy/Link';
 import Modal from '@mui/joy/Modal';
 import Stack from '@mui/joy/Stack';
+import Table from '@mui/joy/Table';
 import Textarea from '@mui/joy/Textarea';
 import Typography from '@mui/joy/Typography';
 
@@ -33,10 +36,12 @@ import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import LibraryAddRoundedIcon from '@mui/icons-material/LibraryAddRounded';
 
 import CountrySelector from '../layouts/components/CountrySelector';
 import ModalDelete from '../layouts/components/ModalDelete';
 import PageSectionTabs from '../layouts/components/PageSectionTabs';
+import StatusChip from '../layouts/components/StatusChip';
 
 export function getGuestId() {
   const params: any = useParams()
@@ -124,17 +129,17 @@ export default function GuestProfile() {
   const [open, setOpen] = React.useState<boolean>(false);
 
   const isEditMode = (getGuestId()) ? true : false;
-  let guest = [];
+  let guest: Guest | undefined = undefined;
   if (isEditMode) {
-    guest = useLoaderData();
+    guest = useLoaderData() as Guest;
   }
 
   const sections = [
     { label: 'Guest Info', desc: 'Guest name, address and contact details.', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: true },
-    { label: 'Notes', desc: 'Include any special request, dietary requirements, etc. (Notes are not shared with guests.)',  ref: React.useRef<HTMLDivElement>(null), showOnNewPage: true },
-    { label: 'Bookings', desc:'Previous reservations.',  ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
-    { label: 'Reviews', desc:'Guest reviews and comments.',  ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
-    { label: 'Settings', desc:'',  ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
+    { label: 'Notes', desc: 'Include any special request, dietary requirements, etc. (Notes are not shared with guests.)', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: true },
+    { label: 'Bookings', desc: 'Previous reservations.', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
+    { label: 'Reviews', desc: 'Guest reviews and comments.', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
+    { label: 'Settings', desc: '', ref: React.useRef<HTMLDivElement>(null), showOnNewPage: false },
   ];
 
   const scrollOffset = 60;
@@ -172,7 +177,7 @@ export default function GuestProfile() {
         }}
       >
         <fetcher.Form method="post">
-          {isEditMode && <input type="hidden" defaultValue={guest.id} name="id" />}
+          {isEditMode && <input type="hidden" defaultValue={guest?.id} name="id" />}
           <Stack spacing={4}>
 
             <Card key={sections[0].label} ref={sections[0].ref} sx={{ scrollMarginTop: scrollOffset }}>
@@ -194,7 +199,7 @@ export default function GuestProfile() {
                   <Stack spacing={1} sx={{ flexGrow: 1 }}>
                     <FormLabel>Name</FormLabel>
                     <FormControl error={errors?.guest_name}>
-                      <Input size="sm" placeholder="Name" name="guest_name" defaultValue={guest.guest_name} />
+                      <Input size="sm" placeholder="Name" name="guest_name" defaultValue={guest?.guest_name} />
                       {errors?.guest_name ?
                         <FormHelperText>
                           <InfoOutlined />
@@ -213,7 +218,7 @@ export default function GuestProfile() {
                           startDecorator={<EmailRoundedIcon />}
                           placeholder="email@example.com"
                           name="email"
-                          defaultValue={guest.email}
+                          defaultValue={guest?.email}
                           sx={{ flexGrow: 1 }}
                         />
                         {errors?.email ?
@@ -231,7 +236,7 @@ export default function GuestProfile() {
                           startDecorator={<PhoneRoundedIcon />}
                           placeholder="e.g. 07123 456 789"
                           name="telephone"
-                          defaultValue={guest.telephone}
+                          defaultValue={guest?.telephone}
                         />
                         {errors?.telephone ?
                           <FormHelperText>
@@ -254,21 +259,21 @@ export default function GuestProfile() {
                       }}
                     >
                       <FormLabel>Address</FormLabel>
-                      <Input size="sm" placeholder="Address Line 1" name="address_1" defaultValue={guest.address_1} />
+                      <Input size="sm" placeholder="Address Line 1" name="address_1" defaultValue={guest?.address_1} />
                       {errors?.address_1 ?
                         <FormHelperText>
                           <InfoOutlined />
                           {errors.address_1}
                         </FormHelperText> : null}
 
-                      <Input sx={{ mt: 1 }} size="sm" placeholder="Address Line 2" name="address_2" defaultValue={guest.address_2} />
+                      <Input sx={{ mt: 1 }} size="sm" placeholder="Address Line 2" name="address_2" defaultValue={guest?.address_2} />
                       {errors?.address_2 ?
                         <FormHelperText>
                           <InfoOutlined />
                           {errors.address_2}
                         </FormHelperText> : null}
 
-                      <Input sx={{ mt: 1 }} size="sm" placeholder="City" name="city" defaultValue={guest.city} />
+                      <Input sx={{ mt: 1 }} size="sm" placeholder="City" name="city" defaultValue={guest?.city} />
                       {errors?.city ?
                         <FormHelperText>
                           <InfoOutlined />
@@ -277,7 +282,7 @@ export default function GuestProfile() {
 
                       <Grid container spacing={1} sx={{ p: 0, m: 0, mt: 1 }}>
                         <Grid sx={{ p: 0, pr: { xs: 0, md: 1 }, pb: { xs: 1, md: 0 }, width: { xs: '100%', md: '50%' } }}>
-                          <Input size="sm" placeholder="Postcode" name="postcode" defaultValue={guest.postcode} />
+                          <Input size="sm" placeholder="Postcode" name="postcode" defaultValue={guest?.postcode} />
                           {errors?.postcode ?
                             <FormHelperText>
                               <InfoOutlined />
@@ -285,7 +290,7 @@ export default function GuestProfile() {
                             </FormHelperText> : null}
                         </Grid>
                         <Grid sx={{ p: 0, pl: { xs: 0, md: 1 }, width: { xs: '100%', md: '50%' } }}>
-                          <Input size="sm" placeholder="County/Region" name="county" defaultValue={guest.county} sx={{ flexGrow: 1 }} />
+                          <Input size="sm" placeholder="County/Region" name="county" defaultValue={guest?.county} sx={{ flexGrow: 1 }} />
                           {errors?.county ?
                             <FormHelperText>
                               <InfoOutlined />
@@ -327,7 +332,7 @@ export default function GuestProfile() {
                   sx={{ mt: 1.5 }}
                   placeholder="Special requests, notes, etc."
                   name="guest_notes"
-                  defaultValue={guest.guest_notes}
+                  defaultValue={guest?.guest_notes}
                 />
                 <FormHelperText color="danger" sx={{ mt: 0.75, fontSize: 'xs' }}>
                   <Alert color="danger">Do not store payment or card details here.</Alert>
@@ -346,8 +351,11 @@ export default function GuestProfile() {
             </Card>
           </Stack>
         </fetcher.Form>
+
+
         {isEditMode &&
           <React.Fragment>
+            {/* Bookings */}
             <Card key={sections[2].label} ref={sections[2].ref} sx={{ scrollMarginTop: scrollOffset }}>
               <Box sx={{ mb: 1 }}>
                 <Typography level="title-md">Bookings</Typography>
@@ -357,9 +365,56 @@ export default function GuestProfile() {
               </Box>
               <Divider />
               <Stack spacing={2} sx={{ my: 1 }}>
+                {guest?.reservations && guest?.reservations.length > 0 ?
+                  <Table>
+                    <thead>
+                      <tr>
+                        <th>Booking No.</th>
+                        <th>Check-In</th>
+                        <th>Check-Out</th>
+                        <th>Room Cost</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {guest?.reservations.map((reservation: Reservation) =>
+                        <tr>
+                          <td><Link onClick={() => navigate(`/reservations/${reservation.id}`)}>
+                            #{String(reservation.id).padStart(5, '0')}
+                          </Link></td>
+                          <td>{new Date(reservation.start_date).toLocaleDateString()}</td>
+                          <td>{new Date(reservation.end_date).toLocaleDateString()}</td>
+                          <td>
+                            {'\u00A3 ' + (dateDiff(reservation.start_date, reservation.end_date)
+                              * reservation.rooms.reduce((sum, room) => sum + room.room_base_price_per_night, 0))
+                              .toFixed(2)}
+                          </td>
+                          <td>
+                            <StatusChip reservation={reservation} />
 
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </Table>
+                  :
+                  <Typography level="body-sm">No reservations for this guest.</Typography>
+                }
+                <CardActions sx={{ alignSelf: 'center', pt: 1 }}>
+                  <Button
+                  onClick={() => navigate('/reservations/new')}
+                  color="primary"
+                  startDecorator={<LibraryAddRoundedIcon />}
+                  size="sm"
+                >
+                  Add New Booking
+                </Button>
+                </CardActions>
+                
               </Stack>
             </Card>
+
+            {/* Reviews */}
             <Card key={sections[3].label} ref={sections[3].ref} sx={{ scrollMarginTop: scrollOffset }}>
               <Box sx={{ mb: 1 }}>
                 <Typography level="title-md">Reviews</Typography>
@@ -390,9 +445,10 @@ export default function GuestProfile() {
                 </CardActions>
               </CardOverflow>
             </Card>
-            <Modal open={open} onClose={() => setOpen(false)}>
-              <ModalDelete id={guest.id} objName='Guest' onDelete={handleDelete} setOpen={setOpen} />
-            </Modal>
+            {guest &&
+              <Modal open={open} onClose={() => setOpen(false)}>
+                <ModalDelete id={guest.id} objName='Guest' onDelete={handleDelete} setOpen={setOpen} />
+              </Modal>}
           </React.Fragment>
         }
       </Stack>

@@ -80,11 +80,17 @@ export default function DataTable<T extends DataModel>({ data, columns, objName,
           stickyHeader
           hoverRow
           sx={{
+            overflow: 'auto',
             '--TableCell-headBackground': 'var(--joy-palette-background-level1)',
             '--Table-headerUnderlineThickness': '1px',
             '--TableRow-hoverBackground': 'var(--joy-palette-background-level1)',
             '--TableCell-paddingY': '4px',
             '--TableCell-paddingX': '8px',
+            '& tr > *:last-child': {
+              position: 'sticky',
+              right: 0,
+              bgcolor: 'var(--TableCell-headBackground)',
+            },
           }}
         >
           <thead>
@@ -112,7 +118,8 @@ export default function DataTable<T extends DataModel>({ data, columns, objName,
               {columns.map((col) => (
                 <th
                   key={col.key as string}
-                  style={col.width ? { width: col.width, padding: '12px 6px' } : { padding: '12px 6px' }}
+                  // set default width if none set
+                  style={col.width ? { width: col.width, padding: '12px 6px' } : { minWidth: 120, padding: '12px 6px' }}
                 >
                   <Link
                     underline="none"

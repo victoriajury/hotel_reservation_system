@@ -5,7 +5,9 @@ import { SpecialOffer } from '../data/data_models';
 
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
+import Switch from '@mui/joy/Switch';
 import Typography from '@mui/joy/Typography';
+
 
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
@@ -17,30 +19,45 @@ export async function loader() {
   return { offers };
 }
 
+
 const offerColumns = [
-  { key: 'title', label: 'Offer' },
-  { key: 'room_type_name', label: 'Room Type' },
+  { key: 'title', label: 'Offer Title', width: 250 },
+  { key: 'room_type_name', label: 'Room Type', width: 120 },
   {
     key: 'price_per_night',
-    label: 'Price',
+    label: 'Price (per night)',
+    width: 130,
     render: (offer: SpecialOffer) =>
       '\u00A3 ' + String(offer.price_per_night.toFixed(2)),
   },
   {
     key: 'start_date',
     label: 'Start Date',
+    width: 120,
     render: (offer: SpecialOffer) =>
-      new Date(offer.modified).toLocaleDateString(),
+      new Date(offer.modified).toDateString(),
   },
   {
     key: 'end_date',
     label: 'End Date',
+    width: 120,
     render: (offer: SpecialOffer) =>
-      new Date(offer.modified).toLocaleDateString(),
+      new Date(offer.modified).toDateString(),
+  },
+  {
+    key: 'is_enabled',
+    label: 'Active',
+    width: 80,
+    render: (offer: SpecialOffer) =>
+      // TODO: switch is_enabled state from the datatable view
+      <Switch size='sm'
+        checked={offer.is_enabled}
+      />
   },
   {
     key: 'modified',
     label: 'Last Modified',
+    width: 120,
     render: (offer: SpecialOffer) =>
       new Date(offer.modified).toLocaleString(),
   },
@@ -73,7 +90,7 @@ export default function SpecialOffersPage() {
         </Button>
       </Box>
       {/* Desktop View */}
-      <DataTable data={offers} columns={offerColumns} />
+      <DataTable data={offers} objName="Offer" columns={offerColumns} />
       {/* Mobile View */}
       <DataList />
     </>
