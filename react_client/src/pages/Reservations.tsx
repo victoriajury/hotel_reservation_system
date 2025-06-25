@@ -13,13 +13,12 @@ import Typography from '@mui/joy/Typography';
 import LibraryAddRoundedIcon from '@mui/icons-material/LibraryAddRounded';
 
 import StatusChip from '../layouts/components/StatusChip';
-import DataTable from '../layouts/components/DataTable';
+import DataTable, { TableColumn } from '../layouts/components/DataTable';
 import DataList from '../layouts/components/DataList';
 
 
 export async function loader() {
   const reservations = await getReservations();
-
   return { reservations };
 }
 
@@ -27,10 +26,11 @@ export default function ReservationsPage() {
   const navigate = useNavigate();
   const { reservations } = useLoaderData() as { reservations: Reservation[] };
 
-  const reservationsColumns = [
+  const reservationsColumns: TableColumn<Reservation>[] = [
     {
       key: 'id',
       label: 'Booking No.',
+      numeric: true,
       width: 120,
       render: (reservation: Reservation) =>
         <Link onClick={() => navigate(`/reservations/${reservation.id}`)}>
@@ -40,6 +40,7 @@ export default function ReservationsPage() {
     {
       key: 'start_date',
       label: 'Check-In',
+      numeric: false,
       width: 120,
       render: (reservation: Reservation) =>
         new Date(reservation.start_date).toLocaleDateString(),
@@ -47,6 +48,7 @@ export default function ReservationsPage() {
     {
       key: 'end_date',
       label: 'Check-Out',
+      numeric: false,
       width: 120,
       render: (reservation: Reservation) =>
         new Date(reservation.end_date).toLocaleDateString(),
@@ -54,6 +56,7 @@ export default function ReservationsPage() {
     {
       key: 'guest_name',
       label: 'Guest',
+      numeric: false,
       width: 260,
       render: (reservation: Reservation) =>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -67,6 +70,7 @@ export default function ReservationsPage() {
     {
       key: 'status',
       label: 'Status',
+      numeric: false,
       width: 130,
       render: (reservation: Reservation) =>
         <StatusChip reservation={reservation} />
@@ -74,21 +78,27 @@ export default function ReservationsPage() {
     {
       key: 'total_room_base_price',
       label: 'Room Cost',
+      numeric: false,
       width: 120,
       render: (reservation: Reservation) =>
         // TODO: reuse this formula to sum all room prices and give booking total
-        '\u00A3 ' + String((dateDiff(reservation.start_date, reservation.end_date)
+      <React.Fragment>
+        &pound; {(dateDiff(reservation.start_date, reservation.end_date)
           * reservation.rooms.reduce((sum, room) => sum + room.room_base_price_per_night, 0))
-          .toFixed(2))
+          .toFixed(2)}     
+      </React.Fragment>
+
     },
     {
       key: 'guest_transport_method',
       label: 'Arriving By',
+      numeric: false,
       width: 120,
     },
     {
       key: 'modified',
       label: 'Last Modified',
+      numeric: false,
       width: 130,
       render: (reservation: Reservation) =>
         new Date(reservation.modified).toLocaleString(),

@@ -10,26 +10,30 @@ import Typography from '@mui/joy/Typography';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import SquareRoundedIcon from '@mui/icons-material/SquareRounded';
 
-import DataTable from '../layouts/components/DataTable';
+import DataTable, { TableColumn } from '../layouts/components/DataTable';
 import DataList from '../layouts/components/DataList';
+
 
 export async function loader() {
   const statuses = await getReservationStatuses();
   return { statuses };
 }
 
-const resStatusColumns = [
-  {
-    key: 'status',
-    label: 'Status',
-    render: (status: ReservationStatus) =>
-      <Typography startDecorator={<SquareRoundedIcon htmlColor={status.bg_color} style={{ fontSize: "24px" }} />} >{status.status}</Typography>
-  },
-  { key: 'description', label: 'Description' },
-];
-
 export default function ReservationStatusPage() {
-  const { statuses } = useLoaderData();
+  const { statuses } = useLoaderData() as { statuses: ReservationStatus[] };
+
+  const resStatusColumns: TableColumn<ReservationStatus>[] = [
+    {
+      key: 'status',
+      label: 'Status',
+      numeric: false,
+      render: (status: ReservationStatus) =>
+        <Typography startDecorator={<SquareRoundedIcon htmlColor={status.bg_color} style={{ fontSize: "24px" }} />} >{status.status}</Typography>
+    },
+    { key: 'description', label: 'Description', numeric: false, },
+  ];
+
+
   return (
     <>
       <Box

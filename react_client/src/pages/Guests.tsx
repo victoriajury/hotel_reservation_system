@@ -10,7 +10,7 @@ import Link from '@mui/joy/Link';
 
 import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded';
 
-import DataTable from '../layouts/components/DataTable';
+import DataTable, { TableColumn } from '../layouts/components/DataTable';
 import DataList from '../layouts/components/DataList';
 
 export async function loader() {
@@ -20,7 +20,7 @@ export async function loader() {
 
 export default function GuestsPage() {
   const navigate = useNavigate();
-  const { guests } = useLoaderData();
+  const { guests } = useLoaderData() as { guests: Guest[] };
   const { revalidate } = useRevalidator();
 
   const handleDelete = async (id: DataModelId) => {
@@ -28,10 +28,11 @@ export default function GuestsPage() {
     revalidate();
   };
 
-  const guestColumns = [
+  const guestColumns: TableColumn<Guest>[] = [
     {
       key: 'guest_name',
       label: 'Name',
+      numeric: false,
       width: 150,
       render: (guest: Guest) =>
         <Link onClick={() => navigate(`/guest-profile/${guest.id}`)}>{guest.guest_name}</Link>
@@ -39,15 +40,17 @@ export default function GuestsPage() {
     {
       key: 'email',
       label: 'Email',
+      numeric: false,
       width: 200,
       render: (guest: Guest) =>
         <Link onClick={e => { e.preventDefault(); window.open(`mailto:${guest.email}`); }}>{guest.email}</Link>
     },
-    { key: 'telephone', label: 'Phone', width: 150 },
-    { key: 'city', label: 'City', width: 120 },
+    { key: 'telephone', label: 'Phone', numeric: false, width: 150 },
+    { key: 'city', label: 'City', numeric: false, width: 120 },
     {
       key: 'guest_notes',
       label: 'Notes',
+      numeric: false,
       width: 150,
       render: (guest: Guest) =>
         guest.guest_notes ? guest.guest_notes : ' - '
@@ -55,6 +58,7 @@ export default function GuestsPage() {
     {
       key: 'modified',
       label: 'Last Modified',
+      numeric: false,
       width: 150,
       render: (guest: Guest) =>
         new Date(guest.modified).toLocaleString(),

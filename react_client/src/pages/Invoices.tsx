@@ -11,7 +11,7 @@ import Link from '@mui/joy/Link';
 
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
-import DataTable from '../layouts/components/DataTable';
+import DataTable, { TableColumn } from '../layouts/components/DataTable';
 import DataList from '../layouts/components/DataList';
 
 
@@ -21,14 +21,14 @@ export async function loader() {
 }
 
 export default function InvoicesPage() {
-  const { invoices } = useLoaderData() as { invoices: Invoice[] }
   const navigate = useNavigate();
+  const { invoices } = useLoaderData() as { invoices: Invoice[] }
 
-
-  const invoiceColumns = [
+  const invoiceColumns: TableColumn<Invoice>[] = [
     {
       key: 'id',
       label: 'Invoice No.',
+      numeric: true,
       width: 120,
       render: (invoice: Invoice) =>
         <Link onClick={() => navigate(`/invoices/${invoice.id}`)}>
@@ -38,6 +38,7 @@ export default function InvoicesPage() {
     {
       key: 'reservation_id',
       label: 'Booking No.',
+      numeric: true,
       width: 120,
       render: (invoice: Invoice) =>
         <Link onClick={() => navigate(`/reservations/${invoice.reservation_id}`)}>
@@ -47,6 +48,7 @@ export default function InvoicesPage() {
     {
       key: 'created',
       label: 'Date',
+      numeric: false,
       width: 120,
       render: (invoice: Invoice) =>
         new Date(invoice.created).toLocaleDateString(),
@@ -54,6 +56,7 @@ export default function InvoicesPage() {
     {
       key: 'guest_name',
       label: 'Guest',
+      numeric: false,
       width: 260,
       render: (invoice: Invoice) =>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -67,6 +70,7 @@ export default function InvoicesPage() {
     {
       key: 'invoice_total',
       label: 'Total',
+      numeric: true,
       width: 120,
       render: (invoice: Invoice) =>
         '\u00A3 ' + String((invoice.invoice_total).toFixed(2)),
@@ -74,6 +78,7 @@ export default function InvoicesPage() {
     {
       key: 'amount_paid',
       label: 'Outstanding',
+      numeric: true,
       width: 120,
       render: (invoice: Invoice) => {
         const outstanding = invoice.invoice_total - invoice.amount_paid;
@@ -85,6 +90,7 @@ export default function InvoicesPage() {
     {
       key: 'modified',
       label: 'Last Modified',
+      numeric: false,
       width: 120,
       render: (invoice: Invoice) =>
         new Date(invoice.modified).toLocaleString(),

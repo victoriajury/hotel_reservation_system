@@ -11,7 +11,7 @@ import Link from '@mui/joy/Link';
 
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 
-import DataTable from '../layouts/components/DataTable';
+import DataTable, { TableColumn } from '../layouts/components/DataTable';
 import DataList from '../layouts/components/DataList';
 
 export async function loader() {
@@ -20,13 +20,14 @@ export async function loader() {
 }
 
 export default function PaymentsPage() {
-  const { payments } = useLoaderData() as { payments: Payment[] };
   const navigate = useNavigate();
+  const { payments } = useLoaderData() as { payments: Payment[] };
 
-  const paymentColumns = [
+  const paymentColumns: TableColumn<Payment>[] = [
     {
       key: 'invoice_id',
       label: 'Invoice No.',
+      numeric: true,
       width: 150,
       render: (payment: Payment) =>
         <Link onClick={() => navigate(`/invoices/${payment.invoice_id}`)}>
@@ -36,6 +37,7 @@ export default function PaymentsPage() {
     {
       key: 'reservation_id',
       label: 'Booking No.',
+      numeric: true,
       width: 150,
       render: (payment: Payment) =>
         <Link onClick={() => navigate(`/reservations/${payment.reservation_id}`)}>
@@ -45,6 +47,7 @@ export default function PaymentsPage() {
     {
       key: 'entered_date',
       label: 'Date',
+      numeric: false,
       width: 150,
       render: (payment: Payment) =>
         new Date(payment.entered_date).toLocaleDateString(),
@@ -52,6 +55,7 @@ export default function PaymentsPage() {
     {
       key: 'guest_name',
       label: 'Guest',
+      numeric: false,
       width: 260,
       render: (payment: Payment) =>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -69,6 +73,7 @@ export default function PaymentsPage() {
     {
       key: 'amount',
       label: 'Total',
+      numeric: true,
       width: 150,
       render: (payment: Payment) =>
         '\u00A3 ' + String(payment.amount.toFixed(2)),
@@ -76,6 +81,7 @@ export default function PaymentsPage() {
     {
       key: 'modified',
       label: 'Last Modified',
+      numeric: false,
       width: 150,
       render: (payment: Payment) =>
         new Date(payment.modified).toLocaleString(),
