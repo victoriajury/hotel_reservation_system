@@ -1,6 +1,9 @@
 
 import * as React from 'react';
 
+import { getReservationStatuses } from '../../data/reservation_status';
+import { DataModel, ReservationStatus } from '../../data/data_models';
+
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import Divider from '@mui/joy/Divider';
@@ -19,45 +22,72 @@ import Typography from '@mui/joy/Typography';
 
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import SearchIcon from '@mui/icons-material/Search';
+import { TableColumn } from './DataTable';
 
-export default function DataTableSearchFilters() {
-    const [open, setOpen] = React.useState(false);
-    const renderFilters = () => (
+interface DataTableSearchFiltersProps<T extends DataModel> {
+  columns: TableColumn<T>[];
+  onFilterChange?: (selectedValue: string) => void;
+}
+
+export async function getReservationStatusesList() {
+  const statuses = await getReservationStatuses();
+  return statuses;
+}
+
+
+export default function DataTableSearchFilters<T extends DataModel>({ columns, onFilterChange }: DataTableSearchFiltersProps<T>) {
+  const [open, setOpen] = React.useState(false);
+  const hasStatusColumn: boolean = columns.some((col) => col.key === 'status');
+  const hasDateColumns: boolean = columns.some((col) => col.key.toString().includes('date') || col.key.toString().includes('created'));
+  const [statusOptions, setStatusOptions] = React.useState<string[]>([]);
+  const [selectedStatus, setSelectedStatus] = React.useState<string>('all');
+
+  React.useEffect(() => {
+    if (hasStatusColumn) {
+      getReservationStatusesList()
+        .then((statuses: ReservationStatus[]) =>
+          setStatusOptions(statuses.map((s) => s.status))
+        );
+    }
+  }, [hasStatusColumn]);
+
+  const createFilterHandler = (status: string) => {
+    setSelectedStatus(status ?? '');
+    onFilterChange && onFilterChange(status ?? '');
+  }
+
+  const renderFilters = () => (
     <React.Fragment>
-      <FormControl size="sm">
-        <FormLabel>Status</FormLabel>
-        <Select
-          size="sm"
-          placeholder="Filter by status"
-          slotProps={{ button: { sx: { whiteSpace: 'nowrap' } } }}
-        >
-          <Option value="paid">Paid</Option>
-          <Option value="pending">Pending</Option>
-          <Option value="refunded">Refunded</Option>
-          <Option value="cancelled">Cancelled</Option>
-        </Select>
-      </FormControl>
-      <FormControl size="sm">
-        <FormLabel>Category</FormLabel>
-        <Select size="sm" placeholder="All">
-          <Option value="all">All</Option>
-          <Option value="refund">Refund</Option>
-          <Option value="purchase">Purchase</Option>
-          <Option value="debit">Debit</Option>
-        </Select>
-      </FormControl>
-      <FormControl size="sm">
-        <FormLabel>Customer</FormLabel>
-        <Select size="sm" placeholder="All">
-          <Option value="all">All</Option>
-          <Option value="olivia">Olivia Rhye</Option>
-          <Option value="steve">Steve Hampton</Option>
-          <Option value="ciaran">Ciaran Murray</Option>
-          <Option value="marina">Marina Macdonald</Option>
-          <Option value="charles">Charles Fulton</Option>
-          <Option value="jay">Jay Hoper</Option>
-        </Select>
-      </FormControl>
+      {hasStatusColumn &&
+        <FormControl size="sm">
+          <FormLabel sx={{ minWidth: 40 }}>Status:</FormLabel>
+          <Select
+            size="sm"
+            placeholder="Filter by status"
+            slotProps={{ button: { sx: { whiteSpace: 'nowrap' } } }}
+            value={selectedStatus}
+            onChange={(_, value) => createFilterHandler(value ?? 'all')}
+          >
+            <Option value="all">All</Option>
+            {statusOptions.map((option) => (
+              <Option key={option} value={option}>
+                {option}
+              </Option>
+            ))}
+          </Select>
+        </FormControl>}
+
+      {hasDateColumns &&
+        <React.Fragment>
+          <FormControl size="sm">
+            <FormLabel sx={{ minWidth: 40 }}>Start Date:</FormLabel>
+            <Input size="sm" type='date' placeholder="Start Date" />
+          </FormControl>
+          <FormControl size="sm">
+            <FormLabel sx={{ minWidth: 40 }}>End Date:</FormLabel>
+            <Input size="sm" type='date' placeholder="End Date" />
+          </FormControl>
+        </React.Fragment>}
     </React.Fragment>
   );
   return (
@@ -100,7 +130,7 @@ export default function DataTableSearchFilters() {
         className="SearchAndFilters-tabletUp"
         sx={{
           borderRadius: 'sm',
-          py: 2,
+          // py: 2,
           display: { xs: 'none', sm: 'flex' },
           flexWrap: 'wrap',
           gap: 1.5,
@@ -109,8 +139,8 @@ export default function DataTableSearchFilters() {
           },
         }}
       >
-        <FormControl sx={{ flex: 1 }} size="sm">
-          <FormLabel>Search for order</FormLabel>
+        <FormControl size="sm">
+          <FormLabel sx={{ minWidth: 40 }}>Search:</FormLabel>
           <Input size="sm" placeholder="Search" startDecorator={<SearchIcon />} />
         </FormControl>
         {renderFilters()}

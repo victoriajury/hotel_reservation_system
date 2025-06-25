@@ -40,7 +40,6 @@ interface DataTableProps<T extends DataModel> {
   onDelete?: (id: DataModelId) => void;
 }
 
-
 function labelDisplayedRows({
   from,
   to,
@@ -86,7 +85,6 @@ interface EnhancedTableProps<T extends DataModel> {
   orderBy: string;
   rowCount: number;
 }
-
 function EnhancedTableHead<T extends DataModel>(props: EnhancedTableProps<T>) {
   const { columns, onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
     props;
@@ -161,14 +159,15 @@ function EnhancedTableHead<T extends DataModel>(props: EnhancedTableProps<T>) {
   );
 }
 
-
-interface EnhancedTableToolbarProps {
+interface EnhancedTableToolbarProps<T extends DataModel> {
   numSelected: number;
+  columns: TableColumn<T>[];
+  onFilterChange?: (selectedValue: string) => void;
 }
-function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
-  const { numSelected } = props;
+function EnhancedTableToolbar<T extends DataModel>(props: EnhancedTableToolbarProps<T>) {
+  const { numSelected, columns, onFilterChange } = props;
   return (
-    
+
     <Box
       sx={[
         {
@@ -190,13 +189,13 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
         </Typography>
       ) : (
 
-        <DataTableSearchFilters />
+        <DataTableSearchFilters columns={columns} onFilterChange={onFilterChange} />
 
       )}
       {numSelected > 0 && (
         // TODO: if delete, show button, or bulk set status
         <Tooltip title="Delete">
-          <IconButton size="sm" color="danger" variant="solid" sx={{mr: 1}}>
+          <IconButton size="sm" color="danger" variant="solid" sx={{ mr: 1 }}>
             <DeleteIcon />
           </IconButton>
         </Tooltip>
@@ -212,6 +211,7 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [filteredData, setFilteredData] = React.useState(data)
 
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
@@ -220,6 +220,12 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
+  };
+  const handleFilterData = (selectedValue: string) => {
+    const filteredData = selectedValue === 'all'
+      ? data
+      : data.filter(row => String(row['status']) === selectedValue);
+    setFilteredData(filteredData)
   };
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
@@ -254,19 +260,23 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
     setPage(0);
   };
   const getLabelDisplayedRowsTo = () => {
-    if (data.length === -1) {
+    if (filteredData.length === -1) {
       return (page + 1) * rowsPerPage;
     }
     return rowsPerPage === -1
-      ? data.length
-      : Math.min(data.length, (page + 1) * rowsPerPage);
+      ? filteredData.length
+      : Math.min(filteredData.length, (page + 1) * rowsPerPage);
   };
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - data.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - filteredData.length) : 0;
   return (
     <React.Fragment>
-      <EnhancedTableToolbar numSelected={selected.length} />
+      <EnhancedTableToolbar
+        numSelected={selected.length}
+        columns={columns}
+        onFilterChange={handleFilterData}
+      />
       <Sheet
         variant="outlined"
         sx={{
@@ -297,10 +307,10 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
             orderBy={String(orderBy)}
             onSelectAllClick={handleSelectAllClick}
             onRequestSort={handleRequestSort}
-            rowCount={data.length}
+            rowCount={filteredData.length}
           />
           <tbody>
-            {[...data]
+            {[...filteredData]
               .sort(getComparator<T>(order, orderBy))
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row, index) => {
@@ -381,9 +391,9 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
                   </FormControl>
                   <Typography sx={{ textAlign: 'center', minWidth: 80 }}>
                     {labelDisplayedRows({
-                      from: data.length === 0 ? 0 : page * rowsPerPage + 1,
+                      from: filteredData.length === 0 ? 0 : page * rowsPerPage + 1,
                       to: getLabelDisplayedRowsTo(),
-                      count: data.length === -1 ? -1 : data.length,
+                      count: filteredData.length === -1 ? -1 : filteredData.length,
                     })}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1 }}>
@@ -402,8 +412,8 @@ export default function DataTable<T extends DataModel>({ data, columns }: DataTa
                       color="neutral"
                       variant="outlined"
                       disabled={
-                        data.length !== -1
-                          ? page >= Math.ceil(data.length / rowsPerPage) - 1
+                        filteredData.length !== -1
+                          ? page >= Math.ceil(filteredData.length / rowsPerPage) - 1
                           : false
                       }
                       onClick={() => handleChangePage(page + 1)}
