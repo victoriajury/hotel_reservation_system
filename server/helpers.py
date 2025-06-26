@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 def room_image_location():
     return "img/hotel_rooms/"
 
@@ -20,3 +23,7 @@ def previous_page_url(redirect_url: str):
         else:
             return redirect_url.replace("/", ".").lstrip(".")
     return None
+
+
+def date_diff_days(start_date: datetime, end_date: datetime) -> int:
+    return (end_date - start_date).days

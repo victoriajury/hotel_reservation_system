@@ -56,7 +56,6 @@ VALUES
 INSERT INTO reservations
   (start_date,
   end_date,
-  total_room_base_price,
   special_offer_applied_title,
   special_offer_discount,
   guest_id,
@@ -66,17 +65,17 @@ INSERT INTO reservations
   status_id,
   modified_by_id)
 VALUES
-  ("2024-09-17","2024-09-20",390.0,"",0,5,"15:00","Car","Search Engine",2,1),
-  ("2024-08-20","2024-08-25",725.0,"125 discount",125,4,"16:00","Train","Booking.com",4,1),
-  ("2024-09-08","2024-09-12",520.0,"",0,2,"14:30","Plane","TripAdvisor",3,1),
-  ("2024-09-01","2024-09-05",460.0,"",0,8,"17:00","Car","Stayed Before",2,1),
-  ("2024-09-03","2024-09-07",520.0,"",0,4,"15:30","Bicycle","Instagram",5,1),
-  ("2024-09-10","2024-09-14",460.0,"",0,7,"16:15","Motorhome","Facebook",2,1),
-  ("2024-09-19","2024-09-23",520.0,"",0,3,"13:45","Train","Email",2,1),
-  ("2024-09-12","2024-09-19",1015.0,"",0,6,"15:00","Car","Recommendation",1,1),
-  ("2024-09-08","2024-09-12",520.0,"",0,1,"14:00","Coach","Other",3,1),
-  ("2025-06-15","2025-06-20",520.0,"",0,1,"14:00","Taxi","Other",3,1),
-  ("2025-06-08","2025-06-12",520.0,"",0,1,"14:00","Coach","",5,1)
+  ("2024-09-17","2024-09-20","",0,5,"15:00","Car","Search Engine",2,1),
+  ("2024-08-20","2024-08-25","125 discount",125,4,"16:00","Train","Booking.com",4,1),
+  ("2024-09-08","2024-09-12","",0,2,"14:30","Plane","TripAdvisor",3,1),
+  ("2024-09-01","2024-09-05","",0,8,"17:00","Car","Stayed Before",2,1),
+  ("2024-09-03","2024-09-07","",0,4,"15:30","Bicycle","Instagram",5,1),
+  ("2024-09-10","2024-09-14","",0,7,"16:15","Motorhome","Facebook",2,1),
+  ("2024-09-19","2024-09-23","",0,3,"13:45","Train","Email",2,1),
+  ("2024-09-12","2024-09-19","",0,6,"15:00","Car","Recommendation",1,1),
+  ("2024-09-08","2024-09-12","",0,1,"14:00","Coach","Other",3,1),
+  ("2025-06-15","2025-06-20","",0,1,"14:00","Taxi","Other",3,1),
+  ("2025-06-08","2025-06-12","",0,1,"14:00","Coach","",5,1)
 ;
 
 INSERT INTO special_offers
@@ -148,7 +147,7 @@ VALUES
 ;
 
 INSERT INTO join_rooms_reservations
-  (room_id, reservation_id, room_number_of_occupants, room_base_price_per_night)
+  (room_id, reservation_id, room_number_of_occupants, reserved_room_price_per_night)
 VALUES
   (1, 1, 2, 130.0),
   (2, 2, 2, 145.0),

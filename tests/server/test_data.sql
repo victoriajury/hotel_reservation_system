@@ -30,7 +30,7 @@ VALUES
 INSERT INTO reservations
   (start_date,
   end_date,
-  total_room_base_price,
+  computed_total_price,
   special_offer_applied_title,
   special_offer_discount,
   guest_id,

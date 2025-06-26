@@ -173,7 +173,7 @@ export default function GuestProfile() {
           maxWidth: '800px',
           mx: 'auto',
           px: { xs: 2, md: 6 },
-          p: { xs: 2, md: 3 },
+          p: { xs: 2, md: 3 }
         }}
       >
         <fetcher.Form method="post">
@@ -386,7 +386,7 @@ export default function GuestProfile() {
                           <td>{new Date(reservation.end_date).toLocaleDateString()}</td>
                           <td>
                             {'\u00A3 ' + (dateDiff(reservation.start_date, reservation.end_date)
-                              * reservation.rooms.reduce((sum, room) => sum + room.room_base_price_per_night, 0))
+                              * reservation.rooms.reduce((sum, room) => sum + room.reserved_room_price_per_night, 0))
                               .toFixed(2)}
                           </td>
                           <td>

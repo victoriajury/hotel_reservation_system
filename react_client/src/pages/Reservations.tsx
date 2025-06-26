@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useLoaderData, useNavigate } from 'react-router-dom';
 import { getReservations } from '../data/reservations';
 import { Reservation } from '../data/data_models';
-import { dateDiff } from '../utils';
 
 import Avatar from '@mui/joy/Avatar';
 import Box from '@mui/joy/Box';
@@ -76,18 +75,12 @@ export default function ReservationsPage() {
         <StatusChip reservation={reservation} />
     },
     {
-      key: 'total_room_base_price',
+      key: 'computed_total_price',
       label: 'Room Cost',
-      numeric: false,
+      numeric: true,
       width: 120,
-      render: (reservation: Reservation) =>
-        // TODO: reuse this formula to sum all room prices and give booking total
-      <React.Fragment>
-        &pound; {(dateDiff(reservation.start_date, reservation.end_date)
-          * reservation.rooms.reduce((sum, room) => sum + room.room_base_price_per_night, 0))
-          .toFixed(2)}     
-      </React.Fragment>
-
+      render: (reservation: Reservation) => 
+        '\u00A3 ' + String((reservation.computed_total_price).toFixed(2)),
     },
     {
       key: 'guest_transport_method',

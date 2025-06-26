@@ -1,6 +1,7 @@
 import datetime
 from typing import Optional
 
+from server.helpers import date_diff_days
 from server.database import db
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -62,7 +63,7 @@ class Guests(db.Model):  # type: ignore
                 "rooms": [
                     {
                         **rooms_res_assoc.rooms.to_dict(),
-                        "room_base_price_per_night": rooms_res_assoc.room_base_price_per_night,
+                        "reserved_room_price_per_night": rooms_res_assoc.reserved_room_price_per_night,
                         "room_number_of_occupants": rooms_res_assoc.room_number_of_occupants,
                     }
                     for rooms_res_assoc in res.rooms
@@ -100,7 +101,7 @@ class RoomReservationAssociation(db.Model):  # type: ignore
         Integer, ForeignKey("reservations.id"), primary_key=True
     )
     room_number_of_occupants = mapped_column(Integer)
-    room_base_price_per_night = mapped_column(Float)
+    reserved_room_price_per_night = mapped_column(Float)
 
     rooms = relationship("Rooms", back_populates="reservations")
     reservations = relationship("Reservations", back_populates="rooms")
@@ -129,7 +130,7 @@ class Rooms(db.Model):  # type: ignore
         _dict["room_max_occupants"] = self.room_type.max_occupants
         _dict["room_amenities"] = self.room_type.amenities
         _dict["room_photo"] = self.room_type.photo
-        _dict["base_price_per_night_quoted"] = self.room_type.base_price_per_night
+        _dict["base_price_per_night"] = self.room_type.base_price_per_night
         _dict["modified_by_user"] = self.modified_by_user.username
         return _dict
 
@@ -154,7 +155,9 @@ class Reservations(db.Model):  # type: ignore
     end_date: Mapped[datetime.datetime] = mapped_column(DateTime)
     status_id: Mapped[int] = mapped_column(ForeignKey("reservation_status.id"))
     guest_id: Mapped[int] = mapped_column(Integer, ForeignKey("guests.id"))
-    total_room_base_price: Mapped[float] = mapped_column(Float)
+
+    # computed_total_price: Mapped[float] = mapped_column(Float)
+
     special_offer_applied_title: Mapped[Optional[str]] = mapped_column(String)
     special_offer_discount: Mapped[float] = mapped_column(Float, server_default="0.0")
     reservation_notes: Mapped[Optional[str]] = mapped_column(String)
@@ -185,6 +188,12 @@ class Reservations(db.Model):  # type: ignore
             }
             for rooms_res_assoc in self.rooms
         ]
+        _dict["computed_total_price"] = date_diff_days(
+            self.start_date, self.end_date
+        ) * sum(
+            rooms_res_assoc.reserved_room_price_per_night
+            for rooms_res_assoc in self.rooms
+        )
 
         _dict["guest_name"] = self.guest.guest_name
         _dict["guest_address"] = ", ".join(
@@ -267,7 +276,7 @@ class Invoices(db.Model):  # type: ignore
             for payment in self.payments
         ]
         _dict["amount_paid"] = sum(
-            [p.amount for p in self.payments if p.invoice_id == self.id]
+            p.amount for p in self.payments if p.invoice_id == self.id
         )
         _dict["invoice_items"] = [
             {
@@ -282,27 +291,21 @@ class Invoices(db.Model):  # type: ignore
         ]
         _dict["invoice_total"] = (
             sum(
-                [
-                    ii.price * ii.quantity
-                    for ii in self.invoice_items
-                    if ii.invoice_id == self.id
-                ]
+                ii.price * ii.quantity
+                for ii in self.invoice_items
+                if ii.invoice_id == self.id
             )
             - self.reservation.special_offer_discount
         )
         _dict["invoice_items_room_total"] = sum(
-            [
-                ii.price * ii.quantity
-                for ii in self.invoice_items
-                if ii.invoice_id == self.id and ii.is_room
-            ]
+            ii.price * ii.quantity
+            for ii in self.invoice_items
+            if ii.invoice_id == self.id and ii.is_room
         )
         _dict["invoice_items_extras_total"] = sum(
-            [
-                ii.price * ii.quantity
-                for ii in self.invoice_items
-                if ii.invoice_id == self.id and not ii.is_room
-            ]
+            ii.price * ii.quantity
+            for ii in self.invoice_items
+            if ii.invoice_id == self.id and not ii.is_room
         )
         _dict["modified_by_user"] = self.modified_by_user.username
         return _dict

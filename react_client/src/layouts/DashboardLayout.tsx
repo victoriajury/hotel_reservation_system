@@ -18,6 +18,13 @@ import Header from './components/Header';
 
 export default function DashboardLayout() {
   const location = useLocation();
+
+  React.useLayoutEffect(() => {
+    // Scrolls to the to when navigating from half-way down different view
+    const el = document.getElementById('main-content');
+    el?.scrollTo({top: 0, behavior: 'instant'});
+  }, [location.pathname]);
+
   return (
 
     <CssVarsProvider disableTransitionOnChange>

@@ -15,7 +15,7 @@ required_fields = [
     "status_id",
     "guest_id",
     "number_of_guests",
-    "total_room_base_price",
+    "computed_total_price",
     "special_offer_discount",
     "modified_by_id",
 ]
@@ -63,7 +63,7 @@ class ReservationResource(Resource):
                 status_id=fields["status_id"],
                 guest_id=fields["guest_id"],
                 number_of_guests=fields["number_of_guests"],
-                total_room_base_price=fields["total_room_base_price"],
+                computed_total_price=fields["computed_total_price"],
                 special_offer_applied_title=fields["special_offer_applied_title"],
                 special_offer_discount=fields["special_offer_discount"],
                 reservation_notes=fields["reservation_notes"],
@@ -98,7 +98,7 @@ class ReservationResource(Resource):
             reservation.status_id = fields["status_id"]
             reservation.guest_id = fields["guest_id"]
             reservation.number_of_guests = fields["number_of_guests"]
-            reservation.total_room_base_price = fields["total_room_base_price"]
+            reservation.computed_total_price = fields["computed_total_price"]
             reservation.special_offer_applied_title = fields.get(
                 "special_offer_applied_title"
             )
@@ -161,7 +161,7 @@ class ReservationResource(Resource):
 #         "number_of_guests",
 #         "start_date",
 #         "end_date",
-#         "total_room_base_price",
+#         "computed_total_price",
 #         "special_offer_applied",
 #         "special_offer_discount",
 #         "reservation_notes",

@@ -41,8 +41,8 @@ export interface Room extends DataModel {
   room_number_of_occupants: number;
   room_amenities: string;
   room_photo: string;
-  base_price_per_night_quoted: number;
-  room_base_price_per_night: number;
+  base_price_per_night: number;
+  reserved_room_price_per_night: number;
   modified: string;
 }
 
@@ -63,7 +63,7 @@ export interface Reservation extends DataModel {
   guest_telephone?: string;
   guest_email?: string;
   guest_address?: string;
-  total_room_base_price: number;
+  computed_total_price: number;
   special_offer_applied_title?: string;
   special_offer_discount: number;
   reservation_notes?: string;

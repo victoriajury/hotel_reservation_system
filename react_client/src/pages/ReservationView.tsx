@@ -84,15 +84,15 @@ export async function loader({ params }: { params: { reservationId?: string } })
   }
   return redirect(`/reservations`);
 }
+
 export default function ReservationView() {
   const { reservation, statuses, invoice } = useLoaderData() as { reservation: Reservation; statuses: ReservationStatus[]; invoice: Invoice };
-  let navigate = useNavigate();
-
+  const navigate = useNavigate();
   const [open, setOpen] = React.useState<boolean>(false);
 
   const roomsTotal = () => {
     return dateDiff(reservation.start_date, reservation.end_date) *
-      reservation.rooms.reduce((sum: number, room: Room) => sum + room.room_base_price_per_night, 0)
+      reservation.rooms.reduce((sum: number, room: Room) => sum + room.reserved_room_price_per_night, 0)
   }
 
   const handleSaveNote = (note: string) => {
@@ -227,7 +227,7 @@ export default function ReservationView() {
                         {room.room_number_of_occupants} person
                       </Typography>}
                   </Typography>
-                  <Typography level="body-sm">{room.room_type_name} - &pound; {room.room_base_price_per_night.toFixed(2)} per night</Typography>
+                  <Typography level="body-sm">{room.room_type_name} - &pound; {room.reserved_room_price_per_night.toFixed(2)} per night</Typography>
                 </CardContent>
               </Card>
             )}
@@ -274,7 +274,7 @@ export default function ReservationView() {
             </Box>
             <Divider />
             <Box>
-              <Typography level='title-md' startDecorator={<Avatar color='primary'
+              <Typography level='title-md' component={'div'} startDecorator={<Avatar color='primary'
                 variant='soft' sx={{ mr: 1 }} />}>
                 {reservation.guest_name}
               </Typography>
@@ -317,7 +317,10 @@ export default function ReservationView() {
                       alignItems: 'center',
                     }}
                   >
-                    <Typography level="body-md" startDecorator={<Avatar sx={{ mr: 1 }} size='sm'><EditNoteRoundedIcon /></Avatar>}>Reservation notes</Typography>
+                    <Typography level="body-md" component={'div'} startDecorator={<Avatar sx={{ mr: 1 }} size='sm'>
+                      <EditNoteRoundedIcon /></Avatar>}>
+                      Reservation notes
+                    </Typography>
 
                   </Box>
                   <CardContent>
@@ -373,7 +376,7 @@ export default function ReservationView() {
             <Stack spacing={2} sx={{ my: 1 }}>
 
               <Table size='sm' sx={{
-                '& tr > *:not(:first-child)': { textAlign: 'right' },
+                '& tr > *:not(:first-of-type)': { textAlign: 'right' },
                 '& tr.invoice-total > *': { borderTop: '2px solid var(--TableCell-borderColor)' }
               }}>
                 <thead>
@@ -387,7 +390,9 @@ export default function ReservationView() {
                 <tbody>
                   <tr>
                     <td>Room Cost</td>
-                    {invoice && invoice.invoice_items_room_total ? <td>&pound; {invoice.invoice_items_room_total.toFixed(2)}</td> : <td>&pound; {roomsTotal().toFixed(2)}</td>}
+                    {invoice && invoice.invoice_items_room_total
+                      ? <td>&pound; {invoice.invoice_items_room_total.toFixed(2)}</td>
+                      : <td>&pound; {roomsTotal().toFixed(2)}</td>}
                   </tr>
                   <tr>
                     <td>Additional charges</td>
@@ -467,7 +472,7 @@ export default function ReservationView() {
             <Stack spacing={2} sx={{ my: 1 }}>
               {invoice ?
                 <Table size='sm' sx={{
-                  '& tr > *:not(:first-child)': { textAlign: 'right' },
+                  '& tr > *:not(:first-of-type)': { textAlign: 'right' },
                   '& tr.payments-total > *': { borderTop: '2px solid var(--TableCell-borderColor)' }
                 }}>
                   <thead>

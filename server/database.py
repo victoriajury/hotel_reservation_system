@@ -13,7 +13,7 @@ db = SQLAlchemy(model_class=Base)
 
 
 def init_db(filename="dummy_data.sql"):
-    """Initialize the database using schema.sql"""
+    """Initialize the database using models.py"""
     # TODO: take new file as CLI arg
     with current_app.open_resource(filename, "r") as f:
         sql = f.read()
